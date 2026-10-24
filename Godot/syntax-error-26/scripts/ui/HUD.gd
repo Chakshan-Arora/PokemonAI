@@ -267,6 +267,7 @@ func _process(delta: float) -> void:
 func update_hud() -> void:
 	var active_p = GameState.get_active_pokemon()
 	if active_p:
+		var refuses = active_p.refuses_to_battle() if active_p.has_method("refuses_to_battle") else false
 		pokemon_panel.visible = true
 		pokemon_name_lbl.text = active_p.get_display_name()
 		pokemon_level_lbl.text = "Lv. %d" % active_p.level
@@ -318,7 +319,6 @@ func update_hud() -> void:
 			var t_name = trainer_bar.get_node_or_null("TrainerName") as Label
 			if t_name:
 				var has_mult = (active_p.trust > 50.0 and active_p.affection > 50.0)
-				var refuses = active_p.refuses_to_battle()
 				var status_tag = ""
 				if refuses:
 					status_tag = " ⚠️Refuses Battle"
