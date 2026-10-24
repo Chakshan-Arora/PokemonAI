@@ -52,13 +52,26 @@ from src.ai.live_provider import (
     LiveAIDecisionProvider,
     create_live_decision_provider,
 )
+from src.ai.local_model_provider import (
+    LocalModelDecisionProvider,
+    LocalModelError,
+)
 from src.ai.wild_encounter_service import AutonomousWildService
+from src.ai.battle_talk_parser import BattleTalkParser, parse as parse_battle_talk
+from src.ai.battle_talk import parse_battle_talk_intent
 from src.ai.companion_service import (
     CompanionService,
     CompanionInteractionResult,
     CompanionBattleDisposition,
     TeammateInteractionResult,
+    BattleTalkContext,
+    generate_battle_talk_response,
 )
+# from src.ai.voice_input import (
+#     VoiceInputService,
+#     VoiceInputResult,
+#     VoiceInputErrorType,
+# )
 from src.ai.scheduler import AutonomousWorldScheduler
 from src.ai.persistence import (
     CURRENT_AI_SCHEMA_VERSION,
@@ -108,11 +121,21 @@ __all__ = [
     "OpenAIDecisionProvider",
     "LiveAIDecisionProvider",
     "create_live_decision_provider",
+    "LocalModelDecisionProvider",
+    "LocalModelError",
     "AutonomousWildService",
     "CompanionService",
     "CompanionInteractionResult",
     "CompanionBattleDisposition",
     "TeammateInteractionResult",
+    "BattleTalkParser",
+    "parse_battle_talk",
+    "parse_battle_talk_intent",
+    "BattleTalkContext",
+    "generate_battle_talk_response",
+#     "VoiceInputService",
+#     "VoiceInputResult",
+#     "VoiceInputErrorType",
     "AutonomousWorldScheduler",
     "CURRENT_AI_SCHEMA_VERSION",
     "SUPPORTED_AI_SCHEMA_VERSIONS",

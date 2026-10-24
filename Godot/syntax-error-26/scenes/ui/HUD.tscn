@@ -1,0 +1,248 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8y3xqjHUD"]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_prompt"]
+bg_color = Color(0.1, 0.14, 0.22, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.78, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[node name="HUD" type="Control" groups=["hud"]]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="TopLeft" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 284.0
+offset_bottom = 124.0
+
+[node name="PokemonPanel" type="PanelContainer" parent="TopLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="TopLeft/PokemonPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HBox" type="HBoxContainer" parent="TopLeft/PokemonPanel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="TopLeft/PokemonPanel/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Pikachu"
+
+[node name="LevelLabel" type="Label" parent="TopLeft/PokemonPanel/VBox/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Lv. 5"
+
+[node name="HPBar" type="ProgressBar" parent="TopLeft/PokemonPanel/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+max_value = 25.0
+value = 25.0
+show_percentage = false
+
+[node name="HPTextLabel" type="Label" parent="TopLeft/PokemonPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 0.3, 0.4, 1)
+theme_override_font_sizes/font_size = 13
+text = "25 / 25 HP"
+horizontal_alignment = 2
+
+[node name="TopRight" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -224.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 94.0
+grow_horizontal = 0
+
+[node name="TimePanel" type="PanelContainer" parent="TopRight"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="TopRight/TimePanel"]
+layout_mode = 2
+
+[node name="TimeLabel" type="Label" parent="TopRight/TimePanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "08:00 AM"
+horizontal_alignment = 1
+
+[node name="TODLabel" type="Label" parent="TopRight/TimePanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.3, 0.45, 1)
+theme_override_font_sizes/font_size = 14
+text = "Morning"
+horizontal_alignment = 1
+
+[node name="BottomLeft" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -104.0
+offset_right = 324.0
+offset_bottom = -24.0
+grow_vertical = 0
+
+[node name="RegionPanel" type="PanelContainer" parent="BottomLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="BottomLeft/RegionPanel"]
+layout_mode = 2
+
+[node name="RegionLabel" type="Label" parent="BottomLeft/RegionPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Starting Meadow"
+
+[node name="HelpLabel" type="Label" parent="BottomLeft/RegionPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 0.3, 0.4, 1)
+theme_override_font_sizes/font_size = 12
+text = "[TAB] Party | [I] Bag | [J] Quests | [ESC] Pause"
+
+[node name="CenterPrompt" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="InteractPrompt" type="PanelContainer" parent="CenterPrompt"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_prompt")
+
+[node name="PromptLabel" type="Label" parent="CenterPrompt/InteractPrompt"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "[E] Interact"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TopCenter" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 24.0
+offset_right = 300.0
+offset_bottom = 74.0
+grow_horizontal = 2
+
+[node name="MessageBanner" type="PanelContainer" parent="TopCenter"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MessageLabel" type="Label" parent="TopCenter/MessageBanner"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "Notification"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DialogueBox" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -140.0
+offset_right = 340.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBox" type="HBoxContainer" parent="DialogueBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Portrait" type="TextureRect" parent="DialogueBox/HBox"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="DialogueBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpeakerLabel" type="Label" parent="DialogueBox/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.32, 0.55, 1)
+theme_override_font_sizes/font_size = 14
+text = "Notice"
+
+[node name="DialogueLabel" type="Label" parent="DialogueBox/HBox/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.1, 0.1, 0.15, 1)
+theme_override_font_sizes/font_size = 15
+text = "Hello there!"
+autowrap_mode = 2
+

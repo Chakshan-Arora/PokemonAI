@@ -31,6 +31,10 @@ from src.models.battle import (
     BattleActionType,
     BattleAction,
     BattleActionResult,
+    BattleTalkCommand,
+    BattleTalkPayload,
+    BattleTalkIntent,
+    TalkCategory,
 )
 from src.models.battle_manager import BattleManager
 from src.models.progression import (
@@ -219,6 +223,10 @@ __all__ = [
     "BattleActionType",
     "BattleAction",
     "BattleActionResult",
+    "BattleTalkCommand",
+    "BattleTalkPayload",
+    "BattleTalkIntent",
+    "TalkCategory",
     "BattleManager",
     "MAX_LEVEL",
     "XP_PER_LEVEL_MULTIPLIER",

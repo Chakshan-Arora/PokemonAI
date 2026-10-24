@@ -1,0 +1,114 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8y3xqjInventoryUI"]
+
+[ext_resource type="Script" path="res://scripts/ui/InventoryUI.gd" id="1_inv"]
+
+[node name="InventoryUI" type="Control" groups=["inventory_ui"]]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_inv")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -240.0
+offset_right = 380.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 16.0
+offset_right = 100.0
+offset_bottom = 46.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+text = "Item Bag"
+horizontal_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="Panel"]
+custom_minimum_size = Vector2(80, 32)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 48.0
+grow_horizontal = 0
+text = "Close"
+
+[node name="HBox" type="HBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 64.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 24
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/HBox"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/HBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="DetailVBox" type="VBoxContainer" parent="Panel/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="ItemNameLabel" type="Label" parent="Panel/HBox/DetailVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Select an item"
+
+[node name="ItemDescLabel" type="Label" parent="Panel/HBox/DetailVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.25, 0.3, 0.38, 1)
+text = "Description will appear here."
+autowrap_mode = 2
+
+[node name="UseBtn" type="Button" parent="Panel/HBox/DetailVBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Use on Active Pokémon"
+
+[node name="StatusLabel" type="Label" parent="Panel/HBox/DetailVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.5, 0.2, 1)
+horizontal_alignment = 1
+

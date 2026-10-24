@@ -1,0 +1,2175 @@
+{
+  "species": {
+    "Pikachu": {
+      "name": "Pikachu",
+      "types": [
+        "Electric"
+      ],
+      "base_hp": 11,
+      "base_attack": 55,
+      "base_defense": 40,
+      "base_speed": 90,
+      "available_attacks": [
+        "Thunder Shock",
+        "Quick Attack",
+        "Thunderbolt",
+        "Spark"
+      ],
+      "abilities": [
+        "Static",
+        "Lightning Rod"
+      ],
+      "color": "#FAD812",
+      "description": "A wild Pikachu."
+    },
+    "Charmander": {
+      "name": "Charmander",
+      "types": [
+        "Fire"
+      ],
+      "base_hp": 12,
+      "base_attack": 52,
+      "base_defense": 43,
+      "base_speed": 65,
+      "available_attacks": [
+        "Scratch",
+        "Ember",
+        "Flamethrower",
+        "Fire Fang"
+      ],
+      "abilities": [
+        "Blaze"
+      ],
+      "color": "#F05A0A",
+      "description": "A wild Charmander."
+    },
+    "Squirtle": {
+      "name": "Squirtle",
+      "types": [
+        "Water"
+      ],
+      "base_hp": 13,
+      "base_attack": 48,
+      "base_defense": 65,
+      "base_speed": 43,
+      "available_attacks": [
+        "Tackle",
+        "Water Gun",
+        "Hydro Pump",
+        "Bite"
+      ],
+      "abilities": [
+        "Torrent"
+      ],
+      "color": "#458FE8",
+      "description": "A wild Squirtle."
+    },
+    "Bulbasaur": {
+      "name": "Bulbasaur",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "base_hp": 14,
+      "base_attack": 49,
+      "base_defense": 49,
+      "base_speed": 45,
+      "available_attacks": [
+        "Tackle",
+        "Vine Whip",
+        "Poison Powder",
+        "Razor Leaf",
+        "Solar Beam"
+      ],
+      "abilities": [
+        "Overgrow"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Bulbasaur."
+    },
+    "Pidgey": {
+      "name": "Pidgey",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "base_hp": 12,
+      "base_attack": 45,
+      "base_defense": 40,
+      "base_speed": 56,
+      "available_attacks": [
+        "Tackle",
+        "Gust",
+        "Quick Attack",
+        "Wing Attack"
+      ],
+      "abilities": [
+        "Keen Eye"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Pidgey."
+    },
+    "Rattata": {
+      "name": "Rattata",
+      "types": [
+        "Normal"
+      ],
+      "base_hp": 10,
+      "base_attack": 56,
+      "base_defense": 35,
+      "base_speed": 72,
+      "available_attacks": [
+        "Tackle",
+        "Quick Attack",
+        "Bite",
+        "Hyper Fang"
+      ],
+      "abilities": [
+        "Run Away"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Rattata."
+    },
+    "Caterpie": {
+      "name": "Caterpie",
+      "types": [
+        "Bug"
+      ],
+      "base_hp": 12,
+      "base_attack": 30,
+      "base_defense": 35,
+      "base_speed": 45,
+      "available_attacks": [
+        "Tackle",
+        "Bug Bite"
+      ],
+      "abilities": [
+        "Shield Dust"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Caterpie."
+    },
+    "Butterfree": {
+      "name": "Butterfree",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "base_hp": 16,
+      "base_attack": 45,
+      "base_defense": 50,
+      "base_speed": 70,
+      "available_attacks": [
+        "Gust",
+        "Confusion",
+        "Poison Powder",
+        "Psybeam"
+      ],
+      "abilities": [
+        "Compound Eyes"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Butterfree."
+    },
+    "Geodude": {
+      "name": "Geodude",
+      "types": [
+        "Rock",
+        "Ground"
+      ],
+      "base_hp": 12,
+      "base_attack": 80,
+      "base_defense": 100,
+      "base_speed": 20,
+      "available_attacks": [
+        "Tackle",
+        "Rock Throw",
+        "Rock Slide"
+      ],
+      "abilities": [
+        "Rock Head"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Geodude."
+    },
+    "Zubat": {
+      "name": "Zubat",
+      "types": [
+        "Poison",
+        "Flying"
+      ],
+      "base_hp": 11,
+      "base_attack": 45,
+      "base_defense": 35,
+      "base_speed": 55,
+      "available_attacks": [
+        "Leech Life",
+        "Bite",
+        "Wing Attack"
+      ],
+      "abilities": [
+        "Inner Focus"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Zubat."
+    },
+    "Machop": {
+      "name": "Machop",
+      "types": [
+        "Fighting"
+      ],
+      "base_hp": 18,
+      "base_attack": 80,
+      "base_defense": 50,
+      "base_speed": 35,
+      "available_attacks": [
+        "Low Kick",
+        "Karate Chop",
+        "Tackle",
+        "Brick Break"
+      ],
+      "abilities": [
+        "Guts"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Machop."
+    },
+    "Gastly": {
+      "name": "Gastly",
+      "types": [
+        "Ghost",
+        "Poison"
+      ],
+      "base_hp": 10,
+      "base_attack": 35,
+      "base_defense": 30,
+      "base_speed": 80,
+      "available_attacks": [
+        "Lick",
+        "Night Shade",
+        "Shadow Ball"
+      ],
+      "abilities": [
+        "Levitate"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Gastly."
+    },
+    "Abra": {
+      "name": "Abra",
+      "types": [
+        "Psychic"
+      ],
+      "base_hp": 8,
+      "base_attack": 20,
+      "base_defense": 15,
+      "base_speed": 90,
+      "available_attacks": [
+        "Tackle",
+        "Confusion",
+        "Psybeam",
+        "Psychic"
+      ],
+      "abilities": [
+        "Synchronize"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Abra."
+    },
+    "Eevee": {
+      "name": "Eevee",
+      "types": [
+        "Normal"
+      ],
+      "base_hp": 14,
+      "base_attack": 55,
+      "base_defense": 50,
+      "base_speed": 55,
+      "available_attacks": [
+        "Tackle",
+        "Quick Attack",
+        "Bite",
+        "Body Slam"
+      ],
+      "abilities": [
+        "Adaptability",
+        "Run Away"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Eevee."
+    },
+    "Growlithe": {
+      "name": "Growlithe",
+      "types": [
+        "Fire"
+      ],
+      "base_hp": 14,
+      "base_attack": 70,
+      "base_defense": 45,
+      "base_speed": 60,
+      "available_attacks": [
+        "Bite",
+        "Ember",
+        "Flame Wheel",
+        "Flamethrower"
+      ],
+      "abilities": [
+        "Intimidate"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Growlithe."
+    },
+    "Poliwag": {
+      "name": "Poliwag",
+      "types": [
+        "Water"
+      ],
+      "base_hp": 12,
+      "base_attack": 50,
+      "base_defense": 40,
+      "base_speed": 90,
+      "available_attacks": [
+        "Water Gun",
+        "Bubble",
+        "Body Slam",
+        "Hydro Pump"
+      ],
+      "abilities": [
+        "Water Absorb"
+      ],
+      "color": "#4DAE44",
+      "description": "A wild Poliwag."
+    }
+  },
+  "attacks": {
+    "Tackle": {
+      "name": "Tackle",
+      "type": "Normal",
+      "power": 40,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Quick Attack": {
+      "name": "Quick Attack",
+      "type": "Normal",
+      "power": 40,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Scratch": {
+      "name": "Scratch",
+      "type": "Normal",
+      "power": 40,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Thunder Shock": {
+      "name": "Thunder Shock",
+      "type": "Electric",
+      "power": 40,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Thunderbolt": {
+      "name": "Thunderbolt",
+      "type": "Electric",
+      "power": 90,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Ember": {
+      "name": "Ember",
+      "type": "Fire",
+      "power": 40,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Flamethrower": {
+      "name": "Flamethrower",
+      "type": "Fire",
+      "power": 90,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Water Gun": {
+      "name": "Water Gun",
+      "type": "Water",
+      "power": 40,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Hydro Pump": {
+      "name": "Hydro Pump",
+      "type": "Water",
+      "power": 110,
+      "accuracy": 80,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Vine Whip": {
+      "name": "Vine Whip",
+      "type": "Grass",
+      "power": 45,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Will-O-Wisp": {
+      "name": "Will-O-Wisp",
+      "type": "Fire",
+      "power": 0,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "BURN",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Fire Fang": {
+      "name": "Fire Fang",
+      "type": "Fire",
+      "power": 65,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "BURN",
+      "effect_target": "defender",
+      "effect_chance": 20,
+      "priority": 0
+    },
+    "Poison Powder": {
+      "name": "Poison Powder",
+      "type": "Grass",
+      "power": 0,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "POISON",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Poison Sting": {
+      "name": "Poison Sting",
+      "type": "Normal",
+      "power": 15,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "POISON",
+      "effect_target": "defender",
+      "effect_chance": 30,
+      "priority": 0
+    },
+    "Thunder Wave": {
+      "name": "Thunder Wave",
+      "type": "Electric",
+      "power": 0,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "PARALYSIS",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Spark": {
+      "name": "Spark",
+      "type": "Electric",
+      "power": 65,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "PARALYSIS",
+      "effect_target": "defender",
+      "effect_chance": 30,
+      "priority": 0
+    },
+    "Growl": {
+      "name": "Growl",
+      "type": "Normal",
+      "power": 0,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "ATTACK_REDUCTION",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Tail Whip": {
+      "name": "Tail Whip",
+      "type": "Normal",
+      "power": 0,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "DEFENSE_REDUCTION",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Leer": {
+      "name": "Leer",
+      "type": "Normal",
+      "power": 0,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "DEFENSE_REDUCTION",
+      "effect_target": "defender",
+      "effect_chance": 100,
+      "priority": 0
+    },
+    "Razor Leaf": {
+      "name": "Razor Leaf",
+      "type": "Grass",
+      "power": 55,
+      "accuracy": 95,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Solar Beam": {
+      "name": "Solar Beam",
+      "type": "Grass",
+      "power": 120,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Sludge": {
+      "name": "Sludge",
+      "type": "Poison",
+      "power": 65,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "POISON",
+      "effect_target": "defender",
+      "effect_chance": 30,
+      "priority": 0
+    },
+    "Gust": {
+      "name": "Gust",
+      "type": "Flying",
+      "power": 40,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Wing Attack": {
+      "name": "Wing Attack",
+      "type": "Flying",
+      "power": 60,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Bite": {
+      "name": "Bite",
+      "type": "Normal",
+      "power": 60,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Hyper Fang": {
+      "name": "Hyper Fang",
+      "type": "Normal",
+      "power": 80,
+      "accuracy": 90,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Headbutt": {
+      "name": "Headbutt",
+      "type": "Normal",
+      "power": 70,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Body Slam": {
+      "name": "Body Slam",
+      "type": "Normal",
+      "power": 85,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "PARALYSIS",
+      "effect_target": "defender",
+      "effect_chance": 30,
+      "priority": 0
+    },
+    "Bug Bite": {
+      "name": "Bug Bite",
+      "type": "Bug",
+      "power": 60,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Leech Life": {
+      "name": "Leech Life",
+      "type": "Bug",
+      "power": 20,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Rock Throw": {
+      "name": "Rock Throw",
+      "type": "Rock",
+      "power": 50,
+      "accuracy": 90,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Rock Slide": {
+      "name": "Rock Slide",
+      "type": "Rock",
+      "power": 75,
+      "accuracy": 90,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Defense Curl": {
+      "name": "Defense Curl",
+      "type": "Normal",
+      "power": 0,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Confuse Ray": {
+      "name": "Confuse Ray",
+      "type": "Ghost",
+      "power": 0,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Low Kick": {
+      "name": "Low Kick",
+      "type": "Fighting",
+      "power": 50,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Karate Chop": {
+      "name": "Karate Chop",
+      "type": "Fighting",
+      "power": 50,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Brick Break": {
+      "name": "Brick Break",
+      "type": "Fighting",
+      "power": 75,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Lick": {
+      "name": "Lick",
+      "type": "Ghost",
+      "power": 30,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "PARALYSIS",
+      "effect_target": "defender",
+      "effect_chance": 30,
+      "priority": 0
+    },
+    "Night Shade": {
+      "name": "Night Shade",
+      "type": "Ghost",
+      "power": 50,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Shadow Ball": {
+      "name": "Shadow Ball",
+      "type": "Ghost",
+      "power": 80,
+      "accuracy": 100,
+      "category": "physical",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Confusion": {
+      "name": "Confusion",
+      "type": "Psychic",
+      "power": 50,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Psybeam": {
+      "name": "Psybeam",
+      "type": "Psychic",
+      "power": 65,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Psychic": {
+      "name": "Psychic",
+      "type": "Psychic",
+      "power": 90,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    },
+    "Flame Wheel": {
+      "name": "Flame Wheel",
+      "type": "Fire",
+      "power": 60,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "BURN",
+      "effect_target": "defender",
+      "effect_chance": 10,
+      "priority": 0
+    },
+    "Bubble": {
+      "name": "Bubble",
+      "type": "Water",
+      "power": 40,
+      "accuracy": 100,
+      "category": "special",
+      "effect": "",
+      "effect_target": "defender",
+      "effect_chance": 0,
+      "priority": 0
+    }
+  },
+  "move_learning": {
+    "Pikachu": [
+      [
+        1,
+        "Thunder Shock"
+      ],
+      [
+        3,
+        "Quick Attack"
+      ],
+      [
+        6,
+        "Tackle"
+      ],
+      [
+        10,
+        "Thunderbolt"
+      ]
+    ],
+    "Charmander": [
+      [
+        1,
+        "Scratch"
+      ],
+      [
+        3,
+        "Ember"
+      ],
+      [
+        6,
+        "Tackle"
+      ],
+      [
+        10,
+        "Flamethrower"
+      ]
+    ],
+    "Squirtle": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Water Gun"
+      ],
+      [
+        6,
+        "Quick Attack"
+      ],
+      [
+        10,
+        "Hydro Pump"
+      ]
+    ],
+    "Bulbasaur": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Vine Whip"
+      ],
+      [
+        6,
+        "Poison Powder"
+      ],
+      [
+        10,
+        "Razor Leaf"
+      ]
+    ],
+    "Pidgey": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Gust"
+      ],
+      [
+        6,
+        "Quick Attack"
+      ],
+      [
+        10,
+        "Wing Attack"
+      ]
+    ],
+    "Rattata": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Quick Attack"
+      ],
+      [
+        6,
+        "Bite"
+      ],
+      [
+        10,
+        "Hyper Fang"
+      ]
+    ],
+    "Caterpie": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Bug Bite"
+      ],
+      [
+        6,
+        "Tackle"
+      ]
+    ],
+    "Butterfree": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Gust"
+      ],
+      [
+        6,
+        "Confusion"
+      ],
+      [
+        10,
+        "Psybeam"
+      ]
+    ],
+    "Geodude": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Rock Throw"
+      ],
+      [
+        6,
+        "Defense Curl"
+      ],
+      [
+        10,
+        "Rock Slide"
+      ]
+    ],
+    "Zubat": [
+      [
+        1,
+        "Leech Life"
+      ],
+      [
+        3,
+        "Bite"
+      ],
+      [
+        6,
+        "Wing Attack"
+      ],
+      [
+        10,
+        "Confuse Ray"
+      ]
+    ],
+    "Machop": [
+      [
+        1,
+        "Low Kick"
+      ],
+      [
+        3,
+        "Karate Chop"
+      ],
+      [
+        6,
+        "Tackle"
+      ],
+      [
+        10,
+        "Brick Break"
+      ]
+    ],
+    "Gastly": [
+      [
+        1,
+        "Lick"
+      ],
+      [
+        3,
+        "Confuse Ray"
+      ],
+      [
+        6,
+        "Night Shade"
+      ],
+      [
+        10,
+        "Shadow Ball"
+      ]
+    ],
+    "Abra": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Confusion"
+      ],
+      [
+        6,
+        "Psybeam"
+      ],
+      [
+        10,
+        "Psychic"
+      ]
+    ],
+    "Eevee": [
+      [
+        1,
+        "Tackle"
+      ],
+      [
+        3,
+        "Quick Attack"
+      ],
+      [
+        6,
+        "Bite"
+      ],
+      [
+        10,
+        "Body Slam"
+      ]
+    ],
+    "Growlithe": [
+      [
+        1,
+        "Bite"
+      ],
+      [
+        3,
+        "Ember"
+      ],
+      [
+        6,
+        "Flame Wheel"
+      ],
+      [
+        10,
+        "Flamethrower"
+      ]
+    ],
+    "Poliwag": [
+      [
+        1,
+        "Water Gun"
+      ],
+      [
+        3,
+        "Bubble"
+      ],
+      [
+        6,
+        "Body Slam"
+      ],
+      [
+        10,
+        "Hydro Pump"
+      ]
+    ]
+  },
+  "personality_traits": [
+    "aggression",
+    "curiosity",
+    "fear",
+    "sociability",
+    "loyalty",
+    "confidence"
+  ],
+  "items": {
+    "potion": {
+      "id": "potion",
+      "name": "Potion",
+      "description": "A spray-type medicine for treating wounds. It restores 20 HP to a single Pokemon.",
+      "effect": "heal",
+      "heal_amount": 20,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "super_potion": {
+      "id": "super_potion",
+      "name": "Super Potion",
+      "description": "A spray-type medicine for treating wounds. It restores 50 HP to a single Pokemon.",
+      "effect": "heal",
+      "heal_amount": 50,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "full_restore": {
+      "id": "full_restore",
+      "name": "Full Restore",
+      "description": "A medicine that fully restores the HP of a single Pokemon and heals any major status condition.",
+      "effect": "full_restore",
+      "heal_amount": 9999,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "antidote": {
+      "id": "antidote",
+      "name": "Antidote",
+      "description": "A spray-type medicine for treating poison. It lifts the effects of poison from a single Pokemon.",
+      "effect": "antidote",
+      "heal_amount": 0,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "burn_heal": {
+      "id": "burn_heal",
+      "name": "Burn Heal",
+      "description": "A spray-type medicine for treating burns. It heals a single Pokemon suffering from a burn.",
+      "effect": "burn_heal",
+      "heal_amount": 0,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "paralyze_heal": {
+      "id": "paralyze_heal",
+      "name": "Paralyze Heal",
+      "description": "A spray-type medicine for treating paralysis. It cures a single Pokemon that is paralyzed.",
+      "effect": "paralyze_heal",
+      "heal_amount": 0,
+      "usable_in_battle": true,
+      "usable_in_field": true
+    },
+    "poke_ball": {
+      "id": "poke_ball",
+      "name": "Pok\u00e9 Ball",
+      "description": "A device for catching wild Pokemon. Reserved for a future capture integration.",
+      "effect": "capture",
+      "heal_amount": 0,
+      "usable_in_battle": true,
+      "usable_in_field": false
+    }
+  },
+  "habitats": {
+    "starting_meadow": [
+      {
+        "species": "Pidgey",
+        "weight": 60,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Rattata",
+        "weight": 55,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Caterpie",
+        "weight": 50,
+        "min_level": 2,
+        "max_level": 3,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 40,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Eevee",
+        "weight": 15,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Bulbasaur",
+        "weight": 20,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Poliwag",
+        "weight": 25,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Squirtle",
+        "weight": 15,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      }
+    ],
+    "meadow": [
+      {
+        "species": "Pidgey",
+        "weight": 60,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Rattata",
+        "weight": 55,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Caterpie",
+        "weight": 50,
+        "min_level": 2,
+        "max_level": 3,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 40,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Eevee",
+        "weight": 15,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Bulbasaur",
+        "weight": 20,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Poliwag",
+        "weight": 25,
+        "min_level": 2,
+        "max_level": 4,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Squirtle",
+        "weight": 15,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      }
+    ],
+    "forest_trail": [
+      {
+        "species": "Pidgey",
+        "weight": 45,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Caterpie",
+        "weight": 40,
+        "min_level": 3,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 45,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 35,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Charmander",
+        "weight": 30,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Butterfree",
+        "weight": 15,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Abra",
+        "weight": 10,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Machop",
+        "weight": 20,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      }
+    ],
+    "forest": [
+      {
+        "species": "Pidgey",
+        "weight": 45,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Caterpie",
+        "weight": 40,
+        "min_level": 3,
+        "max_level": 4,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 45,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 35,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Charmander",
+        "weight": 30,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "day",
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Butterfree",
+        "weight": 15,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Abra",
+        "weight": 10,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Machop",
+        "weight": 20,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      }
+    ],
+    "ancient_shrine_grounds": [
+      {
+        "species": "Geodude",
+        "weight": 45,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 40,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Gastly",
+        "weight": 30,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Growlithe",
+        "weight": 25,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 20,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Machop",
+        "weight": 20,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Charmander",
+        "weight": 10,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Abra",
+        "weight": 8,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      }
+    ],
+    "shrine_grounds": [
+      {
+        "species": "Geodude",
+        "weight": 45,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 40,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Gastly",
+        "weight": 30,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Growlithe",
+        "weight": 25,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 20,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Machop",
+        "weight": 20,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Charmander",
+        "weight": 10,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Abra",
+        "weight": 8,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "night"
+        ]
+      }
+    ],
+    "mountain_pass": [
+      {
+        "species": "Geodude",
+        "weight": 60,
+        "min_level": 5,
+        "max_level": 8,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Machop",
+        "weight": 45,
+        "min_level": 5,
+        "max_level": 8,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 35,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Growlithe",
+        "weight": 20,
+        "min_level": 6,
+        "max_level": 9,
+        "allowed_times": [
+          "day"
+        ]
+      },
+      {
+        "species": "Rattata",
+        "weight": 30,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      }
+    ],
+    "lakeside": [
+      {
+        "species": "Poliwag",
+        "weight": 60,
+        "min_level": 3,
+        "max_level": 6,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Squirtle",
+        "weight": 35,
+        "min_level": 4,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Pidgey",
+        "weight": 30,
+        "min_level": 3,
+        "max_level": 5,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Eevee",
+        "weight": 10,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "evening"
+        ]
+      },
+      {
+        "species": "Caterpie",
+        "weight": 25,
+        "min_level": 3,
+        "max_level": 4,
+        "allowed_times": [
+          "morning"
+        ]
+      }
+    ],
+    "haunted_ruins": [
+      {
+        "species": "Gastly",
+        "weight": 60,
+        "min_level": 5,
+        "max_level": 8,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Zubat",
+        "weight": 50,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "evening",
+          "night"
+        ]
+      },
+      {
+        "species": "Abra",
+        "weight": 20,
+        "min_level": 6,
+        "max_level": 9,
+        "allowed_times": [
+          "night"
+        ]
+      },
+      {
+        "species": "Rattata",
+        "weight": 25,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      }
+    ],
+    "tall_grass_plains": [
+      {
+        "species": "Rattata",
+        "weight": 55,
+        "min_level": 3,
+        "max_level": 6,
+        "allowed_times": [
+          "morning",
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Pidgey",
+        "weight": 55,
+        "min_level": 3,
+        "max_level": 6,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Eevee",
+        "weight": 20,
+        "min_level": 4,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Growlithe",
+        "weight": 25,
+        "min_level": 5,
+        "max_level": 7,
+        "allowed_times": [
+          "day",
+          "evening"
+        ]
+      },
+      {
+        "species": "Bulbasaur",
+        "weight": 15,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "morning",
+          "day"
+        ]
+      },
+      {
+        "species": "Pikachu",
+        "weight": 15,
+        "min_level": 4,
+        "max_level": 6,
+        "allowed_times": [
+          "day"
+        ]
+      }
+    ]
+  },
+  "regions": {
+    "starting_meadow": {
+      "id": "starting_meadow",
+      "name": "Starting Meadow",
+      "description": "A sunlit clearing of soft green grass, welcoming new trainers with sweet berry bushes.",
+      "discovery_text": "You have stepped into the Starting Meadow! Warm sunlight illuminates the open clearing.",
+      "bounds": [
+        0.0,
+        0.0,
+        10.0,
+        10.0
+      ]
+    },
+    "forest_trail": {
+      "id": "forest_trail",
+      "name": "Forest Trail",
+      "description": "A shaded winding pathway bordered by dense brush where travelers cache supplies.",
+      "discovery_text": "You entered the Forest Trail. Tall canopies whisper quietly in the forest wind.",
+      "bounds": [
+        11.0,
+        0.0,
+        20.0,
+        15.0
+      ]
+    },
+    "ancient_shrine_grounds": {
+      "id": "ancient_shrine_grounds",
+      "name": "Ancient Shrine Grounds",
+      "description": "A secluded plateau surrounding the legendary Thunder Stone Shrine.",
+      "discovery_text": "You discovered the Ancient Shrine Grounds! Residual thunder energy pulses through the stone.",
+      "bounds": [
+        21.0,
+        20.0,
+        30.0,
+        30.0
+      ]
+    },
+    "mountain_pass": {
+      "id": "mountain_pass",
+      "name": "Mountain Pass",
+      "description": "A rocky mountain path with exposed boulders and cliffs.",
+      "discovery_text": "You entered the Mountain Pass! Cold mountain winds sweep across rugged rocky cliffs.",
+      "bounds": [
+        31.0,
+        0.0,
+        40.0,
+        10.0
+      ]
+    },
+    "lakeside": {
+      "id": "lakeside",
+      "name": "Crystal Lakeside",
+      "description": "A serene lake surrounded by tall reeds and rippling water.",
+      "discovery_text": "You discovered the Crystal Lakeside! Gentle ripples lap against the shore under fresh breezes.",
+      "bounds": [
+        0.0,
+        11.0,
+        10.0,
+        20.0
+      ]
+    },
+    "haunted_ruins": {
+      "id": "haunted_ruins",
+      "name": "Haunted Ruins",
+      "description": "Crumbling stone ruins where eerie lights flicker after dark.",
+      "discovery_text": "You entered the Haunted Ruins! A mysterious chill lingers amidst crumbling stone arches.",
+      "bounds": [
+        11.0,
+        16.0,
+        20.0,
+        25.0
+      ]
+    },
+    "tall_grass_plains": {
+      "id": "tall_grass_plains",
+      "name": "Tall Grass Plains",
+      "description": "Wide open grasslands where wild Pok\u00e9mon roam freely.",
+      "discovery_text": "You arrived at the Tall Grass Plains! An expansive sea of tall whispering grasses surrounds you.",
+      "bounds": [
+        21.0,
+        10.0,
+        30.0,
+        19.0
+      ]
+    }
+  },
+  "quests": {
+    "first_encounter": {
+      "id": "first_encounter",
+      "name": "First Encounter",
+      "description": "Venture into the wild tall grass and capture your very first wild Pokemon.",
+      "objectives": [
+        {
+          "objective_id": "capture_first_pokemon",
+          "type": "capture_any",
+          "description": "Capture any 1 wild Pokemon",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 2
+      },
+      "prerequisites": []
+    },
+    "species_research": {
+      "id": "species_research",
+      "name": "Species Research",
+      "description": "Aid the research project by discovering and capturing a Pikachu and a Squirtle.",
+      "objectives": [
+        {
+          "objective_id": "capture_pikachu",
+          "type": "capture_species",
+          "description": "Capture 1 Pikachu",
+          "target_count": 1,
+          "target_species": "Pikachu",
+          "target_item": null
+        },
+        {
+          "objective_id": "capture_squirtle",
+          "type": "capture_species",
+          "description": "Capture 1 Squirtle",
+          "target_count": 1,
+          "target_species": "Squirtle",
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 3
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "growing_stronger": {
+      "id": "growing_stronger",
+      "name": "Growing Stronger",
+      "description": "Train and battle with your Pokemon until at least one reaches Level 5.",
+      "objectives": [
+        {
+          "objective_id": "reach_level_5",
+          "type": "reach_level",
+          "description": "Reach Level 5 on any Pokemon",
+          "target_count": 5,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "super_potion": 1
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "collectors_pride": {
+      "id": "collectors_pride",
+      "name": "Collector's Pride",
+      "description": "Expand your trainer collection by obtaining a Charmander.",
+      "objectives": [
+        {
+          "objective_id": "own_charmander",
+          "type": "own_species",
+          "description": "Own 1 Charmander in collection",
+          "target_count": 1,
+          "target_species": "Charmander",
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "antidote": 1
+      },
+      "prerequisites": []
+    },
+    "wild_challenger": {
+      "id": "wild_challenger",
+      "name": "Wild Challenger",
+      "description": "Test your combat skills in a turn-based battle and defeat any Pokemon.",
+      "objectives": [
+        {
+          "objective_id": "defeat_any_pokemon",
+          "type": "defeat_any",
+          "description": "Defeat any 1 Pokemon in battle",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "super_potion": 1
+      },
+      "prerequisites": []
+    },
+    "stocking_supplies": {
+      "id": "stocking_supplies",
+      "name": "Stocking Supplies",
+      "description": "Ensure your bag is ready for exploration by accumulating at least 3 Potions.",
+      "objectives": [
+        {
+          "objective_id": "collect_potions",
+          "type": "collect_item",
+          "description": "Possess at least 3 Potions in inventory",
+          "target_count": 3,
+          "target_species": null,
+          "target_item": "potion"
+        }
+      ],
+      "rewards": {
+        "super_potion": 1
+      },
+      "prerequisites": []
+    },
+    "trailblazer": {
+      "id": "trailblazer",
+      "name": "Trailblazer",
+      "description": "Chart new horizons by discovering the Starting Meadow and the Thunder Stone Shrine.",
+      "objectives": [
+        {
+          "objective_id": "discover_meadow",
+          "type": "discover_region",
+          "description": "Discover Starting Meadow",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        },
+        {
+          "objective_id": "discover_shrine",
+          "type": "discover_landmark",
+          "description": "Discover Thunder Stone Shrine",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 2
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "shrine_investigation": {
+      "id": "shrine_investigation",
+      "name": "Shrine Investigation",
+      "description": "Investigate anomalous energy at the Ancient Shrine and choose your resolution path.",
+      "objectives": [
+        {
+          "objective_id": "obj_reach_shrine",
+          "type": "discover_landmark",
+          "description": "Discover Ancient Shrine landmark",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 1
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "research_specialization": {
+      "id": "research_specialization",
+      "name": "Research Specialization",
+      "description": "Select a specialized field research focus to assist Professor Oak.",
+      "objectives": [],
+      "rewards": {
+        "potion": 1
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    }
+  }
+}

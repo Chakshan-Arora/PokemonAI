@@ -1,0 +1,345 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8y3xqjBattleScene"]
+
+[ext_resource type="Script" path="res://scripts/ui/BattleScene.gd" id="1_battle"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/meadow.jpg" id="2_bg"]
+
+[node name="Battle" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_battle")
+
+[node name="Arena" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="Arena"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DimOverlay" type="ColorRect" parent="Arena/Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.15)
+
+[node name="OpponentPlatform" type="Panel" parent="Arena"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 80.0
+offset_top = -110.0
+offset_right = 320.0
+offset_bottom = -75.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OpponentSprite" type="Control" parent="Arena"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 130.0
+offset_top = -240.0
+offset_right = 270.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Arena/OpponentSprite"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -14.0
+offset_right = 50.0
+offset_bottom = 14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "Wild"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerPlatform" type="Panel" parent="Arena"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -340.0
+offset_top = 65.0
+offset_right = -80.0
+offset_bottom = 105.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PlayerSprite" type="Control" parent="Arena"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -80.0
+offset_right = -120.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Arena/PlayerSprite"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -14.0
+offset_right = 60.0
+offset_bottom = 14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
+text = "Partner"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BattleUI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="OpponentPanel" type="PanelContainer" parent="BattleUI"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -240.0
+offset_right = -90.0
+offset_bottom = -155.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="BattleUI/OpponentPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HBox" type="HBoxContainer" parent="BattleUI/OpponentPanel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="BattleUI/OpponentPanel/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Wild Pokemon"
+
+[node name="LevelLabel" type="Label" parent="BattleUI/OpponentPanel/VBox/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Lv. 3"
+
+[node name="HPBar" type="ProgressBar" parent="BattleUI/OpponentPanel/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+max_value = 20.0
+value = 20.0
+show_percentage = false
+
+[node name="PlayerPanel" type="PanelContainer" parent="BattleUI"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 70.0
+offset_top = -5.0
+offset_right = 380.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="BattleUI/PlayerPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HBox" type="HBoxContainer" parent="BattleUI/PlayerPanel/VBox"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="BattleUI/PlayerPanel/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Your Pokemon"
+
+[node name="LevelLabel" type="Label" parent="BattleUI/PlayerPanel/VBox/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Lv. 5"
+
+[node name="HPBar" type="ProgressBar" parent="BattleUI/PlayerPanel/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+max_value = 25.0
+value = 25.0
+show_percentage = false
+
+[node name="HPTextLabel" type="Label" parent="BattleUI/PlayerPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.35, 0.45, 1)
+theme_override_font_sizes/font_size = 13
+text = "25 / 25 HP"
+horizontal_alignment = 2
+
+[node name="EXPBar" type="ProgressBar" parent="BattleUI/PlayerPanel/VBox"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="MessageBox" type="PanelContainer" parent="BattleUI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = -170.0
+offset_right = -440.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="BattleUI/MessageBox"]
+layout_mode = 2
+
+[node name="MessageLabel" type="Label" parent="BattleUI/MessageBox/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 20
+text = "Battle started!"
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="BattleUI"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = -170.0
+offset_right = -32.0
+offset_bottom = -30.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="ActionMenu" type="GridContainer" parent="BattleUI/MenuPanel"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="FightBtn" type="Button" parent="BattleUI/MenuPanel/ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 20
+text = "⚔️ FIGHT"
+
+[node name="BagBtn" type="Button" parent="BattleUI/MenuPanel/ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 20
+text = "🎒 BAG"
+
+[node name="PokemonBtn" type="Button" parent="BattleUI/MenuPanel/ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 20
+text = "⚡ POKÉMON"
+
+[node name="RunBtn" type="Button" parent="BattleUI/MenuPanel/ActionMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 20
+text = "🏃 RUN"
+
+[node name="MovesMenu" type="GridContainer" parent="BattleUI/MenuPanel"]
+visible = false
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="Move1Btn" type="Button" parent="BattleUI/MenuPanel/MovesMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Move 1"
+
+[node name="Move2Btn" type="Button" parent="BattleUI/MenuPanel/MovesMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Move 2"
+
+[node name="Move3Btn" type="Button" parent="BattleUI/MenuPanel/MovesMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Move 3"
+
+[node name="Move4Btn" type="Button" parent="BattleUI/MenuPanel/MovesMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Move 4"
+
+[node name="BackBtn" type="Button" parent="BattleUI/MenuPanel/MovesMenu"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Back"

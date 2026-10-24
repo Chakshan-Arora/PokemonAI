@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PokemonBondingDecision",
+  "description": "Schema for Adapter A (Personality and Bonding Decisions)",
+  "type": "object",
+  "required": [
+    "interpretation",
+    "emotional_state",
+    "action_type",
+    "intent",
+    "dialogue",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "interpretation": {
+      "type": "string",
+      "description": "Interpretation of player interaction intent (e.g. praise, scold, chat, inquire_goals, discuss_release)"
+    },
+    "emotional_state": {
+      "type": "string",
+      "description": "Predicted emotional response of the Pokemon (e.g. pleased, excited, defiant, dejected, anxious, curious, affectionate)"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "obey",
+        "attack",
+        "defend",
+        "hesitate",
+        "disobey",
+        "flee",
+        "inspect",
+        "interact",
+        "suggest",
+        "protest",
+        "request_release",
+        "rest"
+      ],
+      "description": "Chosen behavioral action type"
+    },
+    "intent": {
+      "type": "string",
+      "description": "Concise summary of the autonomous intention"
+    },
+    "dialogue": {
+      "type": "string",
+      "description": "Authentic character dialogue, vocal cry, or physical gesture"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Model decision confidence rating"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Short explanation linking traits, trust, mood, and memories to this decision"
+    },
+    "suggested_alternative": {
+      "type": ["string", "null"],
+      "description": "Optional tactical alternative move name when action_type is suggest"
+    }
+  },
+  "additionalProperties": false
+}

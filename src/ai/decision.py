@@ -40,6 +40,8 @@ class AgentDecision:
     rationale: str = ""
     confidence: float = 1.0
     suggested_alternative: Optional[str] = None
+    trust_delta: float = 2.0
+    affection_delta: float = 3.0
 
     def __post_init__(self) -> None:
         if isinstance(self.action_type, str):
@@ -61,6 +63,8 @@ class AgentDecision:
             "rationale": self.rationale,
             "confidence": round(self.confidence, 2),
             "suggested_alternative": self.suggested_alternative,
+            "trust_delta": self.trust_delta,
+            "affection_delta": self.affection_delta,
         }
 
     @classmethod
@@ -85,4 +89,6 @@ class AgentDecision:
             rationale=str(data.get("rationale", "")),
             confidence=float(data.get("confidence", 1.0)),
             suggested_alternative=data.get("suggested_alternative"),
+            trust_delta=float(data.get("trust_delta", 2.0)),
+            affection_delta=float(data.get("affection_delta", 3.0)),
         )

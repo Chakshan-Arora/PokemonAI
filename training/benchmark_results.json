@@ -1,0 +1,32 @@
+{
+  "system": {
+    "os": "Darwin 25.5.0",
+    "architecture": "arm64",
+    "processor": "arm",
+    "total_ram_gb": 16.0
+  },
+  "model_path": "PokemonAI/models/Qwen3-4B-4bit",
+  "benchmarks": {
+    "bonding": {
+      "adapter": "PokemonAI/training/adapters/bonding_adapter",
+      "load_time_sec": 0.526,
+      "samples_evaluated": 30,
+      "json_parse_rate": 100.0,
+      "schema_conformity_rate": 100.0,
+      "permitted_action_accuracy": 90.0,
+      "avg_latency_ms": 4180.08,
+      "throughput_tokens_per_sec": 38.32
+    },
+    "battle": {
+      "adapter": "PokemonAI/training/adapters/battle_adapter",
+      "load_time_sec": 0.484,
+      "samples_evaluated": 30,
+      "json_parse_rate": 100.0,
+      "schema_conformity_rate": 100.0,
+      "permitted_action_accuracy": 100.0,
+      "legal_move_accuracy": 100.0,
+      "avg_latency_ms": 9433.62,
+      "throughput_tokens_per_sec": 16.96
+    }
+  }
+}

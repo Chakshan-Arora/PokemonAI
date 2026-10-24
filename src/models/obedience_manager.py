@@ -12,6 +12,8 @@ from src.models.pokemon import Pokemon, MIN_OBEDIENCE, MAX_OBEDIENCE, MIN_BOND, 
 BASE_OBEDIENCE_PROBABILITY: float = 0.70
 OBEDIENCE_WEIGHT: float = 0.25
 BOND_WEIGHT: float = 0.05
+LOYALTY_WEIGHT: float = 0.05
+FEAR_WEIGHT: float = 0.03
 MIN_OBEDIENCE_PROBABILITY: float = 0.05
 MAX_OBEDIENCE_PROBABILITY: float = 1.00
 
@@ -49,6 +51,8 @@ def calculate_obedience_probability(
     base_prob: float = BASE_OBEDIENCE_PROBABILITY,
     obedience_weight: float = OBEDIENCE_WEIGHT,
     bond_weight: float = BOND_WEIGHT,
+    loyalty_weight: float = LOYALTY_WEIGHT,
+    fear_weight: float = FEAR_WEIGHT,
     min_prob: float = MIN_OBEDIENCE_PROBABILITY,
     max_prob: float = MAX_OBEDIENCE_PROBABILITY,
 ) -> float:
@@ -56,11 +60,15 @@ def calculate_obedience_probability(
     Calculates the probability that a Pokemon obeys a command.
 
     Formula:
-      raw_prob = base_prob + (obedience / 100) * obedience_weight + (bond / 100) * bond_weight - difficulty
-      clamped  = clamp(raw_prob, min_prob, max_prob)
+      obedience_term = (clamped_obedience / 100) * obedience_weight
+      bond_term      = (clamped_bond / 100) * bond_weight
+      loyalty_term   = ((loyalty - 50) / 100) * loyalty_weight
+      fear_term      = ((50 - fear) / 100) * fear_weight
+      raw_prob       = base_prob + obedience_term + bond_term + loyalty_term + fear_term - difficulty
+      clamped        = clamp(raw_prob, min_prob, max_prob)
 
     With default constants:
-      raw_prob = 0.70 + (obedience / 100) * 0.25 + (bond / 100) * 0.05
+      raw_prob = 0.70 + (obedience / 100) * 0.25 + (bond / 100) * 0.05 + ((loyalty - 50)/100)*0.05 + ((50 - fear)/100)*0.03
       clamped  = clamp(raw_prob, 0.05, 1.00)
 
     Args:
@@ -69,6 +77,8 @@ def calculate_obedience_probability(
         base_prob: Base obedience probability floor (default 0.70).
         obedience_weight: Influence multiplier for obedience (default 0.25).
         bond_weight: Influence multiplier for bond (default 0.05).
+        loyalty_weight: Influence multiplier for loyalty trait deviation from 50 (default 0.05).
+        fear_weight: Influence multiplier for fear trait deviation from 50 (default 0.03).
         min_prob: Minimum allowed probability (default 0.05).
         max_prob: Maximum allowed probability (default 1.00).
 
@@ -89,7 +99,16 @@ def calculate_obedience_probability(
     obedience_term = (clamped_obedience / 100.0) * obedience_weight
     bond_term = (clamped_bond / 100.0) * bond_weight
 
-    raw_probability = base_prob + obedience_term + bond_term - diff_modifier
+    loyalty_term = 0.0
+    fear_term = 0.0
+    personality = getattr(pokemon, "personality", None)
+    if personality is not None:
+        clamped_loyalty = max(0.0, min(100.0, float(getattr(personality, "loyalty", 50.0))))
+        clamped_fear = max(0.0, min(100.0, float(getattr(personality, "fear", 50.0))))
+        loyalty_term = ((clamped_loyalty - 50.0) / 100.0) * loyalty_weight
+        fear_term = ((50.0 - clamped_fear) / 100.0) * fear_weight
+
+    raw_probability = base_prob + obedience_term + bond_term + loyalty_term + fear_term - diff_modifier
     return max(min_prob, min(max_prob, raw_probability))
 
 
@@ -106,6 +125,8 @@ class ObedienceManager:
         base_prob: float = BASE_OBEDIENCE_PROBABILITY,
         obedience_weight: float = OBEDIENCE_WEIGHT,
         bond_weight: float = BOND_WEIGHT,
+        loyalty_weight: float = LOYALTY_WEIGHT,
+        fear_weight: float = FEAR_WEIGHT,
         min_prob: float = MIN_OBEDIENCE_PROBABILITY,
         max_prob: float = MAX_OBEDIENCE_PROBABILITY,
     ) -> None:
@@ -119,6 +140,8 @@ class ObedienceManager:
         self._base_prob = base_prob
         self._obedience_weight = obedience_weight
         self._bond_weight = bond_weight
+        self._loyalty_weight = loyalty_weight
+        self._fear_weight = fear_weight
         self._min_prob = min_prob
         self._max_prob = max_prob
 
@@ -137,6 +160,8 @@ class ObedienceManager:
             base_prob=self._base_prob,
             obedience_weight=self._obedience_weight,
             bond_weight=self._bond_weight,
+            loyalty_weight=self._loyalty_weight,
+            fear_weight=self._fear_weight,
             min_prob=self._min_prob,
             max_prob=self._max_prob,
         )

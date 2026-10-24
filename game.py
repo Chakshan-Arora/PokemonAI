@@ -117,6 +117,7 @@ class AdventureGame:
         output_fn: Optional[Callable[..., None]] = None,
         save_file: str = "save_game.json",
         seed: Optional[int] = None,
+        voice_service: Optional[Any] = None,
     ) -> None:
         """
         Initializes an independent adventure game session.
@@ -131,6 +132,7 @@ class AdventureGame:
         self._output_fn: Callable[..., None] = output_fn if output_fn is not None else print
         self.save_file: str = save_file
         self.seed: Optional[int] = seed
+        self._initial_voice_service = voice_service
 
         # Deterministic random generator for this session
         self.rng: random.Random = random.Random(seed) if seed is not None else random.Random()
@@ -217,6 +219,14 @@ class AdventureGame:
 
         # In-world trainer manager
         self.trainer_manager = create_default_trainer_manager()
+
+
+        # Voice Input via AssemblyAI (BT3.1) - commented out
+        # from src.ai.voice_input import VoiceInputService
+        # self.voice_service: VoiceInputService = (
+        #     self._initial_voice_service if getattr(self, "_initial_voice_service", None) is not None else VoiceInputService()
+        # )
+        self.voice_service = None
 
     def _init_spawn_areas(self) -> None:
         """Configures default spawn areas for regions."""
@@ -466,6 +476,7 @@ class AdventureGame:
                 self.trainer_manager = TrainerManager.load_from_file(trainer_path, rng=self.rng)
             else:
                 self.trainer_manager = create_default_trainer_manager()
+
 
             # Sync spatial state
             self.player_pos = [5.0, 5.0]
@@ -1869,6 +1880,77 @@ class AdventureGame:
             self._print(f"  > {res.reason}")
         return len(battle.events)
 
+    def _handle_battle_talk_menu(self, battle: Battle, active_mon: Pokemon, prev_event_cursor: int) -> int:
+        """
+        Presents the Battle Talk prompt.
+        (AssemblyAI voice input option commented out; keyboard typing is used).
+        """
+        # =========================================================================
+        # --- Voice Input via AssemblyAI (BT3.1) - COMMENTED OUT ---
+        # self._print("\n" + "=" * 45)
+        # self._print(f" BATTLE TALK: Speak to {active_mon.display_name}")
+        # self._print("=" * 45)
+        # self._print(" [1] Speak Command (Voice Input via AssemblyAI)")
+        # self._print(" [2] Type Command (Keyboard Input)")
+        # self._print(" [0] Cancel / Back")
+        #
+        # talk_choice = self._prompt("\nSelect option (0-2): ").strip()
+        # if talk_choice in ("0", "cancel", "back", ""):
+        #     self._print("[-] Cancelled battle talk.")
+        #     return prev_event_cursor
+        #
+        # if talk_choice == "1":
+        #     # Voice Input Option
+        #     avail, err_type, err_msg = self.voice_service.check_availability()
+        #     if not avail:
+        #         self._print(f"\n[-] Voice input unavailable: {err_msg}")
+        #         self._print("[Tip: You can use Option [2] to type your battle talk command instead.]")
+        #         return prev_event_cursor
+        #
+        #     self._print(f"\n[Voice Input Activated]")
+        #     self._print(f"Speak a command for {active_mon.display_name} (e.g. 'Dodge that attack!', 'Keep going!').")
+        #     rec_prompt = self._prompt("Press [Enter] to start recording (or type 'cancel'): ").strip().lower()
+        #     if rec_prompt in ("cancel", "back", "0", "exit"):
+        #         self._print("[-] Voice input cancelled.")
+        #         return prev_event_cursor
+        #
+        #     self._print("[*] Recording audio from microphone (speak now)...")
+        #     res_voice = self.voice_service.record_and_transcribe(duration_seconds=5.0)
+        #
+        #     if not res_voice.success:
+        #         self._print(f"\n[-] Voice input error [{res_voice.error_type}]: {res_voice.error_message}")
+        #         self._print("[Tip: You can try again or use Option [2] to type your command.]")
+        #         return prev_event_cursor
+        #
+        #     transcript = (res_voice.text or "").strip()
+        #     if not transcript:
+        #         self._print("\n[-] No speech was detected in the recording.")
+        #         return prev_event_cursor
+        #
+        #     self._print(f"\n[AssemblyAI Transcript]: \"{transcript}\"")
+        #     confirm = self._prompt("Send this command to battle? (Y/n / [Enter] for yes): ").strip().lower()
+        #     if confirm not in ("", "y", "yes"):
+        #         self._print("[-] Voice command cancelled. No battle action was executed.")
+        #         return prev_event_cursor
+        #
+        #     # Player confirmed transcript -> execute through authoritative BattleManager.talk()
+        #     self._print(f"\n[+] Executing command: \"{transcript}\"")
+        #     res = self.battle_manager.talk(self.player, transcript)
+        #     return self._print_battle_events(battle, res, prev_event_cursor)
+        # =========================================================================
+
+        # Direct typed battle talk:
+        self._print("\n" + "=" * 45)
+        self._print(f" BATTLE TALK: Talk to {active_mon.display_name}")
+        self._print("=" * 45)
+        typed_text = self._prompt(f"Enter command to {active_mon.display_name} (or 'cancel'): ").strip()
+        if typed_text.lower() in ("cancel", "back", "0", "exit", ""):
+            self._print("[-] Battle talk cancelled.")
+            return prev_event_cursor
+
+        res = self.battle_manager.talk(self.player, typed_text)
+        return self._print_battle_events(battle, res, prev_event_cursor)
+
     # --- Battle Sub-Loop ---
 
     def _battle_loop(self, battle: Battle) -> None:
@@ -1938,8 +2020,10 @@ class AdventureGame:
             self._print(" [3] Throw Poke Ball")
             self._print(" [4] Flee")
             self._print(f" [5] Inspect {'Opponent' if is_trainer else 'Wild'} Pokemon")
+            self._print(" [6] Battle Talk")
+            self._print(" [7] Dodge (Tactical Manoeuvre)")
 
-            action_choice = self._prompt("\nChoose action (1-5): ")
+            action_choice = self._prompt("\nChoose action (1-7): ")
 
             if action_choice == "1":
                 # List moves
@@ -2040,12 +2124,19 @@ class AdventureGame:
                     res = self.battle_manager.inspect_wild_pokemon(self.player)
                     event_cursor = self._print_battle_events(battle, res, event_cursor)
 
+            elif action_choice == "6":
+                event_cursor = self._handle_battle_talk_menu(battle, active_mon, event_cursor)
+
+            elif action_choice == "7":
+                res = self.battle_manager.dodge(self.player)
+                event_cursor = self._print_battle_events(battle, res, event_cursor)
+
             elif action_choice in ("quit", "exit"):
                 self.battle_manager.resolve_battle(self.player, reason="Player quit")
                 break
 
             else:
-                self._print(f"Invalid choice '{action_choice}'. Please select 1, 2, 3, 4, or 5.")
+                self._print(f"Invalid choice '{action_choice}'. Please select 1, 2, 3, 4, 5, 6, or 7.")
 
         # Post-Battle Resolution
         self._print("\n" + "=" * 45)

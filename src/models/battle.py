@@ -13,6 +13,7 @@ from src.models.damage_calculator import calculate_damage
 from src.data.type_chart import get_effectiveness_against_pokemon
 from src.models.status_effect import StatusEffectType
 from src.models.status_effect_manager import StatusEffectManager
+from src.models.obedience_manager import ObedienceManager, CommandContext, ObedienceResult
 
 
 class BattleActionType(str, Enum):
@@ -25,6 +26,77 @@ class BattleActionType(str, Enum):
     CAPTURE = "CAPTURE"
     USE_ITEM = "USE_ITEM"
     INSPECT = "INSPECT"
+    TALK = "TALK"
+    DODGE = "DODGE"
+
+
+class BattleTalkIntent(str, Enum):
+    """
+    Supported non-combat conversational intents for Battle Talk.
+    """
+    PRAISE = "PRAISE"
+    ENCOURAGE = "ENCOURAGE"
+    WARNING = "WARNING"
+    GENERAL = "GENERAL"
+    DODGE = "DODGE"
+
+
+class TalkCategory(str, Enum):
+    """
+    Categories of battle talk commands.
+    """
+    CONVERSATIONAL = "CONVERSATIONAL"
+    TACTICAL = "TACTICAL"
+
+
+@dataclass(frozen=True)
+class BattleTalkCommand:
+    """
+    Structured data model for a Battle Talk action.
+    Represents player speech/text, category, parsed intent, and metadata.
+    """
+    text: str
+    category: TalkCategory = TalkCategory.CONVERSATIONAL
+    intent: Optional[Union[BattleTalkIntent, str]] = None
+    is_tactical: bool = False
+    metadata: Optional[dict[str, Any]] = None
+    dialogue: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.is_tactical and self.category == TalkCategory.CONVERSATIONAL:
+            object.__setattr__(self, "category", TalkCategory.TACTICAL)
+        elif self.category == TalkCategory.TACTICAL and not self.is_tactical:
+            object.__setattr__(self, "is_tactical", True)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "text": self.text,
+            "category": self.category.value if isinstance(self.category, Enum) else str(self.category),
+            "intent": self.intent.value if isinstance(self.intent, Enum) else self.intent,
+            "is_tactical": self.is_tactical,
+            "metadata": self.metadata or {},
+            "dialogue": self.dialogue,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "BattleTalkCommand":
+        cat_val = data.get("category", TalkCategory.CONVERSATIONAL.value)
+        try:
+            category = TalkCategory(cat_val)
+        except (ValueError, TypeError):
+            category = TalkCategory.CONVERSATIONAL
+        return cls(
+            text=str(data.get("text", "")),
+            category=category,
+            intent=data.get("intent"),
+            is_tactical=bool(data.get("is_tactical", False)),
+            metadata=data.get("metadata"),
+            dialogue=data.get("dialogue"),
+        )
+
+
+# Backward-compatibility alias
+BattleTalkPayload = BattleTalkCommand
 
 
 @dataclass(frozen=True)
@@ -36,6 +108,31 @@ class BattleAction:
     attack: Optional[Attack] = None
     target_pokemon: Optional[Pokemon] = None
     item_id: Optional[str] = None
+    text: Optional[str] = None
+    talk_command: Optional[Union[BattleTalkCommand, str]] = None
+    talk_payload: Optional[Union[BattleTalkCommand, str]] = None
+
+    def __post_init__(self) -> None:
+        cmd: Optional[Union[BattleTalkCommand, str]] = (
+            self.talk_command if self.talk_command is not None else self.talk_payload
+        )
+        if cmd is not None:
+            if isinstance(cmd, BattleTalkCommand):
+                object.__setattr__(self, "talk_command", cmd)
+                object.__setattr__(self, "talk_payload", cmd)
+                if self.text is None:
+                    object.__setattr__(self, "text", cmd.text)
+            elif isinstance(cmd, str):
+                normalized = BattleTalkCommand(text=cmd)
+                object.__setattr__(self, "talk_command", normalized)
+                object.__setattr__(self, "talk_payload", normalized)
+                if self.text is None:
+                    object.__setattr__(self, "text", cmd)
+        elif self.text is not None:
+            if isinstance(self.text, str):
+                normalized = BattleTalkCommand(text=self.text)
+                object.__setattr__(self, "talk_command", normalized)
+                object.__setattr__(self, "talk_payload", normalized)
 
 
 @dataclass(frozen=True)
@@ -81,6 +178,38 @@ class BattleActionResult:
     escaped: bool = False
     terminal: bool = False
     error_type: Optional[str] = None
+    talk_command: Optional[BattleTalkCommand] = None
+    talk_payload: Optional[BattleTalkCommand] = None
+    is_obeyed: bool = False
+    dodge_successful: bool = False
+    dodge_probability: Optional[float] = None
+    obedience_result: Optional[ObedienceResult] = None
+
+    def __post_init__(self) -> None:
+        if self.talk_command is not None and self.talk_payload is None:
+            object.__setattr__(self, "talk_payload", self.talk_command)
+        elif self.talk_payload is not None and self.talk_command is None:
+            object.__setattr__(self, "talk_command", self.talk_payload)
+
+    @property
+    def talk_dialogue(self) -> Optional[str]:
+        """Convenience accessor for Battle Talk cosmetic response dialogue."""
+        cmd = self.talk_command or self.talk_payload
+        return getattr(cmd, "dialogue", None) if cmd is not None else None
+
+    @property
+    def talk_intent(self) -> Optional[BattleTalkIntent]:
+        """Convenience accessor for Battle Talk interpreted intent."""
+        cmd = self.talk_command or self.talk_payload
+        raw = getattr(cmd, "intent", None) if cmd is not None else None
+        if isinstance(raw, BattleTalkIntent):
+            return raw
+        elif isinstance(raw, str):
+            try:
+                return BattleTalkIntent(raw)
+            except ValueError:
+                return None
+        return None
 
 
 class Battle:
@@ -112,6 +241,7 @@ class Battle:
         ai_provider: Optional[Any] = None,
         ai_state: Optional[Any] = None,
         trainer_ai: Optional[Any] = None,
+        obedience_manager: Optional[ObedienceManager] = None,
     ) -> None:
         if not isinstance(pokemon1, Pokemon):
             raise TypeError(f"pokemon1 must be a Pokemon instance, got {type(pokemon1).__name__}.")
@@ -187,6 +317,11 @@ class Battle:
         else:
             self._status_manager = StatusEffectManager(rng=self._rng)
 
+        if obedience_manager is not None:
+            self._obedience_manager = obedience_manager
+        else:
+            self._obedience_manager = ObedienceManager(rng=self._rng)
+
         self._state: BattleState = BattleState.NOT_STARTED
         self._current_turn: int = 0
         self._winner: Optional[Pokemon] = None
@@ -195,6 +330,8 @@ class Battle:
         self._events: list[str] = []
         self._history: list[TurnResult] = []
         self._selected_attacks: dict[str, Attack] = {}
+        self._last_talk_turn: Optional[int] = None
+        self._consumed_milestone_turn: Optional[int] = None
 
     # --- Properties ---
 
@@ -231,6 +368,11 @@ class Battle:
     def is_wild_battle(self) -> bool:
         """True if opposing participant is a wild Pokemon, False if an opponent trainer."""
         return self._opponent_trainer is None
+
+    @property
+    def obedience_manager(self) -> ObedienceManager:
+        """Obedience manager handling command compliance evaluations."""
+        return self._obedience_manager
 
     @property
     def is_trainer_battle(self) -> bool:
@@ -299,6 +441,15 @@ class Battle:
     def current_turn(self) -> int:
         """Current turn number (1-indexed once started)."""
         return self._current_turn
+
+    @property
+    def can_talk_this_turn(self) -> bool:
+        """True if player has not yet used conversational talk in the current turn."""
+        if self._state != BattleState.IN_PROGRESS:
+            return False
+        if self._pokemon1 is None or self._pokemon1.is_fainted or self._pokemon1.current_hp <= 0:
+            return False
+        return self._last_talk_turn != self._current_turn
 
     @property
     def winner(self) -> Optional[Pokemon]:
@@ -489,10 +640,12 @@ class Battle:
         attacker: Pokemon,
         attack: Attack,
         defender: Pokemon,
+        is_dodged: bool = False,
     ) -> BattleActionRecord:
         """
         Executes a single attack action, evaluating paralysis, accuracy, effectiveness,
-        damage, and move effects.
+        damage, and move effects. If is_dodged is True, the attack cleanly fails to hit
+        and inflicts no damage or attack-dependent effects.
         """
         # 1. Paralysis action check
         can_act_res = self._status_manager.check_can_act(attacker)
@@ -510,7 +663,24 @@ class Battle:
                 message=msg,
             )
 
-        # 2. Accuracy check (accuracy is an integer between 0 and 100)
+        # 2. Check if attack is successfully dodged by defender
+        if is_dodged:
+            eff = get_effectiveness_against_pokemon(attack, defender)
+            msg = f"{attacker.display_name} used {attack.name}! But {defender.display_name} skillfully dodged the attack!"
+            self._events.append(f"[Turn {self._current_turn}] {msg}")
+            return BattleActionRecord(
+                attacker=attacker,
+                defender=defender,
+                attack=attack,
+                hit=False,
+                damage=0,
+                type_effectiveness=eff,
+                defender_hp_remaining=defender.current_hp,
+                message=msg,
+                is_critical=False,
+            )
+
+        # 3. Accuracy check (accuracy is an integer between 0 and 100)
         roll = self._rng.randint(1, 100)
         hit = roll <= attack.accuracy
 
@@ -884,9 +1054,136 @@ class Battle:
         """Convenience method to execute an inspect action against the opponent."""
         return self.take_action(BattleAction(action_type=BattleActionType.INSPECT))
 
+    def talk(self, command: Union[BattleTalkCommand, str]) -> BattleActionResult:
+        """Convenience method to execute a talk action for the active player Pokemon."""
+        if isinstance(command, BattleTalkCommand):
+            return self.take_action(BattleAction(action_type=BattleActionType.TALK, talk_command=command))
+        return self.take_action(BattleAction(action_type=BattleActionType.TALK, text=command))
+
+    def get_latest_player_combat_milestone(self, mark_consumed: bool = False) -> Optional[str]:
+        """
+        Inspects the most recent completed turn in battle history for confirmed combat milestones
+        caused authoritatively by the player's active Pokemon (self._pokemon1).
+
+        Enforces priority:
+        1. Opponent knockout
+        2. Critical hit and super-effective hit together
+        3. Critical hit
+        4. Super-effective hit
+
+        Guarantees:
+        - Only attributes actions caused by self._pokemon1.
+        - Freshness: only evaluates the most recently completed turn.
+        - Deduplication: if mark_consumed is True, records the turn number to prevent replaying
+          the same milestone on subsequent TALK calls.
+        """
+        if not self._history:
+            return None
+
+        last_turn = self._history[-1]
+        if self._consumed_milestone_turn is not None and self._consumed_milestone_turn == last_turn.turn_number:
+            return None
+
+        # Filter strictly for actions where attacker is self._pokemon1
+        player_actions = [
+            act for act in last_turn.actions
+            if act.attacker is self._pokemon1 or getattr(act.attacker, "unique_id", None) == self._pokemon1.unique_id
+        ]
+        if not player_actions:
+            return None
+
+        is_ko = False
+        is_crit = False
+        is_super = False
+
+        for act in player_actions:
+            if not act.hit:
+                continue
+            # Check if this attack resulted in opponent direct knockout
+            if act.defender_hp_remaining <= 0:
+                is_ko = True
+            if act.is_critical:
+                is_crit = True
+            if act.type_effectiveness >= 2.0:
+                is_super = True
+
+        milestone: Optional[str] = None
+        if is_ko:
+            milestone = "opponent_knockout"
+        elif is_crit and is_super:
+            milestone = "critical_and_super_effective"
+        elif is_crit:
+            milestone = "critical_hit"
+        elif is_super:
+            milestone = "super_effective"
+
+        if milestone is not None and mark_consumed:
+            self._consumed_milestone_turn = last_turn.turn_number
+
+        return milestone
+
+    def calculate_dodge_probability(
+        self,
+        defender: Pokemon,
+        attacker: Pokemon,
+        incoming_attack: Optional[Attack] = None,
+    ) -> float:
+        """
+        Calculates the probability that defender successfully dodges attacker's incoming attack.
+
+        Formula:
+            base_prob    = 0.45
+            speed_mod    = clamp((defender.speed - attacker.speed) / 100.0 * 0.15, -0.15, 0.15)
+            bond_mod     = (defender.bond / 100.0) * 0.10
+            conf_mod     = ((personality.confidence - 50) / 100.0) * 0.05
+            fear_mod     = ((50 - personality.fear) / 100.0) * 0.05
+            acc_mod      = max(0.0, (100 - attack.accuracy) / 200.0) if attack else 0.0
+
+            raw_prob     = base + speed_mod + bond_mod + conf_mod + fear_mod + acc_mod
+            clamped      = clamp(raw_prob, 0.10, 0.85)
+        """
+        if not isinstance(defender, Pokemon):
+            raise TypeError(f"defender must be a Pokemon instance, got {type(defender).__name__}.")
+        if not isinstance(attacker, Pokemon):
+            raise TypeError(f"attacker must be a Pokemon instance, got {type(attacker).__name__}.")
+
+        base_prob = 0.45
+
+        # Relative speed difference
+        speed_diff = float(defender.speed - attacker.speed)
+        speed_mod = max(-0.15, min(0.15, (speed_diff / 100.0) * 0.15))
+
+        # Bond modifier (up to +0.10 at 100 bond)
+        bond_val = max(0.0, min(100.0, float(getattr(defender, "bond", 0))))
+        bond_mod = (bond_val / 100.0) * 0.10
+
+        # Personality traits (confidence and fear)
+        pers = getattr(defender, "personality", None)
+        if pers is not None:
+            conf_val = float(getattr(pers, "confidence", 50))
+            fear_val = float(getattr(pers, "fear", 50))
+            conf_mod = ((conf_val - 50.0) / 100.0) * 0.05
+            fear_mod = ((50.0 - fear_val) / 100.0) * 0.05
+        else:
+            conf_mod = 0.0
+            fear_mod = 0.0
+
+        # Opponent attack accuracy
+        if incoming_attack is not None and getattr(incoming_attack, "accuracy", None) is not None:
+            acc_mod = max(0.0, (100.0 - float(incoming_attack.accuracy)) / 200.0)
+        else:
+            acc_mod = 0.0
+
+        raw_prob = base_prob + speed_mod + bond_mod + conf_mod + fear_mod + acc_mod
+        return max(0.10, min(0.85, raw_prob))
+
+    def dodge(self) -> BattleActionResult:
+        """Convenience method to execute a tactical dodge action for the active player Pokemon."""
+        return self.take_action(BattleAction(action_type=BattleActionType.DODGE))
+
     def take_action(self, action: BattleAction) -> BattleActionResult:
         """
-        Executes a validated turn action (ATTACK, SWITCH, FLEE, CAPTURE, INSPECT) for the player.
+        Executes a validated turn action (ATTACK, SWITCH, FLEE, CAPTURE, INSPECT, TALK) for the player.
         Returns a structured BattleActionResult indicating acceptance, outcome, and state.
         Safely rejects actions after the battle has concluded.
         """
@@ -1434,6 +1731,425 @@ class Battle:
                 battle_state=self._state,
                 turn_result=turn_res,
                 terminal=self._state.is_terminal(),
+            )
+
+        # --- Case F: TALK ---
+        elif action.action_type == BattleActionType.TALK:
+            # 1. Missing active Pokemon
+            if self._pokemon1 is None:
+                return BattleActionResult(
+                    accepted=False,
+                    reason="No active Pokemon available to receive talk commands.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="NO_ACTIVE_POKEMON",
+                )
+
+            # 2. Active Pokemon must not be fainted
+            if self._pokemon1.is_fainted or self._pokemon1.current_hp <= 0:
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Active Pokemon '{self._pokemon1.display_name}' has fainted and cannot receive talk commands.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="POKEMON_FAINTED",
+                )
+
+            # 3. Extract and validate talk command
+            cmd_candidate = (
+                action.talk_command if action.talk_command is not None else action.talk_payload
+            )
+            raw_text: Optional[str] = None
+            category = TalkCategory.CONVERSATIONAL
+            intent: Optional[Union[BattleTalkIntent, str]] = None
+            is_tactical = False
+            metadata: Optional[dict[str, Any]] = None
+
+            if cmd_candidate is not None:
+                if isinstance(cmd_candidate, BattleTalkCommand):
+                    if not isinstance(cmd_candidate.text, str) or isinstance(cmd_candidate.text, bool):
+                        return BattleActionResult(
+                            accepted=False,
+                            reason="Malformed talk payload: text must be a string.",
+                            action_type=action.action_type,
+                            battle_state=self._state,
+                            error_type="MALFORMED_TALK_PAYLOAD",
+                        )
+                    raw_text = cmd_candidate.text
+                    category = cmd_candidate.category
+                    intent = cmd_candidate.intent
+                    is_tactical = cmd_candidate.is_tactical
+                    metadata = cmd_candidate.metadata
+                elif isinstance(cmd_candidate, str) and not isinstance(cmd_candidate, bool):
+                    raw_text = cmd_candidate
+                else:
+                    return BattleActionResult(
+                        accepted=False,
+                        reason=f"Malformed talk payload: expected BattleTalkCommand or str, got {type(cmd_candidate).__name__}.",
+                        action_type=action.action_type,
+                        battle_state=self._state,
+                        error_type="MALFORMED_TALK_PAYLOAD",
+                    )
+            elif action.text is not None:
+                if not isinstance(action.text, str) or isinstance(action.text, bool):
+                    return BattleActionResult(
+                        accepted=False,
+                        reason=f"Malformed talk payload: text must be a string, got {type(action.text).__name__}.",
+                        action_type=action.action_type,
+                        battle_state=self._state,
+                        error_type="MALFORMED_TALK_PAYLOAD",
+                    )
+                raw_text = action.text
+            else:
+                return BattleActionResult(
+                    accepted=False,
+                    reason="No talk text specified for TALK action.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="MISSING_TALK_TEXT",
+                )
+
+            # 4. Reject empty or whitespace-only text
+            cleaned_text = raw_text.strip()
+            if not cleaned_text:
+                return BattleActionResult(
+                    accepted=False,
+                    reason="Talk text cannot be empty or whitespace-only.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="EMPTY_TALK_TEXT",
+                )
+
+            # 5. Parse command to check for tactical manoeuvres
+            from src.ai.battle_talk_parser import BattleTalkParser
+
+            parsed_cmd = BattleTalkParser.parse(cleaned_text)
+            if parsed_cmd.is_tactical:
+                category = TalkCategory.TACTICAL
+                is_tactical = True
+                if intent is None:
+                    intent = parsed_cmd.intent
+                if metadata is None:
+                    metadata = parsed_cmd.metadata
+
+            # 6. Check tactical manoeuvres (DODGE supported, others rejected with UNSUPPORTED_COMMAND)
+            if is_tactical or category == TalkCategory.TACTICAL:
+                tactical_action = ""
+                if metadata and "detected_tactical_action" in metadata:
+                    tactical_action = str(metadata["detected_tactical_action"]).lower()
+                elif intent:
+                    tactical_action = str(intent).lower()
+                else:
+                    tactical_action = cleaned_text.lower()
+
+                is_dodge = (
+                    intent == BattleTalkIntent.DODGE
+                    or any(k in tactical_action for k in ("dodge", "evade", "sidestep", "duck"))
+                )
+                if is_dodge:
+                    dodge_cmd = (
+                        cmd_candidate
+                        if isinstance(cmd_candidate, BattleTalkCommand) and cmd_candidate.is_tactical
+                        else parsed_cmd
+                    )
+                    dodge_action = BattleAction(
+                        action_type=BattleActionType.DODGE,
+                        text=cleaned_text,
+                        talk_command=dodge_cmd,
+                    )
+                    return self.take_action(dodge_action)
+
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Tactical manoeuvres such as '{cleaned_text}' are currently unsupported.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="UNSUPPORTED_COMMAND",
+                )
+
+            # 7. Check talk limit for conversational talk (only 1 accepted conversational talk per turn)
+            if self._last_talk_turn == self._current_turn:
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Talk action limit reached for turn {self._current_turn}. Only one talk action is permitted per turn.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="TALK_LIMIT_REACHED",
+                )
+
+            # 8. Intent interpretation and dialogue generation (deferred import to avoid circular dependency)
+            from src.ai.battle_talk import parse_battle_talk_intent, generate_battle_talk_response
+
+            parsed_intent: Optional[Union[BattleTalkIntent, str]] = intent
+            if parsed_intent is None:
+                parsed_intent = parsed_cmd.intent if parsed_cmd else parse_battle_talk_intent(cleaned_text)
+            elif isinstance(parsed_intent, str):
+                try:
+                    parsed_intent = BattleTalkIntent(parsed_intent)
+                except ValueError:
+                    parsed_intent = parse_battle_talk_intent(cleaned_text)
+
+            dialogue = getattr(cmd_candidate, "dialogue", None)
+            if not dialogue:
+                milestone = self.get_latest_player_combat_milestone(mark_consumed=True)
+                last_event = milestone
+                if not last_event:
+                    for ev in reversed(self._events[-5:]):
+                        if "[DODGE_SUCCESS]" in ev:
+                            last_event = "dodge_success"
+                            break
+                        elif "[DODGE_FAILED]" in ev:
+                            last_event = "dodge_failed"
+                            break
+                bt_ctx = None
+                if last_event:
+                    from src.ai.companion_service import BattleTalkContext
+                    bt_ctx = BattleTalkContext(last_event=last_event)
+                dialogue = generate_battle_talk_response(self._pokemon1, parsed_intent or BattleTalkIntent.GENERAL, context=bt_ctx)
+
+            # 9. Mark turn allowance consumed for this authoritative turn
+            self._last_talk_turn = self._current_turn
+
+            command = BattleTalkCommand(
+                text=cleaned_text,
+                category=category,
+                intent=parsed_intent,
+                is_tactical=is_tactical,
+                metadata=metadata or parsed_cmd.metadata,
+                dialogue=dialogue,
+            )
+
+            if dialogue:
+                self._events.append(f"[Turn {self._current_turn}] Player: \"{cleaned_text}\" | {self._pokemon1.display_name}: \"{dialogue}\"")
+            else:
+                self._events.append(f"[Turn {self._current_turn}] Player spoke to {self._pokemon1.display_name}: \"{cleaned_text}\"")
+
+            return BattleActionResult(
+                accepted=True,
+                reason=f"Talk action accepted: '{cleaned_text}'.",
+                action_type=action.action_type,
+                battle_state=self._state,
+                terminal=False,
+                talk_command=command,
+            )
+
+        # --- Case G: DODGE ---
+        elif action.action_type == BattleActionType.DODGE:
+            # 1. Missing active Pokemon
+            if self._pokemon1 is None:
+                return BattleActionResult(
+                    accepted=False,
+                    reason="No active Pokemon available to perform dodge action.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="NO_ACTIVE_POKEMON",
+                )
+
+            # 2. Active Pokemon must not be fainted
+            if self._pokemon1.is_fainted or self._pokemon1.current_hp <= 0:
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Active Pokemon '{self._pokemon1.display_name}' has fainted and cannot dodge.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="POKEMON_FAINTED",
+                )
+
+            # 3. Opponent must be conscious
+            if self._pokemon2.is_fainted:
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Opposing Pokemon '{self._pokemon2.display_name}' has fainted.",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="OPPONENT_FAINTED",
+                )
+
+            # Opponent selects action (same authoritative flow as ATTACK and SWITCH)
+            executed_actions: list[BattleActionRecord] = []
+            opp_attack: Optional[Attack] = None
+            opponent_did_not_attack = False
+
+            if self._use_wild_ai and self.is_wild_battle:
+                from src.models.wild_ai import WildActionType
+                wild_decision = self.decide_wild_action()
+                if wild_decision.action_type == WildActionType.FLEE:
+                    self._events.append(
+                        f"[Turn {self._current_turn}] The wild {self._pokemon2.display_name} fled! ({wild_decision.reason})"
+                    )
+                    self._state = BattleState.ESCAPED
+                    return BattleActionResult(
+                        accepted=True,
+                        reason="Wild Pokemon fled while you prepared to dodge.",
+                        action_type=action.action_type,
+                        battle_state=self._state,
+                        escaped=True,
+                        terminal=True,
+                        talk_command=action.talk_command,
+                    )
+                elif wild_decision.action_type == WildActionType.INSPECT:
+                    self._events.append(
+                        f"[Turn {self._current_turn}] The wild {self._pokemon2.display_name} sizes you up curiously as you prepare to dodge! ({wild_decision.reason})"
+                    )
+                    opponent_did_not_attack = True
+                    if self._wild_agent is not None:
+                        from src.ai.wild_encounter_service import AutonomousWildService
+                        AutonomousWildService.record_observation(
+                            agent=self._wild_agent,
+                            target_name=self._pokemon1.display_name,
+                            details=wild_decision.reason,
+                            player=self._player,
+                        )
+                else:
+                    opp_attack = wild_decision.chosen_attack or self._choose_opponent_attack(self._pokemon2)
+            elif self.is_trainer_battle and self._opponent_trainer is not None:
+                from src.models.trainer_ai import TrainerActionType
+                decision = self.trainer_ai.decide_action(
+                    battle=self,
+                    trainer=self._opponent_trainer,
+                    active_pokemon=self._pokemon2,
+                    opponent_pokemon=self._pokemon1,
+                    rng=self._rng,
+                )
+                if decision.action_type == TrainerActionType.SWITCH and decision.target_pokemon is not None:
+                    self.switch_opponent_pokemon(decision.target_pokemon)
+                    self._events.append(
+                        f"[Turn {self._current_turn}] Opponent withdrew and sent out {decision.target_pokemon.display_name} while you prepared to dodge!"
+                    )
+                    opponent_did_not_attack = True
+                else:
+                    opp_attack = decision.chosen_attack or self._choose_opponent_attack(self._pokemon2)
+            else:
+                opp_attack = self._choose_opponent_attack(self._pokemon2)
+
+            if not opponent_did_not_attack and opp_attack is None and not self._state.is_terminal() and not self._pokemon2.is_fainted:
+                opp_attack = Attack(name="Struggle", type=self._pokemon2.species.types[0], power=35, accuracy=100)
+
+            # Step 1: Action eligibility / Paralysis check on defending Pokemon
+            def_can_act = self._status_manager.check_can_act(self._pokemon1)
+            defender_paralyzed = not def_can_act.can_act
+
+            # Step 2: Obedience check
+            ob_ctx = CommandContext(command="dodge", difficulty_modifier=0.10)
+            ob_res = self._obedience_manager.evaluate_obedience(self._pokemon1, context=ob_ctx, rng=self._rng)
+
+            dodge_prob = self.calculate_dodge_probability(self._pokemon1, self._pokemon2, opp_attack)
+            dodge_successful = False
+
+            if defender_paralyzed:
+                self._events.append(f"[Turn {self._current_turn}] {def_can_act.reason}")
+            elif not ob_res.is_obeyed:
+                self._events.append(
+                    f"[Turn {self._current_turn}] {self._pokemon1.display_name} ignored the command to dodge!"
+                )
+            else:
+                self._events.append(
+                    f"[Turn {self._current_turn}] {self._pokemon1.display_name} obeyed and prepared to evade!"
+                )
+                # Step 3: Dodge execution (only if defender can act, opponent is attacking)
+                if not opponent_did_not_attack and opp_attack is not None:
+                    roll = self._rng.random()
+                    dodge_successful = (roll < dodge_prob)
+
+            # Opponent attack resolves exactly once
+            opp_unable_to_act = False
+            opp_naturally_missed = False
+            if not opponent_did_not_attack and opp_attack is not None:
+                opp_record = self._execute_action(
+                    attacker=self._pokemon2,
+                    attack=opp_attack,
+                    defender=self._pokemon1,
+                    is_dodged=dodge_successful,
+                )
+                executed_actions.append(opp_record)
+
+                # Check if opponent could not act due to status condition (e.g. paralysis)
+                if not opp_record.hit and "paralyzed" in opp_record.message.lower():
+                    opp_unable_to_act = True
+                    dodge_successful = False
+                elif not dodge_successful:
+                    if opp_record.hit:
+                        # Explicit failed dodge narration in battle events
+                        if not defender_paralyzed and ob_res.is_obeyed:
+                            self._events.append(
+                                f"[Turn {self._current_turn}] {self._pokemon1.display_name} failed to dodge in time!"
+                            )
+                    else:
+                        opp_naturally_missed = True
+
+                if self._pokemon1.is_fainted:
+                    self._events.append(f"{self._pokemon1.display_name} fainted!")
+                    self._update_terminal_state()
+
+            # End-of-turn status phase
+            if not self._state.is_terminal():
+                for mon in (self._pokemon1, self._pokemon2):
+                    if not mon.is_fainted:
+                        eot_res = self._status_manager.process_end_of_turn(mon)
+                        for eff_rec in eot_res.effects_processed:
+                            if eff_rec.damage > 0:
+                                self._events.append(f"[Turn {self._current_turn}] {eff_rec.message}")
+                        for exp_type in eot_res.expired_effects:
+                            self._events.append(f"[Turn {self._current_turn}] {mon.display_name}'s {exp_type.display_name} wore off!")
+                        if mon.is_fainted:
+                            self._events.append(f"{mon.display_name} fainted!")
+
+                if self._pokemon1.is_fainted or self._pokemon2.is_fainted:
+                    self._update_terminal_state()
+                    self._handle_opponent_trainer_ko()
+
+                if not self._state.is_terminal():
+                    self._current_turn += 1
+
+            turn_res = TurnResult(
+                turn_number=self._current_turn if self._state.is_terminal() else self._current_turn - 1,
+                actions=tuple(executed_actions),
+                battle_state=self._state,
+                winner=self._winner,
+                loser=self._loser,
+            )
+            self._history.append(turn_res)
+
+            if opponent_did_not_attack:
+                if defender_paralyzed:
+                    reason_str = f"{self._pokemon1.display_name} is paralyzed, but the opponent did not attack."
+                elif ob_res.is_obeyed:
+                    reason_str = f"{self._pokemon1.display_name} prepared to dodge, but the opponent did not attack."
+                else:
+                    reason_str = f"{self._pokemon1.display_name} disobeyed the dodge command."
+            elif opp_unable_to_act:
+                if defender_paralyzed:
+                    reason_str = f"{self._pokemon1.display_name} is paralyzed, and {self._pokemon2.display_name} was also paralyzed."
+                elif ob_res.is_obeyed:
+                    reason_str = f"{self._pokemon1.display_name} prepared to dodge, but {self._pokemon2.display_name} was paralyzed and couldn't attack."
+                else:
+                    reason_str = f"{self._pokemon1.display_name} disobeyed the dodge command, but {self._pokemon2.display_name} was paralyzed."
+            elif defender_paralyzed:
+                if opp_naturally_missed:
+                    reason_str = f"{self._pokemon1.display_name} is paralyzed and could not dodge, but the attack missed!"
+                else:
+                    reason_str = f"{self._pokemon1.display_name} is paralyzed and could not dodge."
+            elif dodge_successful:
+                reason_str = f"{self._pokemon1.display_name} successfully dodged the attack!"
+            elif not ob_res.is_obeyed:
+                reason_str = f"{self._pokemon1.display_name} disobeyed the dodge command."
+            elif opp_naturally_missed:
+                reason_str = f"{self._pokemon1.display_name} failed to dodge, but the attack missed!"
+            else:
+                reason_str = f"{self._pokemon1.display_name} failed to dodge the attack."
+
+            return BattleActionResult(
+                accepted=True,
+                reason=reason_str,
+                action_type=action.action_type,
+                battle_state=self._state,
+                turn_result=turn_res,
+                is_obeyed=ob_res.is_obeyed and not defender_paralyzed,
+                dodge_successful=dodge_successful,
+                dodge_probability=dodge_prob,
+                obedience_result=ob_res,
+                terminal=self._state.is_terminal(),
+                talk_command=action.talk_command,
             )
 
         return BattleActionResult(

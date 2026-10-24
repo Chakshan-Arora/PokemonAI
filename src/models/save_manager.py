@@ -21,8 +21,6 @@ from src.models.save_data import CURRENT_SCHEMA_VERSION, SaveDataError, validate
 from src.models.quest import QuestStatus, QuestProgress, ObjectiveProgress, QuestDefinition
 from src.models.world_interaction import Interactable, InteractableType
 from src.models.world_exploration import WorldRegion
-from src.data.species import SAMPLE_SPECIES
-from src.data.attacks import SAMPLE_ATTACKS
 from src.data.items import ITEM_CATALOG, get_item
 from src.data.quests import QUEST_CATALOG
 from src.data.world_objects import WORLD_OBJECT_CATALOG
@@ -202,8 +200,17 @@ def deserialize_player(
     version = validate_schema_version(data.get("schema_version"))
 
     # Catalog lookups
-    species_cat = species_catalog if species_catalog is not None else SAMPLE_SPECIES
-    attack_cat = attack_catalog if attack_catalog is not None else SAMPLE_ATTACKS
+    if species_catalog is not None:
+        species_cat = species_catalog
+    else:
+        from src.data.species import SAMPLE_SPECIES
+        species_cat = SAMPLE_SPECIES
+
+    if attack_catalog is not None:
+        attack_cat = attack_catalog
+    else:
+        from src.data.attacks import SAMPLE_ATTACKS
+        attack_cat = SAMPLE_ATTACKS
     item_cat = item_catalog if item_catalog is not None else ITEM_CATALOG
     quest_cat = quest_catalog if quest_catalog is not None else QUEST_CATALOG
     world_cat = world_objects_catalog if world_objects_catalog is not None else WORLD_OBJECT_CATALOG
@@ -346,10 +353,14 @@ def deserialize_player(
 
         # Bond & Obedience
         bond = mon_data.get("bond", 0)
+        if isinstance(bond, float):
+            bond = int(round(bond))
         if not isinstance(bond, int) or isinstance(bond, bool) or not (0 <= bond <= 100):
             raise SaveDataError(f"Invalid bond value {bond} for Pokemon '{mon_id}'.")
 
         obedience = mon_data.get("obedience", 100)
+        if isinstance(obedience, float):
+            obedience = int(round(obedience))
         if not isinstance(obedience, int) or isinstance(obedience, bool) or not (0 <= obedience <= 100):
             raise SaveDataError(f"Invalid obedience value {obedience} for Pokemon '{mon_id}'.")
 

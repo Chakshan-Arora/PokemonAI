@@ -17,6 +17,7 @@ from src.models.battle import (
     BattleActionType,
     BattleActionResult,
     TurnResult,
+    BattleTalkCommand,
 )
 from src.models.encounter_manager import EncounterManager, WildEncounter, EncounterResult
 from src.models.spawn_manager import SpawnManager
@@ -428,6 +429,93 @@ class BattleManager:
     def inspect_wild_pokemon(self, player: Player) -> BattleActionResult:
         """Convenience method for player inspecting a wild Pokemon."""
         return self.execute_action(player, BattleAction(action_type=BattleActionType.INSPECT))
+
+    def dodge(self, player: Player) -> BattleActionResult:
+        """Convenience method for player executing a tactical dodge action."""
+        return self.execute_action(player, BattleAction(action_type=BattleActionType.DODGE))
+
+    def talk(self, player: Player, command: Union[BattleTalkCommand, str]) -> BattleActionResult:
+        """
+        Public BattleManager API for talking to the active Pokemon in battle.
+
+        Processes raw player text through the natural-language intent parser,
+        generates personality-aware dialogue for conversational battle talk,
+        or routes tactical dodge commands to the DODGE action.
+
+        Args:
+            player: The Player issuing the battle talk action.
+            command: A structured BattleTalkCommand or a raw string message.
+
+        Returns:
+            BattleActionResult indicating acceptance or rejection reason.
+        """
+        if not isinstance(player, Player):
+            raise TypeError(f"player must be a Player instance, got {type(player).__name__}.")
+
+        battle = self.get_active_battle(player)
+        if battle is None:
+            return BattleActionResult(
+                accepted=False,
+                reason=f"Player '{player.name}' has no active battle.",
+                action_type=BattleActionType.TALK,
+                battle_state=BattleState.NOT_STARTED,
+                error_type="NO_ACTIVE_BATTLE",
+            )
+
+        # 1. Parse raw text into structured BattleTalkCommand if a string was provided
+        if isinstance(command, BattleTalkCommand):
+            talk_cmd = command
+        elif isinstance(command, str):
+            from src.ai.battle_talk_parser import parse_battle_talk
+            talk_cmd = parse_battle_talk(command)
+        else:
+            return battle.take_action(BattleAction(action_type=BattleActionType.TALK, talk_command=command))
+
+        # 2. If tactical manoeuvre requested, route supported dodge to DODGE action, otherwise forward TALK for engine rejection
+        if talk_cmd.is_tactical:
+            tactical_action = ""
+            if talk_cmd.metadata and "detected_tactical_action" in talk_cmd.metadata:
+                tactical_action = str(talk_cmd.metadata["detected_tactical_action"]).lower()
+            elif talk_cmd.intent:
+                tactical_action = str(talk_cmd.intent).lower()
+
+            is_dodge = any(k in tactical_action for k in ("dodge", "evade", "sidestep", "duck"))
+            if is_dodge:
+                action = BattleAction(
+                    action_type=BattleActionType.DODGE,
+                    text=talk_cmd.text,
+                    talk_command=talk_cmd,
+                )
+                return self.execute_action(player, action)
+            return self.execute_action(player, BattleAction(action_type=BattleActionType.TALK, talk_command=talk_cmd))
+
+        # 3. Generate personality-aware companion dialogue if active Pokemon is present, conscious, and battle is in progress
+        if (
+            battle.state == BattleState.IN_PROGRESS
+            and battle.pokemon1 is not None
+            and not battle.pokemon1.is_fainted
+            and talk_cmd.dialogue is None
+        ):
+            from src.ai.companion_service import CompanionService, BattleTalkContext
+            milestone = None
+            if hasattr(battle, "get_latest_player_combat_milestone"):
+                milestone = battle.get_latest_player_combat_milestone(mark_consumed=True)
+            last_event = milestone
+            if not last_event and hasattr(battle, "events") and battle.events:
+                for ev in reversed(battle.events[-5:]):
+                    if "[DODGE_SUCCESS]" in ev:
+                        last_event = "dodge_success"
+                        break
+                    elif "[DODGE_FAILED]" in ev:
+                        last_event = "dodge_failed"
+                        break
+            bt_ctx = BattleTalkContext(last_event=last_event) if last_event else None
+            dialogue = CompanionService.generate_battle_talk_response(battle.pokemon1, talk_cmd, context=bt_ctx)
+            import dataclasses
+            talk_cmd = dataclasses.replace(talk_cmd, dialogue=dialogue)
+
+        action = BattleAction(action_type=BattleActionType.TALK, talk_command=talk_cmd)
+        return self.execute_action(player, action)
 
     # --- In-Battle Capture ---
 

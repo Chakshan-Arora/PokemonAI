@@ -51,6 +51,7 @@ Desktop.ini
 *.log
 *.tmp
 *.bak
+*.wav
 temp/
 tmp/
 
