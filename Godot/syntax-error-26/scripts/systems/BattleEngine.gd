@@ -219,9 +219,13 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 		
 		var actual_damage = defender.take_damage(damage)
 		
+		var is_player_def = (defender == player_pokemon)
 		evts.append({
 			"type": "damage_dealt",
 			"target": defender.nickname,
+			"defender": defender.nickname,
+			"attacker": attacker.nickname,
+			"is_player_target": is_player_def,
 			"damage": actual_damage,
 			"is_critical": calc_result["is_critical"],
 			"type_effectiveness": type_eff,
@@ -254,7 +258,7 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 		
 		# Check faint
 		if defender.is_fainted():
-			evts.append({"type": "fainted", "pokemon": defender.nickname})
+			evts.append({"type": "fainted", "pokemon": defender.nickname, "is_player": is_player_def})
 			EventBus.pokemon_fainted.emit(defender)
 	
 	return evts

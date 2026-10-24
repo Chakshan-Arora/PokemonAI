@@ -8,6 +8,9 @@ var player_name: String = "Trainer"
 var trainer_avatar: String = "calem"
 var unique_id: String = ""
 var team: Array = []           # Array of PokemonInstance (max 6)
+var party: Array:
+	get:
+		return team
 var collection: Array = []     # All caught Pokémon
 var inventory: Dictionary = {} # item_id -> quantity
 var max_team_size: int = 6

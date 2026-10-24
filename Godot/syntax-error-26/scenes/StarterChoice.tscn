@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8y3xqjStarterChoice"]
+[gd_scene load_steps=3 format=3 uid="uid://c8y3xqjStarterChoice"]
 
 [ext_resource type="Script" path="res://scripts/ui/StarterChoice.gd" id="1_starter"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/meadow.jpg" id="2_bg"]
 
 [node name="StarterChoice" type="Control"]
 layout_mode = 3
@@ -11,14 +12,25 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_starter")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.07, 0.09, 0.14, 1)
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DimOverlay" type="ColorRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.08, 0.14, 0.65)
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1

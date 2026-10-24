@@ -96,6 +96,10 @@ pause={
 ]
 }
 
+[gui]
+
+theme/custom="res://assets/ui/pokemon_theme.tres"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

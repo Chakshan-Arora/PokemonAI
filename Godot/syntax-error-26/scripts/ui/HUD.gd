@@ -22,7 +22,13 @@ const QuestData = preload("res://scripts/data/QuestData.gd")
 @onready var message_banner: PanelContainer = $TopCenter/MessageBanner
 @onready var message_label: Label = $TopCenter/MessageBanner/MessageLabel
 
+@onready var dialogue_box: PanelContainer = get_node_or_null("DialogueBox")
+@onready var dialogue_label: Label = get_node_or_null("DialogueBox/HBox/VBox/DialogueLabel")
+@onready var speaker_label: Label = get_node_or_null("DialogueBox/HBox/VBox/SpeakerLabel")
+@onready var dialogue_portrait: TextureRect = get_node_or_null("DialogueBox/HBox/Portrait")
+
 var _banner_timer: float = 0.0
+var _dialogue_timer: float = 0.0
 
 func _ready() -> void:
 	interact_prompt.visible = false
@@ -48,6 +54,11 @@ func _process(delta: float) -> void:
 		if _banner_timer <= 0.0:
 			message_banner.visible = false
 	
+	if dialogue_box and dialogue_box.visible:
+		_dialogue_timer -= delta
+		if _dialogue_timer <= 0.0:
+			dialogue_box.visible = false
+	
 	# Update time display smoothly
 	time_label.text = GameState.get_formatted_time()
 	tod_label.text = GameState.get_time_of_day().capitalize()
@@ -60,6 +71,19 @@ func update_hud() -> void:
 		pokemon_level_lbl.text = "Lv. %d" % active_p.level
 		hp_bar.max_value = active_p.max_hp
 		hp_bar.value = active_p.current_hp
+		
+		# Health color gradient styling
+		var ratio = float(active_p.current_hp) / float(max(1, active_p.max_hp))
+		var hp_fill = StyleBoxFlat.new()
+		hp_fill.set_corner_radius_all(3)
+		if ratio > 0.5:
+			hp_fill.bg_color = Color("#38a169") # Green
+		elif ratio > 0.2:
+			hp_fill.bg_color = Color("#dd6b20") # Orange
+		else:
+			hp_fill.bg_color = Color("#e53e3e") # Red
+		hp_bar.add_theme_stylebox_override("fill", hp_fill)
+		
 		hp_text_lbl.text = "%d / %d HP" % [active_p.current_hp, active_p.max_hp]
 		
 		# Trainer profile header
@@ -81,7 +105,7 @@ func update_hud() -> void:
 			var t_name = Label.new()
 			t_name.name = "TrainerName"
 			t_name.add_theme_font_size_override("font_size", 13)
-			t_name.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
+			t_name.add_theme_color_override("font_color", Color(0.15, 0.28, 0.5, 1.0))
 			trainer_bar.add_child(t_name)
 		
 		if GameState.player:
@@ -134,12 +158,13 @@ func update_hud() -> void:
 		var q_title = Label.new()
 		q_title.name = "QTitle"
 		q_title.add_theme_font_size_override("font_size", 13)
-		q_title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+		q_title.add_theme_color_override("font_color", Color(0.15, 0.28, 0.5, 1.0))
 		q_vbox.add_child(q_title)
 		
 		var q_obj = Label.new()
 		q_obj.name = "QObj"
 		q_obj.add_theme_font_size_override("font_size", 12)
+		q_obj.add_theme_color_override("font_color", Color(0.18, 0.22, 0.28, 1.0))
 		q_obj.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		q_vbox.add_child(q_obj)
 	
@@ -177,9 +202,17 @@ func update_hud() -> void:
 		guide.offset_bottom = -12.0
 		add_child(guide)
 		
+		var sb = StyleBoxFlat.new()
+		sb.bg_color = Color(0.1, 0.14, 0.22, 0.9)
+		sb.border_color = Color(0.25, 0.35, 0.5, 0.8)
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(6)
+		sb.set_content_margin_all(5.0)
+		guide.add_theme_stylebox_override("panel", sb)
+		
 		var lbl = Label.new()
 		lbl.add_theme_font_size_override("font_size", 12)
-		lbl.add_theme_color_override("font_color", Color(0.85, 0.9, 1.0, 0.9))
+		lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.95))
 		lbl.text = " [W/A/S/D] Move  |  [Shift] Sprint  |  [RMB] Camera  |  [E] Interact  |  [Tab] Party  |  [I] Bag  |  [J] Quests  |  [Esc] Menu "
 		guide.add_child(lbl)
 
@@ -189,9 +222,49 @@ func set_interaction_prompt(visible_state: bool, text: String = "") -> void:
 		prompt_label.text = "[E] " + text
 
 func show_notification(text: String, duration: float = 3.0) -> void:
-	message_label.text = text
-	message_banner.visible = true
-	_banner_timer = duration
+	if dialogue_box and text.length() > 22:
+		# Show rich dialogue box with portrait and typewriter effect
+		var speaker = "Notice"
+		var portrait_path = ""
+		if "Oak" in text:
+			speaker = "Professor Oak"
+			portrait_path = "res://assets/sprites/trainers/red.png"
+		elif "Koji" in text:
+			speaker = "Trainer Koji"
+			portrait_path = "res://assets/sprites/trainers/koji.png"
+		elif "campfire" in text.to_lower() or "healed" in text.to_lower():
+			speaker = "Campfire Rest Area"
+			portrait_path = "res://assets/sprites/world/campfire.png"
+		elif "sign" in text.to_lower() or "route" in text.to_lower():
+			speaker = "Wooden Signpost"
+			portrait_path = "res://assets/sprites/world/sign.png"
+		elif "obtained" in text.to_lower() or "cache" in text.to_lower():
+			speaker = "Item Recovery"
+			portrait_path = "res://assets/sprites/items/poke_ball.png"
+		elif "shrine" in text.to_lower():
+			speaker = "Ancient Shrine"
+			portrait_path = "res://assets/sprites/world/rock.png"
+		
+		if speaker_label:
+			speaker_label.text = speaker
+		if dialogue_portrait:
+			if portrait_path != "" and ResourceLoader.exists(portrait_path):
+				dialogue_portrait.texture = load(portrait_path)
+				dialogue_portrait.visible = true
+			else:
+				dialogue_portrait.visible = false
+		if dialogue_label:
+			dialogue_label.text = text
+			dialogue_label.visible_ratio = 0.0
+			var tw = create_tween()
+			tw.tween_property(dialogue_label, "visible_ratio", 1.0, 0.4)
+		
+		dialogue_box.visible = true
+		_dialogue_timer = duration + 0.5
+	else:
+		message_label.text = text
+		message_banner.visible = true
+		_banner_timer = duration
 
 func _on_region_changed(region_id: String) -> void:
 	var r_data = RegionData.get_region(region_id)

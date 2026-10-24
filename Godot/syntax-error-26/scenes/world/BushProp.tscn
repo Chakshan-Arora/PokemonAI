@@ -1,0 +1,51 @@
+[gd_scene load_steps=8 format=3 uid="uid://c8y3xqjBushProp"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/bush.png" id="2_bush"]
+
+[sub_resource type="GDScript" id="GDScript_bushprop"]
+script/source = "extends Node3D
+
+@export_enum(\"bush\", \"flowers\") var prop_type: String = \"bush\"
+@onready var sprite: Sprite3D = $Sprite3D
+
+func _ready() -> void:
+	if is_instance_valid(sprite):
+		if prop_type == \"flowers\":
+			var tex = load(\"res://assets/sprites/world/flowers.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.04
+				sprite.position.y = 0.4
+		else:
+			var tex = load(\"res://assets/sprites/world/bush.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.045
+				sprite.position.y = 0.6
+"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_shadow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(1.2, 1.2)
+orientation = 1
+
+[node name="BushProp" type="Node3D"]
+script = SubResource("GDScript_bushprop")
+
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.045
+texture = ExtResource("2_bush")
+

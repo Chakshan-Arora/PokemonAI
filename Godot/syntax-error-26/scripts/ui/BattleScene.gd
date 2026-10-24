@@ -1,5 +1,5 @@
 extends Control
-## BattleScene - Graphical turn-based battle controller
+## BattleScene - Graphical turn-based battle controller with synchronized animations & typewriter text
 
 const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const PokemonData = preload("res://scripts/data/PokemonData.gd")
@@ -10,7 +10,7 @@ const ItemData = preload("res://scripts/data/ItemData.gd")
 @onready var opponent_name_lbl: Label = $BattleUI/OpponentPanel/VBox/HBox/NameLabel
 @onready var opponent_level_lbl: Label = $BattleUI/OpponentPanel/VBox/HBox/LevelLabel
 @onready var opponent_hp_bar: ProgressBar = $BattleUI/OpponentPanel/VBox/HPBar
-@onready var opponent_sprite: ColorRect = $Arena/OpponentSprite
+@onready var opponent_sprite: Control = $Arena/OpponentSprite
 @onready var opponent_sprite_label: Label = $Arena/OpponentSprite/Label
 
 @onready var player_panel_hbox: HBoxContainer = $BattleUI/PlayerPanel/VBox/HBox
@@ -18,7 +18,8 @@ const ItemData = preload("res://scripts/data/ItemData.gd")
 @onready var player_level_lbl: Label = $BattleUI/PlayerPanel/VBox/HBox/LevelLabel
 @onready var player_hp_bar: ProgressBar = $BattleUI/PlayerPanel/VBox/HPBar
 @onready var player_hp_text: Label = $BattleUI/PlayerPanel/VBox/HPTextLabel
-@onready var player_sprite: ColorRect = $Arena/PlayerSprite
+@onready var player_exp_bar: ProgressBar = $BattleUI/PlayerPanel/VBox/EXPBar
+@onready var player_sprite: Control = $Arena/PlayerSprite
 @onready var player_sprite_label: Label = $Arena/PlayerSprite/Label
 
 @onready var message_lbl: Label = $BattleUI/MessageBox/VBox/MessageLabel
@@ -40,15 +41,18 @@ const ItemData = preload("res://scripts/data/ItemData.gd")
 
 var bag_menu: ScrollContainer = null
 var pokemon_menu: ScrollContainer = null
+var continue_btn: Button = null
 
 var battle_engine: Node = null
 var player_pokemon: PokemonInstance = null
 var opponent_pokemon: PokemonInstance = null
 var is_wild: bool = true
 
-var _message_queue: Array[String] = []
+var _battle_step_queue: Array[Dictionary] = []
 var _is_displaying_messages: bool = false
-var _turn_result_pending: Dictionary = {}
+var _typewriter_tween: Tween = null
+var _battle_concluded: bool = false
+var _waiting_for_continue: bool = false
 
 func _ready() -> void:
 	battle_engine = load("res://scripts/systems/BattleEngine.gd").new()
@@ -60,15 +64,35 @@ func _ready() -> void:
 	run_btn.pressed.connect(_on_run_pressed)
 	back_btn.pressed.connect(_show_action_menu)
 	
+	_style_action_buttons()
+	
+	if is_instance_valid(player_exp_bar):
+		var exp_fill = StyleBoxFlat.new()
+		exp_fill.bg_color = Color("#3182ce")
+		exp_fill.set_corner_radius_all(2)
+		player_exp_bar.add_theme_stylebox_override("fill", exp_fill)
+	
 	for i in range(move_btns.size()):
 		move_btns[i].pressed.connect(_on_move_selected.bind(i))
 	
 	_setup_battle()
 
+func _style_action_buttons() -> void:
+	var btns = [fight_btn, bag_btn, pokemon_btn, run_btn]
+	for b in btns:
+		b.pivot_offset = b.size / 2.0
+		b.mouse_entered.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.04, 1.04), 0.08)
+		)
+		b.mouse_exited.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+
 func _setup_battle() -> void:
 	player_pokemon = GameState.get_active_pokemon()
 	if player_pokemon == null:
-		# Fallback if no active pokemon
 		player_pokemon = PokemonInstance.create("Pikachu", 5)
 		if GameState.player:
 			GameState.player.add_to_team(player_pokemon)
@@ -88,19 +112,9 @@ func _setup_battle() -> void:
 		is_wild = not GameState.get_meta("is_trainer_battle")
 		GameState.remove_meta("is_trainer_battle")
 	
-	# Dynamic region battle background
-	var bg_rect = $Arena/Background as ColorRect
-	if bg_rect:
-		var bg_tr = bg_rect.get_node_or_null("BattleBG") as TextureRect
-		if bg_tr == null:
-			bg_tr = TextureRect.new()
-			bg_tr.name = "BattleBG"
-			bg_tr.layout_mode = 1
-			bg_tr.anchors_preset = Control.PRESET_FULL_RECT
-			bg_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			bg_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-			bg_rect.add_child(bg_tr)
-		
+	# Background
+	var bg_tr = $Arena/Background as TextureRect
+	if bg_tr:
 		var bg_path = "res://assets/backgrounds/meadow.jpg"
 		var reg = GameState.current_region_id
 		if "forest" in reg: bg_path = "res://assets/backgrounds/forest.jpg"
@@ -112,23 +126,45 @@ func _setup_battle() -> void:
 	
 	battle_engine.start_battle(player_pokemon, opponent_pokemon, is_wild)
 	
-	_update_ui()
+	_init_ui_stats()
+	_update_move_buttons()
 	_show_action_menu()
 	
 	if is_wild:
 		_queue_message("A wild %s appeared!" % opponent_pokemon.get_display_name())
 	else:
-		_queue_message("Trainer sent out %s!" % opponent_pokemon.get_display_name())
+		var t_name = GameState.get_meta("trainer_name") if GameState.has_meta("trainer_name") else "Trainer"
+		_queue_message("%s wants to battle!" % t_name)
+		_queue_message("%s sent out %s!" % [t_name, opponent_pokemon.get_display_name()])
 
-func _update_ui() -> void:
+func _update_hp_bar_color(bar: ProgressBar, current: int, maximum: int) -> void:
+	var ratio = float(current) / float(max(1, maximum))
+	var fill_style = StyleBoxFlat.new()
+	fill_style.set_corner_radius_all(3)
+	if ratio > 0.5:
+		fill_style.bg_color = Color("#38a169") # Green
+	elif ratio > 0.2:
+		fill_style.bg_color = Color("#dd6b20") # Orange
+	else:
+		fill_style.bg_color = Color("#e53e3e") # Red
+	bar.add_theme_stylebox_override("fill", fill_style)
+
+## Initialize static visuals and initial HP states at start of battle or after switch
+func _init_ui_stats() -> void:
 	if player_pokemon:
 		player_name_lbl.text = player_pokemon.get_display_name()
 		player_level_lbl.text = "Lv. %d" % player_pokemon.level
 		player_hp_bar.max_value = player_pokemon.max_hp
 		player_hp_bar.value = player_pokemon.current_hp
-		player_hp_text.text = "%d / %d" % [player_pokemon.current_hp, player_pokemon.max_hp]
+		_update_hp_bar_color(player_hp_bar, player_pokemon.current_hp, player_pokemon.max_hp)
+		player_hp_text.text = "%d / %d HP" % [player_pokemon.current_hp, player_pokemon.max_hp]
 		
-		# Player sprite (back or front sprite)
+		# EXP Bar progress
+		if is_instance_valid(player_exp_bar):
+			var xp_pct = float(player_pokemon.experience) / float(max(1, player_pokemon.level * 100)) * 100.0
+			player_exp_bar.value = xp_pct
+		
+		# Player sprite (back sprite preferred in battle)
 		var p_tex = PokemonData.get_back_sprite_texture(player_pokemon.species_name)
 		if p_tex == null:
 			p_tex = PokemonData.get_front_sprite_texture(player_pokemon.species_name)
@@ -143,13 +179,12 @@ func _update_ui() -> void:
 				ptr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				player_sprite.add_child(ptr)
 			ptr.texture = p_tex
-			player_sprite.color = Color(0, 0, 0, 0)
 			player_sprite_label.visible = false
+			player_sprite.modulate.a = 1.0
 		else:
-			player_sprite.color = PokemonData.get_species_color(player_pokemon.species_name)
 			player_sprite_label.text = player_pokemon.get_display_name()
 		
-		# Player panel PMD portrait
+		# PMD portrait
 		var port_tr = player_panel_hbox.get_node_or_null("Portrait") as TextureRect
 		if port_tr == null:
 			port_tr = TextureRect.new()
@@ -171,6 +206,7 @@ func _update_ui() -> void:
 		opponent_level_lbl.text = "Lv. %d" % opponent_pokemon.level
 		opponent_hp_bar.max_value = opponent_pokemon.max_hp
 		opponent_hp_bar.value = opponent_pokemon.current_hp
+		_update_hp_bar_color(opponent_hp_bar, opponent_pokemon.current_hp, opponent_pokemon.max_hp)
 		
 		# Opponent sprite (front sprite)
 		var opp_tex = PokemonData.get_front_sprite_texture(opponent_pokemon.species_name)
@@ -185,13 +221,12 @@ func _update_ui() -> void:
 				otr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				opponent_sprite.add_child(otr)
 			otr.texture = opp_tex
-			opponent_sprite.color = Color(0, 0, 0, 0)
 			opponent_sprite_label.visible = false
+			opponent_sprite.modulate.a = 1.0
 		else:
-			opponent_sprite.color = PokemonData.get_species_color(opponent_pokemon.species_name)
 			opponent_sprite_label.text = opponent_pokemon.get_display_name()
 		
-		# Opponent panel PMD portrait
+		# PMD portrait
 		var opp_port_tr = opponent_panel_hbox.get_node_or_null("Portrait") as TextureRect
 		if opp_port_tr == null:
 			opp_port_tr = TextureRect.new()
@@ -207,30 +242,32 @@ func _update_ui() -> void:
 			opp_port_tr.visible = true
 		else:
 			opp_port_tr.visible = false
-	
-	# Update move buttons with stylized type colors
+
+func _update_move_buttons() -> void:
 	if player_pokemon:
 		for i in range(move_btns.size()):
 			if i < player_pokemon.attacks.size():
 				var atk_name = player_pokemon.attacks[i]
 				var atk_data = AttackData.get_attack(atk_name)
 				var atk_type = atk_data.get("type", "Normal")
+				var max_pp = atk_data.get("pp", 20)
 				move_btns[i].visible = true
-				move_btns[i].text = "%s [%s]\nPwr:%d  Acc:%d%%" % [
+				move_btns[i].text = "%s [%s]\nPwr:%d  Acc:%d%%  PP:%d" % [
 					atk_name,
 					atk_type,
 					atk_data.get("power", 0),
-					atk_data.get("accuracy", 100)
+					atk_data.get("accuracy", 100),
+					max_pp
 				]
 				var tcolor = PokemonData.TYPE_COLORS.get(atk_type, Color(0.7, 0.7, 0.7))
-				move_btns[i].modulate = tcolor.lightened(0.3)
+				move_btns[i].self_modulate = tcolor.lightened(0.25)
 			else:
 				move_btns[i].visible = false
 
 func _animate_attack(is_player: bool) -> void:
 	var sprite = player_sprite if is_player else opponent_sprite
 	var orig_pos = sprite.position
-	var target_offset = Vector2(25, -12) if is_player else Vector2(-25, 12)
+	var target_offset = Vector2(30, -15) if is_player else Vector2(-30, 15)
 	var tween = create_tween()
 	tween.tween_property(sprite, "position", orig_pos + target_offset, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(sprite, "position", orig_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -239,14 +276,15 @@ func _animate_hit(is_player_hit: bool) -> void:
 	var sprite = player_sprite if is_player_hit else opponent_sprite
 	var orig_x = sprite.position.x
 	var tween = create_tween()
-	sprite.modulate = Color(2.2, 0.35, 0.35)
-	tween.tween_property(sprite, "position:x", orig_x - 10, 0.05)
-	tween.tween_property(sprite, "position:x", orig_x + 10, 0.05)
-	tween.tween_property(sprite, "position:x", orig_x - 5, 0.05)
-	tween.tween_property(sprite, "position:x", orig_x, 0.05)
+	sprite.modulate = Color(2.5, 0.4, 0.4)
+	tween.tween_property(sprite, "position:x", orig_x - 12, 0.04)
+	tween.tween_property(sprite, "position:x", orig_x + 12, 0.04)
+	tween.tween_property(sprite, "position:x", orig_x - 6, 0.04)
+	tween.tween_property(sprite, "position:x", orig_x, 0.04)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 
 func _show_action_menu() -> void:
+	if continue_btn: continue_btn.visible = false
 	action_menu.visible = true
 	moves_menu.visible = false
 	if bag_menu: bag_menu.visible = false
@@ -410,6 +448,7 @@ func _on_run_pressed() -> void:
 	var result = battle_engine.resolve_turn()
 	_process_turn_result(result)
 
+## Process turn results into a strictly synchronized sequence of action steps
 func _process_turn_result(result: Dictionary) -> void:
 	var evts = result.get("events", [])
 	for e in evts:
@@ -417,118 +456,276 @@ func _process_turn_result(result: Dictionary) -> void:
 		match etype:
 			"attack_used":
 				var atkr = e.get("attacker", "")
-				var is_p = (atkr == player_pokemon.get_display_name() or atkr == player_pokemon.species_name)
-				_animate_attack(is_p)
-				_queue_message("%s used %s!" % [atkr, e.get("attack", "")])
+				var is_p = (atkr == player_pokemon.get_display_name() or atkr == player_pokemon.species_name or atkr == player_pokemon.nickname)
+				_battle_step_queue.append({
+					"type": "attack",
+					"text": "%s used %s!" % [atkr, e.get("attack", "")],
+					"is_player": is_p
+				})
+			
 			"damage_dealt":
-				var def_name = e.get("defender", "")
-				var is_p_hit = (def_name == player_pokemon.get_display_name() or def_name == player_pokemon.species_name)
-				_animate_hit(is_p_hit)
-				var eff = e.get("effectiveness", 1.0)
+				var is_p_hit = e.get("is_player_target", false)
+				if not e.has("is_player_target"):
+					var def_name = e.get("target", e.get("defender", ""))
+					is_p_hit = (def_name == player_pokemon.get_display_name() or def_name == player_pokemon.species_name or def_name == player_pokemon.nickname)
+				
+				var eff = e.get("type_effectiveness", 1.0)
 				var text = "Dealt %d damage!" % e.get("damage", 0)
 				if eff > 1.0: text += " Super effective!"
 				elif eff < 1.0 and eff > 0.0: text += " Not very effective..."
 				elif eff == 0.0: text += " No effect!"
-				if e.get("critical", false): text += " Critical hit!"
-				_queue_message(text)
-			"pokemon_fainted":
-				_queue_message("%s fainted!" % e.get("pokemon", ""))
-			"fainted":
-				_queue_message("%s fainted!" % e.get("pokemon", ""))
+				if e.get("is_critical", false): text += " Critical hit!"
+				
+				_battle_step_queue.append({
+					"type": "damage",
+					"text": text,
+					"is_player_target": is_p_hit,
+					"defender_hp": e.get("defender_hp", 0),
+					"defender_max_hp": e.get("defender_max_hp", 10)
+				})
+			
+			"fainted", "pokemon_fainted":
+				var f_name = e.get("pokemon", "")
+				var is_p_fainted = e.get("is_player", false)
+				if not e.has("is_player"):
+					is_p_fainted = (f_name == player_pokemon.get_display_name() or f_name == player_pokemon.species_name or f_name == player_pokemon.nickname)
+				_battle_step_queue.append({
+					"type": "faint",
+					"text": "%s fainted!" % f_name,
+					"is_player": is_p_fainted
+				})
+			
 			"switch":
-				_queue_message("Go, %s!" % e.get("pokemon", ""))
-				player_pokemon = battle_engine.player_pokemon
-				_update_ui()
+				_battle_step_queue.append({
+					"type": "switch",
+					"text": "Go, %s!" % e.get("pokemon", "")
+				})
+			
 			"item_used":
-				_queue_message("Used %s on %s!" % [e.get("item", ""), e.get("target", "")])
-				_update_ui()
+				_battle_step_queue.append({
+					"type": "message",
+					"text": "Used %s on %s!" % [e.get("item", ""), e.get("target", "")]
+				})
+			
 			"capture_attempt":
 				var cap_data = e.get("data", {})
 				if cap_data.get("success", false):
-					_queue_message("Gotcha! %s was caught!" % opponent_pokemon.get_display_name())
+					_battle_step_queue.append({
+						"type": "message",
+						"text": "Gotcha! %s was caught!" % opponent_pokemon.get_display_name()
+					})
 				else:
-					_queue_message("Oh no! The wild Pokemon broke free!")
+					_battle_step_queue.append({
+						"type": "message",
+						"text": "Oh no! The wild Pokémon broke free!"
+					})
+			
 			"flee":
-				if e.get("success", false):
-					_queue_message("Got away safely!")
-				else:
-					_queue_message("Can't escape!")
+				_battle_step_queue.append({
+					"type": "message",
+					"text": "Got away safely!" if e.get("success", false) else "Can't escape!"
+				})
+			
+			"eot_status":
+				var data = e.get("data", {})
+				_battle_step_queue.append({
+					"type": "message",
+					"text": data.get("message", "")
+				})
+			
 			"message":
-				_queue_message(e.get("text", ""))
+				_battle_step_queue.append({
+					"type": "message",
+					"text": e.get("text", "")
+				})
 	
-	_turn_result_pending = result
-	_play_next_message()
+	# Check if the turn concluded the battle (victory, defeat, captured, escaped)
+	var state = battle_engine.battle_state
+	if state != battle_engine.BattleState.IN_PROGRESS and not _battle_concluded:
+		_battle_concluded = true
+		match state:
+			battle_engine.BattleState.VICTORY:
+				var xp_gained = opponent_pokemon.level * 40
+				var xp_res = player_pokemon.gain_xp(xp_gained)
+				_battle_step_queue.append({
+					"type": "message",
+					"text": "%s gained %d EXP points!" % [player_pokemon.get_display_name(), xp_gained]
+				})
+				if xp_res.get("levels_gained", 0) > 0:
+					_battle_step_queue.append({
+						"type": "message",
+						"text": "%s grew to level %d!" % [player_pokemon.get_display_name(), player_pokemon.level]
+					})
+				if not is_wild:
+					var tid = "koji"
+					if GameState.has_meta("trainer_id"):
+						tid = GameState.get_meta("trainer_id")
+					if GameState.player:
+						GameState.player.record_trainer_defeat(tid)
+					if QuestSystem:
+						QuestSystem.on_trainer_defeated(tid)
+						QuestSystem.on_trainer_defeated("field_trainer_koji")
+					var tname = GameState.get_meta("trainer_name") if GameState.has_meta("trainer_name") else "Trainer"
+					_battle_step_queue.append({
+						"type": "message",
+						"text": "You defeated Trainer %s!" % tname
+					})
+				EventBus.battle_ended.emit("victory")
+			
+			battle_engine.BattleState.CAPTURED:
+				if GameState.player and opponent_pokemon:
+					GameState.player.add_to_collection(opponent_pokemon)
+					if GameState.player.team.size() < GameState.player.max_team_size:
+						GameState.player.add_to_team(opponent_pokemon)
+					EventBus.pokemon_caught.emit(opponent_pokemon)
+				EventBus.battle_ended.emit("captured")
+			
+			battle_engine.BattleState.ESCAPED:
+				EventBus.battle_ended.emit("escaped")
+			
+			battle_engine.BattleState.DEFEAT:
+				_battle_step_queue.append({
+					"type": "message",
+					"text": "You were defeated... Whited out!"
+				})
+				if GameState.player:
+					for p in GameState.player.team:
+						p.heal_to_full()
+						p.clear_all_statuses()
+					GameState.player.player_position = Vector3(25.0, 0.1, 25.0)
+				EventBus.battle_ended.emit("defeat")
+	
+	if not _is_displaying_messages:
+		_play_next_step()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _waiting_for_continue:
+		var proceed = false
+		if event.is_action_pressed("ui_accept"):
+			proceed = true
+		elif event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_E]:
+				proceed = true
+		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			proceed = true
+		
+		if proceed:
+			get_viewport().set_input_as_handled()
+			_end_battle()
+			return
+	
+	# Skip typewriter during message display
+	if _is_displaying_messages and is_instance_valid(_typewriter_tween) and _typewriter_tween.is_running():
+		var skip = false
+		if event.is_action_pressed("ui_accept"):
+			skip = true
+		elif event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER, KEY_E]:
+				skip = true
+		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			skip = true
+		
+		if skip:
+			_typewriter_tween.custom_step(999.0)
+			get_viewport().set_input_as_handled()
 
 func _queue_message(text: String) -> void:
-	_message_queue.append(text)
+	_battle_step_queue.append({
+		"type": "message",
+		"text": text
+	})
 	if not _is_displaying_messages:
-		_play_next_message()
+		_play_next_step()
 
-func _play_next_message() -> void:
-	if _message_queue.is_empty():
+func _play_next_step() -> void:
+	if _battle_step_queue.is_empty():
 		_is_displaying_messages = false
 		_on_all_messages_displayed()
 		return
 	
 	_is_displaying_messages = true
-	var msg = _message_queue.pop_front()
+	var step = _battle_step_queue.pop_front()
+	var stype = step.get("type", "message")
+	var msg = step.get("text", "")
+	
 	message_lbl.text = msg
+	message_lbl.visible_ratio = 0.0
 	
-	_update_ui()
+	if _typewriter_tween and _typewriter_tween.is_valid():
+		_typewriter_tween.kill()
+	_typewriter_tween = create_tween()
+	var tw_duration = min(0.6, max(0.2, msg.length() * 0.02))
+	_typewriter_tween.tween_property(message_lbl, "visible_ratio", 1.0, tw_duration)
 	
-	# Wait and display next message
-	get_tree().create_timer(1.2).timeout.connect(_play_next_message)
+	var step_delay = tw_duration + 0.65
+	
+	match stype:
+		"attack":
+			# Only the attacker performs an animation. NO HP BARS ARE ALTERED!
+			_animate_attack(step.get("is_player", true))
+			step_delay = tw_duration + 0.45
+		
+		"damage":
+			# The defender takes the hit. Only the defender's HP bar drains!
+			var is_p_target = step.get("is_player_target", false)
+			var new_hp = step.get("defender_hp", 0)
+			var max_hp = step.get("defender_max_hp", 10)
+			
+			_animate_hit(is_p_target)
+			
+			if is_p_target:
+				var hp_tw = create_tween()
+				hp_tw.tween_property(player_hp_bar, "value", float(new_hp), 0.35)
+				_update_hp_bar_color(player_hp_bar, new_hp, max_hp)
+				player_hp_text.text = "%d / %d HP" % [new_hp, max_hp]
+			else:
+				var opp_hp_tw = create_tween()
+				opp_hp_tw.tween_property(opponent_hp_bar, "value", float(new_hp), 0.35)
+				_update_hp_bar_color(opponent_hp_bar, new_hp, max_hp)
+			
+			step_delay = tw_duration + 0.75
+		
+		"faint":
+			var is_p = step.get("is_player", false)
+			var sprite = player_sprite if is_p else opponent_sprite
+			var faint_tw = create_tween()
+			faint_tw.tween_property(sprite, "modulate:a", 0.0, 0.4)
+			step_delay = tw_duration + 0.6
+		
+		"switch":
+			player_pokemon = battle_engine.player_pokemon
+			_init_ui_stats()
+			_update_move_buttons()
+	
+	get_tree().create_timer(step_delay).timeout.connect(_play_next_step)
 
 func _on_all_messages_displayed() -> void:
-	var state = battle_engine.battle_state
-	match state:
-		battle_engine.BattleState.VICTORY:
-			var xp_gained = opponent_pokemon.level * 40
-			var xp_res = player_pokemon.gain_xp(xp_gained)
-			_queue_message("%s gained %d EXP points!" % [player_pokemon.get_display_name(), xp_gained])
-			if xp_res.get("levels_gained", 0) > 0:
-				_queue_message("%s grew to level %d!" % [player_pokemon.get_display_name(), player_pokemon.level])
-			
-			if not is_wild:
-				var tid = "koji"
-				if GameState.has_meta("trainer_id"):
-					tid = GameState.get_meta("trainer_id")
-				if GameState.player:
-					GameState.player.record_trainer_defeat(tid)
-				if QuestSystem:
-					QuestSystem.on_trainer_defeated(tid)
-					QuestSystem.on_trainer_defeated("field_trainer_koji")
-				_queue_message("You defeated Trainer %s!" % (GameState.get_meta("trainer_name") if GameState.has_meta("trainer_name") else ""))
-			
-			EventBus.battle_ended.emit("victory")
-			get_tree().create_timer(2.0).timeout.connect(_end_battle)
-		
-		battle_engine.BattleState.CAPTURED:
-			if GameState.player and opponent_pokemon:
-				GameState.player.add_to_collection(opponent_pokemon)
-				if GameState.player.team.size() < GameState.player.max_team_size:
-					GameState.player.add_to_team(opponent_pokemon)
-				EventBus.pokemon_caught.emit(opponent_pokemon)
-			EventBus.battle_ended.emit("captured")
-			get_tree().create_timer(1.5).timeout.connect(_end_battle)
-		
-		battle_engine.BattleState.ESCAPED:
-			EventBus.battle_ended.emit("escaped")
-			get_tree().create_timer(1.0).timeout.connect(_end_battle)
-		
-		battle_engine.BattleState.DEFEAT:
-			_queue_message("You were defeated... Whited out!")
-			if GameState.player:
-				for p in GameState.player.team:
-					p.heal_to_full()
-					p.clear_all_statuses()
-				GameState.player.player_position = Vector3(25.0, 0.1, 25.0)
-			EventBus.battle_ended.emit("defeat")
-			get_tree().create_timer(2.0).timeout.connect(_end_battle)
-		
-		battle_engine.BattleState.IN_PROGRESS:
-			_show_action_menu()
+	if _battle_concluded:
+		_show_continue_prompt()
+	elif battle_engine.battle_state == battle_engine.BattleState.IN_PROGRESS:
+		_show_action_menu()
+
+func _show_continue_prompt() -> void:
+	_waiting_for_continue = true
+	action_menu.visible = false
+	moves_menu.visible = false
+	if bag_menu: bag_menu.visible = false
+	if pokemon_menu: pokemon_menu.visible = false
+	
+	if continue_btn == null:
+		continue_btn = Button.new()
+		continue_btn.name = "ContinueBtn"
+		continue_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		continue_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		continue_btn.text = "CONTINUE ▶\n(Press Space or Enter)"
+		continue_btn.add_theme_font_size_override("font_size", 18)
+		continue_btn.pressed.connect(_end_battle)
+		menu_panel.add_child(continue_btn)
+	
+	continue_btn.visible = true
+	continue_btn.grab_focus()
 
 func _end_battle() -> void:
+	_waiting_for_continue = false
 	GameState.exit_battle()
 	get_tree().change_scene_to_file("res://scenes/World.tscn")
