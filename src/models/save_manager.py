@@ -285,6 +285,7 @@ def deserialize_player(
                 f"Failed to restore item '{item_id}' (qty: {quantity}): {inventory.last_message}"
             )
 
+
     # Construct Player with restored inventory
     raw_currency = p_info.get("currency", data.get("currency", 500))
     currency = int(raw_currency) if isinstance(raw_currency, (int, float)) and not isinstance(raw_currency, bool) and raw_currency >= 0 else 500
