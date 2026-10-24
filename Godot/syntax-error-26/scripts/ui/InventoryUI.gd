@@ -54,6 +54,10 @@ func _refresh_list() -> void:
 		var idata = ItemData.get_item(item_id)
 		var btn = Button.new()
 		btn.text = "%s  x%d" % [idata.get("name", item_id), qty]
+		var icon_tex = ItemData.get_item_texture(item_id)
+		if icon_tex:
+			btn.icon = icon_tex
+			btn.expand_icon = true
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(_select_item.bind(item_id))
 		item_list.add_child(btn)

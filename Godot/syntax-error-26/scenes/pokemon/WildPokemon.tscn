@@ -1,32 +1,44 @@
-[gd_scene load_steps=5 format=3 uid="uid://c8y3xqjWildPokemon"]
+[gd_scene load_steps=7 format=3 uid="uid://c8y3xqjWildPokemon"]
 
 [ext_resource type="Script" path="res://scripts/pokemon/WildPokemonAI.gd" id="1_wild"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="2_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/pokemon/Pikachu_front.png" id="3_pika"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_1"]
-radius = 0.6
+radius = 0.5
 
-[sub_resource type="SphereMesh" id="SphereMesh_1"]
-radius = 0.6
-height = 1.2
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("2_shadow")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.9, 0.8, 0.2, 1)
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(0.9, 0.9)
+orientation = 1
 
 [node name="WildPokemon" type="CharacterBody3D" groups=["wild_pokemon"]]
 script = ExtResource("1_wild")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("SphereShape3D_1")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-mesh = SubResource("SphereMesh_1")
-surface_material_override/0 = SubResource("StandardMaterial3D_1")
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.016
+texture = ExtResource("3_pika")
 
 [node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
 billboard = 1
 text = "Wild Pokémon"
-font_size = 24
-
+font_size = 20
+outline_size = 5
+outline_color = Color(0, 0, 0, 0.8)

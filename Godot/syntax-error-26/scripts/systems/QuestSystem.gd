@@ -1,4 +1,3 @@
-class_name QuestSystem
 extends Node
 ## QuestSystem - Routes game events to quest objectives
 

@@ -13,7 +13,7 @@ var is_in_battle: bool = false
 var is_game_started: bool = false
 var is_paused: bool = false
 
-const GAME_TIME_RATE: float = 1.0 / 60.0  # 1 game-hour per 60 real seconds
+const GAME_TIME_RATE: float = 1.0 / 240.0  # 1 game-hour per 4 real minutes (gentle, immersive day/night cycle)
 
 signal game_time_changed(new_time: float, time_of_day: String)
 signal region_changed(new_region_id: String)
@@ -35,8 +35,9 @@ func _process(delta: float) -> void:
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
-func new_game(p_player_name: String, starter_species: String) -> void:
+func new_game(p_player_name: String, starter_species: String, avatar: String = "calem") -> void:
 	player = PlayerModel.create(p_player_name)
+	player.trainer_avatar = avatar
 	
 	# Create starter Pokémon at level 5
 	var starter = PokemonInstance.create(starter_species, 5)

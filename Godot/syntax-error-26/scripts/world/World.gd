@@ -1,6 +1,8 @@
 extends Node3D
 ## World - Root scene for the 3D explorable Pokemon world
 
+const RegionData = preload("res://scripts/data/RegionData.gd")
+
 @onready var player_node: CharacterBody3D = $Player
 @onready var hud: Control = $UILayer/HUD
 
@@ -11,6 +13,10 @@ func _ready() -> void:
 	
 	GameState.exit_battle()
 	GameState.resume_game()
+	
+	# Restore player position from saved/previous state
+	if player_node and GameState.player and GameState.player.player_position != Vector3.ZERO:
+		player_node.global_position = GameState.player.player_position
 	
 	# Update region on start
 	if player_node:

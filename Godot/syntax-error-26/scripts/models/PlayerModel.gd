@@ -5,16 +5,28 @@ const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const QuestData = preload("res://scripts/data/QuestData.gd")
 
 var player_name: String = "Trainer"
+var trainer_avatar: String = "calem"
 var unique_id: String = ""
 var team: Array = []           # Array of PokemonInstance (max 6)
+var party: Array:
+	get:
+		return team
 var collection: Array = []     # All caught Pokémon
 var inventory: Dictionary = {} # item_id -> quantity
 var max_team_size: int = 6
 var discovered_regions: Array = []    # Array of region_id strings
 var discovered_landmarks: Array = []  # Array of landmark_id strings
 var interacted_objects: Dictionary = {} # object_id -> {count, last_time}
+var active_pokemon_index: int = 0
+var defeated_trainers: Array = []
 var active_quest_ids: Array = []
 var completed_quest_ids: Array = []
+var active_quests: Array:
+	get:
+		return active_quest_ids
+var completed_quests: Array:
+	get:
+		return completed_quest_ids
 var quest_progress: Dictionary = {}  # quest_id -> {objective_id -> progress}
 var player_position: Vector3 = Vector3(50.0, 0.5, 50.0)  # Start in meadow
 var total_steps: int = 0
@@ -60,10 +72,19 @@ func remove_from_team(p: PokemonInstance) -> bool:
 	return false
 
 func get_active_pokemon() -> PokemonInstance:
-	for p in team:
+	if active_pokemon_index >= 0 and active_pokemon_index < team.size():
+		var p = team[active_pokemon_index]
 		if not p.is_fainted():
 			return p
+	for i in range(team.size()):
+		if not team[i].is_fainted():
+			active_pokemon_index = i
+			return team[i]
 	return null
+
+func set_active_pokemon_index(index: int) -> void:
+	if index >= 0 and index < team.size():
+		active_pokemon_index = index
 
 func has_living_pokemon() -> bool:
 	for p in team:
@@ -144,11 +165,22 @@ func record_interaction(object_id: String) -> void:
 	else:
 		interacted_objects[object_id] = {"count": 1, "last_time": Time.get_ticks_msec()}
 
+func record_object_interaction(object_id: String) -> void:
+	record_interaction(object_id)
+
 func has_interacted(object_id: String) -> bool:
 	return interacted_objects.has(object_id)
 
 func interaction_count(object_id: String) -> int:
 	return interacted_objects.get(object_id, {}).get("count", 0)
+
+func is_trainer_defeated(trainer_id: String) -> bool:
+	return trainer_id in defeated_trainers
+
+func record_trainer_defeat(trainer_id: String) -> void:
+	if trainer_id not in defeated_trainers:
+		defeated_trainers.append(trainer_id)
+		total_battles += 1
 
 # ─── Quest Tracking ───────────────────────────────────────────────────────────
 
@@ -186,12 +218,15 @@ func to_dict() -> Dictionary:
 		collection_data.append(p.to_dict())
 	return {
 		"player_name": player_name,
+		"trainer_avatar": trainer_avatar,
 		"unique_id": unique_id,
+		"active_pokemon_index": active_pokemon_index,
 		"team": team_data,
 		"collection": collection_data,
 		"inventory": inventory.duplicate(),
 		"discovered_regions": discovered_regions.duplicate(),
 		"discovered_landmarks": discovered_landmarks.duplicate(),
+		"defeated_trainers": defeated_trainers.duplicate(),
 		"interacted_objects": interacted_objects.duplicate(true),
 		"active_quest_ids": active_quest_ids.duplicate(),
 		"completed_quest_ids": completed_quest_ids.duplicate(),
@@ -205,10 +240,13 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var pm = new()
 	pm.player_name = d.get("player_name", "Trainer")
+	pm.trainer_avatar = d.get("trainer_avatar", "calem")
 	pm.unique_id = d.get("unique_id", "")
+	pm.active_pokemon_index = d.get("active_pokemon_index", 0)
 	pm.inventory = d.get("inventory", {"poke_ball": 5, "potion": 3}).duplicate()
 	pm.discovered_regions = d.get("discovered_regions", []).duplicate()
 	pm.discovered_landmarks = d.get("discovered_landmarks", []).duplicate()
+	pm.defeated_trainers = d.get("defeated_trainers", []).duplicate()
 	pm.interacted_objects = d.get("interacted_objects", {}).duplicate(true)
 	pm.active_quest_ids = d.get("active_quest_ids", []).duplicate()
 	pm.completed_quest_ids = d.get("completed_quest_ids", []).duplicate()

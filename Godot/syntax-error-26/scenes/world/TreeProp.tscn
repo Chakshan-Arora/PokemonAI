@@ -1,0 +1,59 @@
+[gd_scene load_steps=8 format=3 uid="uid://c8y3xqjTreeProp"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/tree_oak.png" id="2_oak"]
+
+[sub_resource type="GDScript" id="GDScript_treeprop"]
+script/source = "extends StaticBody3D
+
+@export_enum(\"oak\", \"pine\") var tree_type: String = \"oak\"
+@onready var sprite: Sprite3D = $Sprite3D
+
+func _ready() -> void:
+	if is_instance_valid(sprite):
+		if tree_type == \"pine\":
+			var tex = load(\"res://assets/sprites/world/tree_pine.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.055
+				sprite.position.y = 1.75
+		else:
+			var tex = load(\"res://assets/sprites/world/tree_oak.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.055
+				sprite.position.y = 1.75
+"
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trunk"]
+height = 1.8
+radius = 0.45
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_shadow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(1.8, 1.8)
+orientation = 1
+
+[node name="TreeProp" type="StaticBody3D"]
+script = SubResource("GDScript_treeprop")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CylinderShape3D_trunk")
+
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.055
+texture = ExtResource("2_oak")
+

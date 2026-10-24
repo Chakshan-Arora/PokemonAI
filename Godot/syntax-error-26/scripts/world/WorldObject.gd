@@ -10,19 +10,18 @@ extends StaticBody3D
 @export var region_id: String = "starting_meadow"
 
 @onready var label_3d: Label3D = $Label3D
-@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
+@onready var sprite_3d: Sprite3D = $Sprite3D
+@onready var shadow_mesh: MeshInstance3D = $Shadow
 
 var _respawn_timer: float = 0.0
 var _is_harvested: bool = false
 
 func _ready() -> void:
 	add_to_group("interactable")
-	if label_3d:
+	if is_instance_valid(label_3d):
 		label_3d.text = object_name
 	
-	# Apply distinct color material based on type
-	if mesh_instance:
-		_apply_type_material()
+	_setup_visuals()
 
 func _process(delta: float) -> void:
 	if _is_harvested and respawn_duration > 0.0:
@@ -32,22 +31,46 @@ func _process(delta: float) -> void:
 			visible = true
 			EventBus.world_object_respawned.emit(object_id)
 
-func _apply_type_material() -> void:
-	var mat = StandardMaterial3D.new()
-	match object_type:
-		"resource_node":
-			mat.albedo_color = Color(0.2, 0.8, 0.3)  # Berry green
-		"treasure":
-			mat.albedo_color = Color(1.0, 0.84, 0.0) # Gold
-		"sign":
-			mat.albedo_color = Color(0.6, 0.4, 0.2)  # Wood brown
-		"landmark":
-			mat.albedo_color = Color(0.7, 0.3, 0.9)  # Shrine purple
-		"npc":
-			mat.albedo_color = Color(0.2, 0.7, 0.9)  # Cyan
-		_:
-			mat.albedo_color = Color(0.8, 0.8, 0.8)
-	mesh_instance.material_override = mat
+func _setup_visuals() -> void:
+	if not is_instance_valid(sprite_3d):
+		return
+	
+	if object_id == "campfire_rest":
+		var tex = load("res://assets/sprites/world/campfire.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.045
+			sprite_3d.position.y = 0.7
+	elif object_id == "ancient_shrine" or object_type == "landmark":
+		var tex = load("res://assets/sprites/world/rock.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.075
+			sprite_3d.position.y = 1.0
+	elif object_type == "resource_node" or "berry" in object_id:
+		var tex = load("res://assets/sprites/world/bush.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.05
+			sprite_3d.position.y = 0.7
+	elif object_type == "sign" or "sign" in object_id:
+		var tex = load("res://assets/sprites/world/sign.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.045
+			sprite_3d.position.y = 0.65
+	elif object_type == "npc":
+		var tex = load("res://assets/sprites/trainers/red.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.045
+			sprite_3d.position.y = 0.75
+	elif object_type == "treasure" or "cache" in object_id:
+		var tex = load("res://assets/sprites/items/poke_ball.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.035
+			sprite_3d.position.y = 0.5
 
 func get_interaction_text() -> String:
 	if _is_harvested:
@@ -68,31 +91,30 @@ func on_interact(_player_node: Node3D) -> void:
 	# Show interaction message
 	EventBus.show_message.emit(interaction_text, 4.0)
 	
-	# Grant rewards if any
-	if not rewards.is_empty() and GameState.player != null:
+	# Handle campfire rest: fully heal team!
+	if object_id == "campfire_rest":
+		if GameState.player:
+			for p in GameState.player.team:
+				p.heal_to_full()
+				p.clear_all_statuses()
+			EventBus.show_message.emit("All Pokémon in your party have been fully healed!", 4.0)
+	
+	# Give rewards if any
+	if not rewards.is_empty():
 		for item_id in rewards:
-			var qty = int(rewards[item_id])
+			var qty = rewards[item_id]
 			GameState.player.add_item(item_id, qty)
-			EventBus.item_obtained.emit(item_id, qty)
+			EventBus.inventory_updated.emit(item_id, GameState.player.get_item_count(item_id))
+			EventBus.item_collected.emit(item_id, qty)
+		
+		if respawn_duration > 0.0:
+			_is_harvested = true
+			_respawn_timer = respawn_duration
+			visible = false
+		else:
+			_is_harvested = true
+			if object_type == "treasure":
+				queue_free()
 	
-	# Handle landmark discovery
-	if object_type == "landmark" and GameState.player != null:
-		var is_new = GameState.player.discover_landmark(object_id)
-		if is_new:
-			EventBus.landmark_discovered.emit(object_id, object_name)
-	
-	# Record interaction in player model
-	if GameState.player != null:
-		GameState.player.record_object_interaction(object_id)
-	
-	EventBus.world_object_interacted.emit(object_id, object_type)
-	
-	# Handle depletion / respawn
-	if object_type == "treasure":
-		_is_harvested = true
-		visible = false
-	elif object_type == "resource_node" and respawn_duration > 0.0:
-		_is_harvested = true
-		_respawn_timer = respawn_duration
-		visible = false
-
+	# Trigger quest step updates
+	EventBus.world_object_interacted.emit(object_id, object_type, region_id)

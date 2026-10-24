@@ -11,27 +11,34 @@ const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 @export var team_levels: Array[int] = [4, 5]
 
 @onready var label_3d: Label3D = $Label3D
-@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
+@onready var sprite_3d: Sprite3D = $Sprite3D
 
 var _is_defeated: bool = false
 
 func _ready() -> void:
 	add_to_group("interactable")
-	if label_3d:
+	if is_instance_valid(label_3d):
 		label_3d.text = trainer_name
 	
-	if mesh_instance:
-		var mat = StandardMaterial3D.new()
-		mat.albedo_color = Color(0.9, 0.4, 0.1)  # Trainer red-orange
-		mesh_instance.material_override = mat
+	if is_instance_valid(sprite_3d):
+		var path = "res://assets/sprites/trainers/%s.png" % trainer_id.to_lower()
+		var tex = load(path)
+		if tex:
+			sprite_3d.texture = tex
 
 func get_interaction_text() -> String:
-	return "Battle " + trainer_name if not _is_defeated else "Talk to " + trainer_name
+	var def = _is_defeated
+	if GameState.player and GameState.player.is_trainer_defeated(trainer_id):
+		def = true
+	return "Talk to " + trainer_name if def else "Battle " + trainer_name
 
 func on_interact(_player_node: Node3D) -> void:
-	if _is_defeated:
+	if _is_defeated or (GameState.player and GameState.player.is_trainer_defeated(trainer_id)):
 		EventBus.show_message.emit(dialogue_defeat, 4.0)
 		return
+	
+	if is_instance_valid(_player_node) and GameState.player:
+		GameState.player.player_position = _player_node.global_position
 	
 	EventBus.show_message.emit(dialogue_intro, 3.0)
 	
@@ -43,6 +50,7 @@ func on_interact(_player_node: Node3D) -> void:
 	GameState.set_meta("wild_pokemon_for_battle", opp_p.to_dict())
 	GameState.set_meta("is_trainer_battle", true)
 	GameState.set_meta("trainer_name", trainer_name)
+	GameState.set_meta("trainer_id", trainer_id)
 	GameState.enter_battle()
 	
 	_is_defeated = true
@@ -52,5 +60,4 @@ func on_interact(_player_node: Node3D) -> void:
 		opp_p.to_dict(),
 		true
 	)
-	
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
