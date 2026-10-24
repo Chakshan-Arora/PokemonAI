@@ -71,7 +71,7 @@ func _build_companion_dialogue_ui() -> void:
 	companion_panel.visible = false
 	
 	var vbox = VBoxContainer.new()
-	vbox.theme_override_constants.separation = 8
+	vbox.add_theme_constant_override("separation", 8)
 	companion_panel.add_child(vbox)
 	
 	var header_hbox = HBoxContainer.new()
