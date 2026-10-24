@@ -29,6 +29,8 @@ signal quest_completed(quest_id)
 signal region_discovered(region_id, region_name)
 signal landmark_discovered(landmark_id, landmark_name)
 signal item_obtained(item_id, quantity)
+signal inventory_updated(item_id, count)
+signal item_collected(item_id, quantity)
 signal world_object_interacted(object_id, object_type)
 signal world_object_respawned(object_id)
 

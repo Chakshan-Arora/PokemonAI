@@ -54,6 +54,7 @@ var companion_input: LineEdit = null
 var companion_output_lbl: Label = null
 var companion_send_btn: Button = null
 var companion_close_btn: Button = null
+var _dialogue_tween: Tween = null
 
 func _build_companion_dialogue_ui() -> void:
 	companion_panel = PanelContainer.new()
@@ -100,6 +101,11 @@ func _build_companion_dialogue_ui() -> void:
 	companion_input.placeholder_text = "Type message to your partner..."
 	companion_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	companion_input.text_submitted.connect(_on_companion_message_submitted)
+	companion_input.focus_entered.connect(func(): GameState.set_meta("typing_active", true))
+	companion_input.focus_exited.connect(func():
+		if not (companion_panel and companion_panel.visible):
+			GameState.set_meta("typing_active", false)
+	)
 	input_hbox.add_child(companion_input)
 	
 	companion_send_btn = Button.new()
@@ -111,18 +117,35 @@ func _build_companion_dialogue_ui() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if companion_panel and companion_panel.visible:
+			if event.keycode == KEY_ESCAPE:
+				_close_companion_chat()
+				get_viewport().set_input_as_handled()
+				return
 		if event.keycode == KEY_C:
-			_toggle_companion_chat()
+			# Do not toggle with C if typing inside companion input
+			if not (companion_input and companion_input.has_focus()):
+				_toggle_companion_chat()
+				get_viewport().set_input_as_handled()
 
 func _toggle_companion_chat() -> void:
 	if companion_panel:
 		companion_panel.visible = not companion_panel.visible
-		if companion_panel.visible and companion_input:
-			companion_input.grab_focus()
+		if companion_panel.visible:
+			GameState.set_meta("typing_active", true)
+			if companion_input:
+				companion_input.grab_focus()
+		else:
+			GameState.set_meta("typing_active", false)
+			if companion_input and companion_input.has_focus():
+				companion_input.release_focus()
 
 func _close_companion_chat() -> void:
 	if companion_panel:
 		companion_panel.visible = false
+		GameState.set_meta("typing_active", false)
+		if companion_input and companion_input.has_focus():
+			companion_input.release_focus()
 
 func _on_companion_message_submitted(text: String) -> void:
 	var msg = text.strip_edges()
@@ -133,8 +156,10 @@ func _on_companion_message_submitted(text: String) -> void:
 		companion_output_lbl.text = "No active partner Pokémon!"
 		return
 	
-	companion_output_lbl.text = "Thinking..."
+	companion_output_lbl.text = "%s is thinking..." % active_p.get_display_name()
 	companion_input.text = ""
+	companion_input.grab_focus()
+	GameState.set_meta("typing_active", true)
 	
 	var p_name = GameState.player.player_name if GameState.player else "Trainer"
 	var res = await LLMClient.talk_to_companion(active_p.species_name, msg, p_name)
@@ -148,6 +173,8 @@ func _on_companion_message_submitted(text: String) -> void:
 			float(res.get("affection_delta", 0.0))
 		]
 		show_notification("Spoke with %s!" % active_p.get_display_name(), 3.0)
+	else:
+		companion_output_lbl.text = "%s looked attentively, but couldn't answer." % active_p.get_display_name()
 
 func _process(delta: float) -> void:
 	if message_banner.visible:
@@ -357,8 +384,10 @@ func show_notification(text: String, duration: float = 3.0) -> void:
 		if dialogue_label:
 			dialogue_label.text = text
 			dialogue_label.visible_ratio = 0.0
-			var tw = create_tween()
-			tw.tween_property(dialogue_label, "visible_ratio", 1.0, 0.4)
+			if _dialogue_tween and _dialogue_tween.is_valid():
+				_dialogue_tween.kill()
+			_dialogue_tween = create_tween()
+			_dialogue_tween.tween_property(dialogue_label, "visible_ratio", 1.0, 0.4)
 		
 		dialogue_box.visible = true
 		_dialogue_timer = duration + 0.5

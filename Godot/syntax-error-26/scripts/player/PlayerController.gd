@@ -74,7 +74,23 @@ func _ready() -> void:
 	EventBus.open_inventory_ui.connect(_on_open_inventory_ui)
 	EventBus.open_quest_journal.connect(_on_open_quest_journal)
 
+func _is_typing() -> bool:
+	if GameState.has_meta("typing_active") and GameState.get_meta("typing_active"):
+		return true
+	var focus_owner = get_viewport().gui_get_focus_owner()
+	if focus_owner is LineEdit or focus_owner is TextEdit:
+		return true
+	return false
+
 func _input(event: InputEvent) -> void:
+	# If player is typing into any text input (e.g. Companion LLM chat, name input),
+	# ignore all hotkeys (I, P, J, E, Space, Enter, menus, etc.) so typing stays 100% focused
+	if _is_typing():
+		return
+	
+	if GameState.is_in_battle or GameState.is_paused:
+		return
+	
 	# Camera orbit with mouse drag
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		camera_rotation_y -= event.relative.x * CAMERA_SENSITIVITY
@@ -112,6 +128,13 @@ func _physics_process(delta: float) -> void:
 	# Gravity
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
+	
+	# If player is actively typing, stop movement and do not process camera arrows or WASD
+	if _is_typing():
+		velocity.x = move_toward(velocity.x, 0, WALK_SPEED * delta * 10.0)
+		velocity.z = move_toward(velocity.z, 0, WALK_SPEED * delta * 10.0)
+		move_and_slide()
+		return
 	
 	# Camera rotate with arrow keys (no mouse drag)
 	if Input.is_action_pressed("ui_left"):

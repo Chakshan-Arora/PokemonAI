@@ -89,7 +89,7 @@ func on_interact(_player_node: Node3D) -> void:
 		return
 	
 	# Show interaction message
-	EventBus.show_message.emit(interaction_text, 4.0)
+	EventBus.show_message.emit(interaction_text)
 	
 	# Handle campfire rest: fully heal team!
 	if object_id == "campfire_rest":
@@ -97,15 +97,16 @@ func on_interact(_player_node: Node3D) -> void:
 			for p in GameState.player.team:
 				p.heal_to_full()
 				p.clear_all_statuses()
-			EventBus.show_message.emit("All Pokémon in your party have been fully healed!", 4.0)
+			EventBus.show_message.emit("All Pokémon in your party have been fully healed!")
 	
 	# Give rewards if any
 	if not rewards.is_empty():
 		for item_id in rewards:
 			var qty = rewards[item_id]
-			GameState.player.add_item(item_id, qty)
-			EventBus.inventory_updated.emit(item_id, GameState.player.get_item_count(item_id))
-			EventBus.item_collected.emit(item_id, qty)
+			if GameState.player:
+				GameState.player.add_item(item_id, qty)
+			EventBus.item_obtained.emit(item_id, qty)
+			EventBus.inventory_updated.emit(item_id, GameState.player.get_item_count(item_id) if GameState.player else qty)
 		
 		if respawn_duration > 0.0:
 			_is_harvested = true
@@ -117,4 +118,4 @@ func on_interact(_player_node: Node3D) -> void:
 				queue_free()
 	
 	# Trigger quest step updates
-	EventBus.world_object_interacted.emit(object_id, object_type, region_id)
+	EventBus.world_object_interacted.emit(object_id, object_type)

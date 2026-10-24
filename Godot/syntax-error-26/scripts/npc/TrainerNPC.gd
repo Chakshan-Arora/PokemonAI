@@ -34,13 +34,13 @@ func get_interaction_text() -> String:
 
 func on_interact(_player_node: Node3D) -> void:
 	if _is_defeated or (GameState.player and GameState.player.is_trainer_defeated(trainer_id)):
-		EventBus.show_message.emit(dialogue_defeat, 4.0)
+		EventBus.show_message.emit(dialogue_defeat)
 		return
 	
 	if is_instance_valid(_player_node) and GameState.player:
 		GameState.player.player_position = _player_node.global_position
 	
-	EventBus.show_message.emit(dialogue_intro, 3.0)
+	EventBus.show_message.emit(dialogue_intro)
 	
 	# Create opponent Pokemon
 	var opp_species = team_species[0] if not team_species.is_empty() else "Geodude"
