@@ -131,6 +131,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         )
 
         decision = self.provider.decide(agent, perception)
+        print(f"[Companion Talk] {species} -> \"{decision.dialogue}\" ({decision.emotional_state})")
 
         # Dynamic relationship delta parsed from model response
         trust_delta = float(getattr(decision, "trust_delta", 2.0) or 2.0)

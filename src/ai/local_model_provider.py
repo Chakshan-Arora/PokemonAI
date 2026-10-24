@@ -233,7 +233,7 @@ class LocalModelDecisionProvider(DecisionProvider):
                 brace_count = 0
                 in_json = False
 
-                for response in stream_generate(target_model, target_tok, prompt=prompt, max_tokens=280, sampler=sampler):
+                for response in stream_generate(target_model, target_tok, prompt=prompt, max_tokens=140, sampler=sampler):
                     text = response.text
                     output_parts.append(text)
                     for char in text:
@@ -263,7 +263,7 @@ class LocalModelDecisionProvider(DecisionProvider):
                         {"role": "user", "content": user_prompt},
                     ]
                     prompt = target_tok.apply_chat_template(messages, add_generation_prompt=True)
-                    raw = generate(target_model, target_tok, prompt=prompt, max_tokens=280, sampler=sampler, verbose=False)
+                    raw = generate(target_model, target_tok, prompt=prompt, max_tokens=140, sampler=sampler, verbose=False)
                     start = raw.find("{")
                     end = raw.rfind("}")
                     if start != -1 and end != -1 and end > start:
