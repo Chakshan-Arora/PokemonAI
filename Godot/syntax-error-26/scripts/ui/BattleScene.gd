@@ -933,7 +933,6 @@ func _create_talk_menu() -> void:
 	
 	var presets = [
 		{"label": "💡 Ask Move Advice", "text": "What move should we use here?"},
-		{"label": "🎯 Hold Back (Only 4 DMG)", "text": "Hold back, only do 4 damage now!"},
 		{"label": "🔥 Cheer & Encourage", "text": "You can do this! Give it everything you've got!"},
 		{"label": "⭐ Praise Performance", "text": "Amazing job! That was fantastic!"},
 		{"label": "🛡️ Watch Out & Guard", "text": "Careful now! Watch out and stay on your guard!"}
@@ -945,6 +944,28 @@ func _create_talk_menu() -> void:
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(_send_battle_talk.bind(p["text"]))
 		vbox.add_child(btn)
+	
+	var hbox = HBoxContainer.new()
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var line_edit = LineEdit.new()
+	line_edit.placeholder_text = "Or type a custom command or shout..."
+	line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(line_edit)
+	
+	var send_btn = Button.new()
+	send_btn.text = "Send"
+	send_btn.pressed.connect(func():
+		var t = line_edit.text.strip_edges()
+		if t != "":
+			_send_battle_talk(t)
+	)
+	hbox.add_child(send_btn)
+	line_edit.text_submitted.connect(func(new_text: String):
+		var t = new_text.strip_edges()
+		if t != "":
+			_send_battle_talk(t)
+	)
+	vbox.add_child(hbox)
 	
 	var back = Button.new()
 	back.text = "← Back"
