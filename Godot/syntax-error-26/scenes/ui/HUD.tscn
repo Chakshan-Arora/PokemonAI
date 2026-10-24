@@ -126,7 +126,7 @@ text = "Starting Meadow"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.65, 0.65, 1)
 theme_override_font_sizes/font_size = 12
-text = "[TAB] Party | [I] Bag | [J] Quests | [ESC] Pause"
+text = "[TAB] Party | [C] Talk (LLM) | [I] Bag | [J] Quests | [ESC] Pause"
 
 [node name="CenterPrompt" type="Control" parent="."]
 layout_mode = 1

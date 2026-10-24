@@ -137,6 +137,27 @@ func _on_move_selected(index: int) -> void:
 	var chosen_attack = player_pokemon.attacks[index]
 	moves_menu.visible = false
 	
+	# Query local fine-tuned LLM for opponent tactical action and combat dialogue
+	if opponent_pokemon != null and LLMClient != null:
+		var act_dict = {
+			"species": opponent_pokemon.species_name,
+			"level": opponent_pokemon.level,
+			"current_hp": opponent_pokemon.current_hp,
+			"max_hp": opponent_pokemon.max_hp,
+			"known_moves": opponent_pokemon.attacks
+		}
+		var def_dict = {
+			"species": player_pokemon.species_name,
+			"level": player_pokemon.level,
+			"apparent_health": "wounded" if player_pokemon.current_hp < player_pokemon.max_hp * 0.5 else "healthy"
+		}
+		var llm_res = await LLMClient.decide_battle_action(act_dict, def_dict, not is_wild, battle_engine.current_turn + 1)
+		if not llm_res.is_empty():
+			if llm_res.has("chosen_move") and llm_res["chosen_move"] != "":
+				battle_engine.set_override_opponent_action(battle_engine.ActionType.ATTACK, llm_res["chosen_move"])
+			if llm_res.has("dialogue") and llm_res["dialogue"] != "":
+				_queue_message("%s" % llm_res["dialogue"])
+	
 	# Select player action in engine
 	battle_engine.select_player_action(battle_engine.ActionType.ATTACK, chosen_attack)
 	var result = battle_engine.resolve_turn()

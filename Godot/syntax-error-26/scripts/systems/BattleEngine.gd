@@ -23,6 +23,7 @@ var events: Array = []
 # Pending actions
 var _player_action: Dictionary = {}
 var _opponent_action: Dictionary = {}
+var _override_opponent_action: Dictionary = {}
 
 signal turn_resolved(turn_data: Dictionary)
 signal battle_over(state: BattleState, events: Array)
@@ -51,6 +52,10 @@ func reset() -> void:
 ## Queue the player's chosen action
 func select_player_action(action_type: ActionType, param: String = "") -> void:
 	_player_action = {"type": action_type, "param": param}
+
+## Explicitly set opponent's chosen action (e.g. from local LLM)
+func set_override_opponent_action(action_type: ActionType, param: String = "") -> void:
+	_override_opponent_action = {"type": action_type, "param": param}
 
 ## Resolve a full turn. Returns dict with all turn events.
 func resolve_turn() -> Dictionary:
@@ -381,6 +386,11 @@ func _switch_pokemon(pokemon_uid: String) -> Array:
 # ─── Opponent AI ──────────────────────────────────────────────────────────────
 
 func _choose_opponent_action() -> Dictionary:
+	if not _override_opponent_action.is_empty():
+		var act = _override_opponent_action
+		_override_opponent_action = {}
+		return act
+
 	if opponent_pokemon == null or opponent_pokemon.attacks.is_empty():
 		return {"type": ActionType.ATTACK, "param": "Tackle"}
 	

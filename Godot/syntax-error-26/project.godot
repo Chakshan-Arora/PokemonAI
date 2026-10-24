@@ -21,6 +21,7 @@ EventBus="*res://scripts/autoloads/EventBus.gd"
 GameData="*res://scripts/autoloads/GameData.gd"
 GameState="*res://scripts/autoloads/GameState.gd"
 SaveLoad="*res://scripts/autoloads/SaveLoad.gd"
+LLMClient="*res://scripts/autoloads/LLMClient.gd"
 
 [display]
 

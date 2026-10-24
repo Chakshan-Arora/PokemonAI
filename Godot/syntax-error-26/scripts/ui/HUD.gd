@@ -35,6 +35,107 @@ func _ready() -> void:
 	GameState.game_time_changed.connect(_on_game_time_changed)
 	
 	update_hud()
+	_build_companion_dialogue_ui()
+
+var companion_panel: PanelContainer = null
+var companion_input: LineEdit = null
+var companion_output_lbl: Label = null
+var companion_send_btn: Button = null
+var companion_close_btn: Button = null
+
+func _build_companion_dialogue_ui() -> void:
+	companion_panel = PanelContainer.new()
+	companion_panel.name = "CompanionChatPanel"
+	companion_panel.anchors_preset = Control.PRESET_CENTER
+	companion_panel.anchor_left = 0.5
+	companion_panel.anchor_top = 0.5
+	companion_panel.anchor_right = 0.5
+	companion_panel.anchor_bottom = 0.5
+	companion_panel.offset_left = -230
+	companion_panel.offset_top = -100
+	companion_panel.offset_right = 230
+	companion_panel.offset_bottom = 100
+	companion_panel.custom_minimum_size = Vector2(460, 200)
+	companion_panel.visible = false
+	
+	var vbox = VBoxContainer.new()
+	vbox.theme_override_constants.separation = 8
+	companion_panel.add_child(vbox)
+	
+	var header_hbox = HBoxContainer.new()
+	vbox.add_child(header_hbox)
+	
+	var title = Label.new()
+	title.text = "💬 Partner Pokémon (Local LLM)"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_hbox.add_child(title)
+	
+	companion_close_btn = Button.new()
+	companion_close_btn.text = " ✕ "
+	companion_close_btn.pressed.connect(_close_companion_chat)
+	header_hbox.add_child(companion_close_btn)
+	
+	companion_output_lbl = Label.new()
+	companion_output_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	companion_output_lbl.text = "Speak freely with your partner Pokemon (press C to toggle)..."
+	companion_output_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(companion_output_lbl)
+	
+	var input_hbox = HBoxContainer.new()
+	vbox.add_child(input_hbox)
+	
+	companion_input = LineEdit.new()
+	companion_input.placeholder_text = "Type message to your partner..."
+	companion_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	companion_input.text_submitted.connect(_on_companion_message_submitted)
+	input_hbox.add_child(companion_input)
+	
+	companion_send_btn = Button.new()
+	companion_send_btn.text = "Send"
+	companion_send_btn.pressed.connect(func(): _on_companion_message_submitted(companion_input.text))
+	input_hbox.add_child(companion_send_btn)
+	
+	add_child(companion_panel)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_C:
+			_toggle_companion_chat()
+
+func _toggle_companion_chat() -> void:
+	if companion_panel:
+		companion_panel.visible = not companion_panel.visible
+		if companion_panel.visible and companion_input:
+			companion_input.grab_focus()
+
+func _close_companion_chat() -> void:
+	if companion_panel:
+		companion_panel.visible = false
+
+func _on_companion_message_submitted(text: String) -> void:
+	var msg = text.strip_edges()
+	if msg == "":
+		return
+	var active_p = GameState.get_active_pokemon()
+	if not active_p:
+		companion_output_lbl.text = "No active partner Pokémon!"
+		return
+	
+	companion_output_lbl.text = "Thinking..."
+	companion_input.text = ""
+	
+	var p_name = GameState.player.player_name if GameState.player else "Trainer"
+	var res = await LLMClient.talk_to_companion(active_p.species_name, msg, p_name)
+	
+	if not res.is_empty():
+		companion_output_lbl.text = "%s: \"%s\"\n[State: %s | Trust: +%.1f | Affection: +%.1f]" % [
+			active_p.get_display_name(),
+			res.get("dialogue", ""),
+			res.get("emotional_state", "pleased").capitalize(),
+			float(res.get("trust_delta", 0.0)),
+			float(res.get("affection_delta", 0.0))
+		]
+		show_notification("Spoke with %s!" % active_p.get_display_name(), 3.0)
 
 func _process(delta: float) -> void:
 	if message_banner.visible:
