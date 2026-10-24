@@ -12,8 +12,13 @@ var game_time: float = 8.0    # 0–24 hour cycle, starts at 8am
 var is_in_battle: bool = false
 var is_game_started: bool = false
 var is_paused: bool = false
+var talk_idle_timer: float = 0.0
+const TALK_DECAY_INTERVAL: float = 300.0  # 5 minutes in real gameplay seconds
 
-const GAME_TIME_RATE: float = 1.0 / 240.0  # 1 game-hour per 4 real minutes (gentle, immersive day/night cycle)
+const GAME_DAY_REAL_MINUTES: float = 20.0
+const GAME_TIME_RATE: float = 24.0 / (GAME_DAY_REAL_MINUTES * 60.0)  # 24 in-game hours per 20 real minutes (1200 real seconds) = 0.02 game hours/sec
+
+var _last_emitted_minute: int = -1
 
 signal game_time_changed(new_time: float, time_of_day: String)
 signal region_changed(new_region_id: String)
@@ -30,8 +35,31 @@ func _process(delta: float) -> void:
 		if game_time >= 24.0:
 			game_time -= 24.0
 		var new_tod = get_time_of_day()
-		if new_tod != old_tod:
+		
+		# Emit when discrete minute changes or time of day changes
+		var current_minute = int(round(game_time * 60.0)) % 1440
+		if current_minute != _last_emitted_minute or new_tod != old_tod:
+			_last_emitted_minute = current_minute
 			game_time_changed.emit(game_time, new_tod)
+		
+		# Every 5 minutes without talking to active Pokemon, trust & affection decrease by 2
+		talk_idle_timer += delta
+		if talk_idle_timer >= TALK_DECAY_INTERVAL:
+			talk_idle_timer -= TALK_DECAY_INTERVAL
+			_apply_talk_decay()
+
+func record_talk_interaction() -> void:
+	talk_idle_timer = 0.0
+	var active_p = get_active_pokemon()
+	if active_p:
+		active_p.last_talk_time = game_time
+
+func _apply_talk_decay() -> void:
+	var active_p = get_active_pokemon()
+	if active_p:
+		active_p.decay_trust_and_affection(2.0)
+		EventBus.show_message.emit("💤 %s feels a bit lonely. (Trust -2, Affection -2)" % active_p.get_display_name())
+		SaveLoad.save_game()
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
@@ -42,6 +70,8 @@ func new_game(p_player_name: String, starter_species: String, avatar: String = "
 	# Create starter Pokémon at level 5
 	var starter = PokemonInstance.create(starter_species, 5)
 	starter.bond = 20.0
+	starter.trust = 50.0
+	starter.affection = 50.0
 	player.add_to_team(starter)
 	
 	# Start auto-start quests
@@ -50,17 +80,21 @@ func new_game(p_player_name: String, starter_species: String, avatar: String = "
 	
 	current_region_id = "starting_meadow"
 	game_time = 8.0
+	_last_emitted_minute = -1
 	is_game_started = true
 	is_in_battle = false
 	
 	game_started.emit()
+	game_time_changed.emit(game_time, get_time_of_day())
 	EventBus.starter_chosen.emit(starter)
 	SaveLoad.save_game()
 
 func load_game(player_model: PlayerModel) -> void:
 	player = player_model
+	_last_emitted_minute = -1
 	is_game_started = true
 	game_started.emit()
+	game_time_changed.emit(game_time, get_time_of_day())
 
 # ─── Party / Pokemon Access ───────────────────────────────────────────────────
 
@@ -98,18 +132,25 @@ func change_region(new_region_id: String) -> void:
 # ─── Time of Day ──────────────────────────────────────────────────────────────
 
 func get_time_of_day() -> String:
-	if game_time >= 6.0 and game_time < 10.0:
+	if game_time >= 5.0 and game_time < 10.0:
 		return "morning"
-	elif game_time >= 10.0 and game_time < 18.0:
+	elif game_time >= 10.0 and game_time < 17.0:
 		return "day"
-	elif game_time >= 18.0 and game_time < 21.0:
+	elif game_time >= 17.0 and game_time < 21.0:
 		return "evening"
 	else:
 		return "night"
 
+func is_night() -> bool:
+	return get_time_of_day() == "night"
+
+func is_day() -> bool:
+	return get_time_of_day() in ["morning", "day"]
+
 func get_formatted_time() -> String:
-	var hours = int(game_time)
-	var minutes = int((game_time - hours) * 60.0)
+	var total_minutes = int(round(game_time * 60.0))
+	var hours = (total_minutes / 60) % 24
+	var minutes = total_minutes % 60
 	var ampm = "AM" if hours < 12 else "PM"
 	var display_hour = hours % 12
 	if display_hour == 0:

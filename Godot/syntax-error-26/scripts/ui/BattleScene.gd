@@ -191,6 +191,9 @@ func _setup_battle() -> void:
 		
 		if ResourceLoader.exists(bg_path):
 			bg_tr.texture = load(bg_path) as Texture2D
+		
+		# Apply day and night lighting/tint to battle arena
+		_apply_time_of_day_atmosphere()
 	
 	battle_engine.start_battle(player_pokemon, opponent_pokemon, is_wild)
 	active_battle_morale = 0
@@ -1053,3 +1056,24 @@ func _update_morale_badge(tier: String) -> void:
 		_:
 			morale_badge.self_modulate = Color(0.8, 0.8, 0.8)
 			morale_badge.tooltip_text = "Morale: Normal"
+
+func _apply_time_of_day_atmosphere() -> void:
+	var tod = GameState.get_time_of_day()
+	var bg_tr = $Arena/Background as TextureRect
+	var dim_rect = $Arena/Background/DimOverlay as ColorRect
+	if not bg_tr or not dim_rect:
+		return
+	
+	match tod:
+		"morning":
+			bg_tr.modulate = Color(1.0, 0.96, 0.88, 1.0)
+			dim_rect.color = Color(0.20, 0.12, 0.05, 0.10)
+		"day":
+			bg_tr.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			dim_rect.color = Color(0.0, 0.0, 0.0, 0.15)
+		"evening":
+			bg_tr.modulate = Color(1.0, 0.78, 0.65, 1.0)
+			dim_rect.color = Color(0.30, 0.10, 0.05, 0.22)
+		"night":
+			bg_tr.modulate = Color(0.55, 0.60, 0.85, 1.0)
+			dim_rect.color = Color(0.04, 0.06, 0.18, 0.42)

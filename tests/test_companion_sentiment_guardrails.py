@@ -161,8 +161,8 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
         self.assertLess(res["new_affection"], 50.0)
         self.assertEqual(res["emotional_state"], "hurt")
 
-    def test_negative_comment_forces_zero_delta(self) -> None:
-        # Scolding / criticism: trust and affection must be exactly 0.0
+    def test_negative_critique_decreases_trust_and_affection_by_2(self) -> None:
+        # Scolding / criticism: trust and affection must decrease by 2.0
         # If model hallucinated a cheerful state, server guardrail overrides it to discouraged
         self.mock_provider.decide.return_value = AgentDecision(
             action_type=AgentActionType.INTERACT,
@@ -181,10 +181,10 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
         })
 
         self.assertEqual(res["sentiment"], "negative")
-        self.assertEqual(res["trust_delta"], 0.0)
-        self.assertEqual(res["affection_delta"], 0.0)
-        self.assertEqual(res["new_trust"], 40.0)
-        self.assertEqual(res["new_affection"], 40.0)
+        self.assertEqual(res["trust_delta"], -2.0)
+        self.assertEqual(res["affection_delta"], -2.0)
+        self.assertEqual(res["new_trust"], 38.0)
+        self.assertEqual(res["new_affection"], 38.0)
         self.assertEqual(res["emotional_state"], "discouraged")
 
     def test_positive_comment_increases_trust_and_affection(self) -> None:
@@ -247,6 +247,62 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
         })
         self.assertLessEqual(res_max["new_trust"], 100.0)
         self.assertLessEqual(res_max["new_affection"], 100.0)
+
+
+class TestTrustAffectionBondMechanics(unittest.TestCase):
+    """Tests the trust/affection decay, 1.5x bond multiplier, and 100% bond EXP reward."""
+
+    def setUp(self) -> None:
+        from src.models.personality import Personality
+        from src.data.species import PIKACHU
+        from src.models.pokemon import Pokemon
+        from src.models.bond_manager import BondManager
+
+        self.pers = Personality(50, 50, 50, 50, 50, 50)
+        self.pokemon = Pokemon(
+            species=PIKACHU,
+            personality=self.pers,
+            level=5,
+            bond=40,
+            obedience=60,
+            trust=60.0,
+            affection=60.0,
+        )
+        self.bond_mgr = BondManager()
+
+    def test_bond_multiplier_active_when_both_above_50(self) -> None:
+        self.pokemon.trust = 55.0
+        self.pokemon.affection = 55.0
+        self.assertEqual(self.pokemon.bond_multiplier, 1.5)
+
+        # Baseline gain 10 -> with 1.5x should become 15
+        prev_bond = self.pokemon.bond
+        res = self.bond_mgr.increase_bond(self.pokemon, 10)
+        self.assertEqual(res.new_bond, prev_bond + 15)
+
+    def test_bond_multiplier_normal_when_either_at_or_below_50(self) -> None:
+        self.pokemon.trust = 50.0
+        self.pokemon.affection = 60.0
+        self.assertEqual(self.pokemon.bond_multiplier, 1.0)
+
+        prev_bond = self.pokemon.bond
+        res = self.bond_mgr.increase_bond(self.pokemon, 10)
+        self.assertEqual(res.new_bond, prev_bond + 10)
+
+    def test_100_percent_bond_awards_50_percent_exp_to_next_level(self) -> None:
+        # At level 5, xp_for_next_level is 500. 50% is 250 XP.
+        self.pokemon.bond = 90
+        prev_xp = self.pokemon.experience
+        res = self.bond_mgr.increase_bond(self.pokemon, 10)
+        self.assertEqual(self.pokemon.bond, 100)
+        self.assertEqual(self.pokemon.experience, prev_xp + 250)
+
+    def test_decay_trust_and_affection(self) -> None:
+        self.pokemon.trust = 60.0
+        self.pokemon.affection = 40.0
+        self.pokemon.decay_trust_and_affection(2.0)
+        self.assertEqual(self.pokemon.trust, 58.0)
+        self.assertEqual(self.pokemon.affection, 38.0)
 
 
 if __name__ == "__main__":

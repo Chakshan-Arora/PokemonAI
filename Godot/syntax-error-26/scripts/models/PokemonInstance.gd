@@ -12,6 +12,10 @@ var current_hp: int = 0
 var max_hp: int = 0
 var bond: float = 0.0         # 0–100
 var obedience: float = 100.0  # 0–100
+var trust: float = 50.0       # 0–100
+var affection: float = 50.0   # 0–100
+var last_talk_time: float = 0.0 # Game time when last spoken to
+var _awarded_max_bond_xp: bool = false
 var attacks: Array = []       # Array of attack name strings (max 4)
 var trained_atk: int = 0
 var trained_def: int = 0
@@ -43,6 +47,38 @@ func get_display_name() -> String:
 
 func get_xp_for_next_level() -> int:
 	return level * 100
+
+func get_bond_multiplier() -> float:
+	return 1.5 if (trust > 50.0 and affection > 50.0) else 1.0
+
+func add_bond(amount: float) -> float:
+	if amount <= 0.0:
+		return 0.0
+	var mult = get_bond_multiplier()
+	var effective_gain = amount * mult
+	var prev_bond = bond
+	bond = clamp(bond + effective_gain, 0.0, 100.0)
+	if prev_bond < 100.0 and bond >= 100.0:
+		check_and_award_max_bond_exp()
+	return bond - prev_bond
+
+func check_and_award_max_bond_exp() -> int:
+	if bond >= 100.0 and not _awarded_max_bond_xp:
+		_awarded_max_bond_xp = true
+		var total_needed = get_xp_for_next_level()
+		var bonus_xp = int(total_needed * 0.5)
+		if bonus_xp > 0:
+			gain_xp(bonus_xp)
+			EventBus.show_message.emit("⭐ %s reached 100%% Bond! Gained %d bonus EXP (50%% level bonus)!" % [get_display_name(), bonus_xp])
+		return bonus_xp
+	elif bond < 100.0:
+		_awarded_max_bond_xp = false
+	return 0
+
+func decay_trust_and_affection(amount: float = 2.0) -> void:
+	trust = clamp(trust - amount, 0.0, 100.0)
+	affection = clamp(affection - amount, 0.0, 100.0)
+	obedience = trust
 
 func heal_full() -> int:
 	var old = current_hp
@@ -276,6 +312,10 @@ func to_dict() -> Dictionary:
 		"max_hp": max_hp,
 		"bond": int(round(bond)),
 		"obedience": int(round(obedience)),
+		"trust": round(trust * 10.0) / 10.0,
+		"affection": round(affection * 10.0) / 10.0,
+		"last_talk_time": last_talk_time,
+		"awarded_max_bond_xp": _awarded_max_bond_xp,
 		"personality": clean_pers,
 		"attacks": attacks.duplicate(),
 		"trained_atk": trained_atk,
@@ -304,6 +344,10 @@ static func from_dict(d: Dictionary):
 	inst.current_hp = min(int(d.get("current_hp", inst.max_hp)), inst.max_hp)
 	inst.bond = float(d.get("bond", 0.0))
 	inst.obedience = float(d.get("obedience", 100.0))
+	inst.trust = float(d.get("trust", inst.obedience))
+	inst.affection = float(d.get("affection", inst.bond))
+	inst.last_talk_time = float(d.get("last_talk_time", 0.0))
+	inst._awarded_max_bond_xp = bool(d.get("awarded_max_bond_xp", inst.bond >= 100.0))
 	inst.awarded_level_moves = d.get("awarded_level_moves", []).duplicate()
 	if d.has("attacks") and d["attacks"] is Array:
 		var raw_atks = d["attacks"]
