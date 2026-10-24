@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://c8y3xqjBattleScene"]
 
 [ext_resource type="Script" path="res://scripts/ui/BattleScene.gd" id="1_battle"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/meadow.jpg" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/battle_meadow_3d.png" id="2_bg"]
 
 [node name="Battle" type="Control"]
 layout_mode = 3
@@ -41,6 +41,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.15)
 
 [node name="OpponentPlatform" type="Panel" parent="Arena"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -61,10 +62,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = 130.0
-offset_top = -240.0
-offset_right = 270.0
-offset_bottom = -100.0
+offset_left = 224.0
+offset_top = -169.0
+offset_right = 384.0
+offset_bottom = -9.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -88,6 +89,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PlayerPlatform" type="Panel" parent="Arena"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -108,10 +110,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -80.0
-offset_right = -120.0
-offset_bottom = 80.0
+offset_left = -406.0
+offset_top = -54.0
+offset_right = -206.0
+offset_bottom = 146.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -145,17 +147,10 @@ mouse_filter = 2
 
 [node name="OpponentPanel" type="PanelContainer" parent="BattleUI"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -380.0
-offset_top = -240.0
-offset_right = -90.0
-offset_bottom = -155.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 40.0
+offset_top = 40.0
+offset_right = 390.0
+offset_bottom = 145.0
 
 [node name="VBox" type="VBoxContainer" parent="BattleUI/OpponentPanel"]
 layout_mode = 2
@@ -184,17 +179,14 @@ show_percentage = false
 
 [node name="PlayerPanel" type="PanelContainer" parent="BattleUI"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 70.0
-offset_top = -5.0
-offset_right = 380.0
-offset_bottom = 100.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -442.0
+offset_top = 345.0
+offset_right = -72.0
+offset_bottom = 455.0
+grow_horizontal = 0
 
 [node name="VBox" type="VBoxContainer" parent="BattleUI/PlayerPanel"]
 layout_mode = 2
@@ -237,15 +229,13 @@ show_percentage = false
 
 [node name="MessageBox" type="PanelContainer" parent="BattleUI"]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 2
 anchor_top = 1.0
-anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 32.0
-offset_top = -170.0
-offset_right = -440.0
-offset_bottom = -30.0
-grow_horizontal = 2
+offset_left = 40.0
+offset_top = -158.0
+offset_right = 650.0
+offset_bottom = -23.0
 grow_vertical = 0
 
 [node name="VBox" type="VBoxContainer" parent="BattleUI/MessageBox"]
@@ -266,10 +256,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -420.0
-offset_top = -170.0
-offset_right = -32.0
-offset_bottom = -30.0
+offset_left = -472.0
+offset_top = -158.0
+offset_right = -62.0
+offset_bottom = -23.0
 grow_horizontal = 0
 grow_vertical = 0
 
