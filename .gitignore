@@ -76,8 +76,14 @@ ai_state.local.json
 .godot/
 
 # ==============================
-# Build artifacts
+# Model weights & Adapters
 # ==============================
+*.safetensors
+*.bin
+*.gguf
+models/
+training/adapters/
+training/.venv/
 build/
 dist/
 *.egg-info/

@@ -234,24 +234,24 @@ class DecisionResponseParser:
             if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
                 cleaned = cleaned[first_brace : last_brace + 1].strip()
 
+        data = None
         try:
             data = json.loads(cleaned)
-        except json.JSONDecodeError as exc:
+        except json.JSONDecodeError:
+            # Attempt streaming raw decode from first brace in case of trailing repetitions
+            if first_brace != -1:
+                try:
+                    data, _ = json.JSONDecoder().raw_decode(raw_text[raw_text.find("{"):])
+                except json.JSONDecodeError:
+                    pass
+
+        if not isinstance(data, dict):
             return AgentDecision(
                 action_type=AgentActionType.HESITATE,
                 intent="Hesitate due to malformed model response",
                 dialogue="...",
                 emotional_state="confused",
-                rationale=f"Failed to parse JSON response: {exc}",
-                confidence=0.5,
-            )
-
-        if not isinstance(data, dict):
-            return AgentDecision(
-                action_type=AgentActionType.HESITATE,
-                intent="Hesitate due to non-dictionary JSON",
-                emotional_state="confused",
-                rationale="Model output parsed to non-dictionary JSON.",
+                rationale="Failed to parse JSON response or returned non-dictionary JSON.",
                 confidence=0.5,
             )
 
@@ -625,7 +625,14 @@ def create_live_decision_provider(
     """
     ptype = provider_type.lower().strip()
 
-    if ptype == "gemini":
+    if ptype == "local":
+        from src.ai.local_model_provider import LocalModelDecisionProvider
+        return LocalModelDecisionProvider(
+            model_name_or_path=model_name,
+            timeout=timeout,
+            allow_mock_fallback=allow_mock_fallback,
+        )
+    elif ptype == "gemini":
         provider = GeminiDecisionProvider(
             api_key=api_key,
             model_name=model_name or DEFAULT_GEMINI_MODEL,
@@ -640,6 +647,15 @@ def create_live_decision_provider(
             http_client=http_client,
         )
     elif ptype == "auto":
+        use_local = os.environ.get("POKEMON_AI_PROVIDER", "").lower() == "local" or os.environ.get("USE_LOCAL_POKEMON_MODEL") == "1"
+        if use_local:
+            from src.ai.local_model_provider import LocalModelDecisionProvider
+            return LocalModelDecisionProvider(
+                model_name_or_path=model_name,
+                timeout=timeout,
+                allow_mock_fallback=allow_mock_fallback,
+            )
+
         has_gemini = bool(
             os.environ.get("GEMINI_API_KEY")
             or os.environ.get("GOOGLE_API_KEY")
@@ -670,6 +686,6 @@ def create_live_decision_provider(
                 http_client=http_client,
             )
     else:
-        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', or 'auto'.")
+        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', 'local', or 'auto'.")
 
     return LiveAIDecisionProvider(active_provider=provider, allow_mock_fallback=allow_mock_fallback)

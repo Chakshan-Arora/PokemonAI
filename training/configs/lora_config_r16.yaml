@@ -1,0 +1,9 @@
+fine_tune_type: lora
+grad_checkpoint: true
+lora_parameters:
+  dropout: 0.05
+  rank: 16
+  scale: 2.0
+mask_prompt: true
+max_seq_length: 512
+num_layers: 16

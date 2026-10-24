@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PokemonBattleDecision",
+  "description": "Schema for Adapter B (Battle Decisions)",
+  "type": "object",
+  "required": [
+    "action_type",
+    "emotional_state",
+    "dialogue",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "attack",
+        "defend",
+        "flee",
+        "hesitate",
+        "suggest",
+        "obey",
+        "disobey"
+      ],
+      "description": "Chosen battle action type"
+    },
+    "chosen_move": {
+      "type": ["string", "null"],
+      "description": "Selected attack name from known moves when action_type is attack or suggest"
+    },
+    "target": {
+      "type": ["string", "null"],
+      "description": "Target Pokemon species or identifier"
+    },
+    "emotional_state": {
+      "type": "string",
+      "description": "Emotional state in combat (e.g. focused, combative, cautious, frightened, confident)"
+    },
+    "dialogue": {
+      "type": "string",
+      "description": "Battle cry or tactical physical gesture"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score for the selected tactical action"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Tactical justification factoring type matchups, HP ratios, or knockout opportunity"
+    },
+    "suggested_alternative": {
+      "type": ["string", "null"],
+      "description": "Alternative move name suggested if questioning trainer's order"
+    }
+  },
+  "additionalProperties": false
+}
