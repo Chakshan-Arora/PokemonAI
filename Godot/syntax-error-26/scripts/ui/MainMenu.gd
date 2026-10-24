@@ -77,13 +77,13 @@ func _setup_avatar_selection() -> void:
 		vbox.add_child(avatar_box)
 		vbox.move_child(avatar_box, vbox.get_child_count() - 3)
 		
-		calem_btn.focus_neighbor_right = serena_btn.get_path()
-		calem_btn.focus_neighbor_left = serena_btn.get_path()
-		serena_btn.focus_neighbor_left = calem_btn.get_path()
-		serena_btn.focus_neighbor_right = calem_btn.get_path()
+		ash_btn.focus_neighbor_right = misty_btn.get_path()
+		ash_btn.focus_neighbor_left = misty_btn.get_path()
+		misty_btn.focus_neighbor_left = ash_btn.get_path()
+		misty_btn.focus_neighbor_right = ash_btn.get_path()
 		
-		calem_btn.focus_entered.connect(func(): _select_avatar("calem"))
-		serena_btn.focus_entered.connect(func(): _select_avatar("serena"))
+		ash_btn.focus_entered.connect(func(): _select_avatar("ash"))
+		misty_btn.focus_entered.connect(func(): _select_avatar("misty"))
 
 func _select_avatar(avatar: String) -> void:
 	selected_avatar = avatar
