@@ -1902,6 +1902,7 @@ class AdventureGame:
         self._print("  - Encourage: 'Hang in there!' / 'You\'ve got this!'")
         self._print("  - Warning  : 'Watch out for that attack!'")
         self._print("  - Tactical : 'Dodge to the left!' / 'Brace yourself!'")
+        self._print("  - Hold Back: 'Bulbasaur only do 4 damage now' / 'Hold back!'")
         self._print("-" * 50)
 
         typed_text = self._prompt(f"Enter words for {active_mon.display_name} (or 'cancel'): ").strip()
@@ -1942,6 +1943,21 @@ class AdventureGame:
         self._print(f" {active_mon.display_name} [{resp['emotional_state'].upper()}]: \"{resp['dialogue']}\"")
         if resp.get("tactical_suggestion"):
             self._print(f" [*] Tactical Suggestion: Recommended move -> {resp['tactical_suggestion']}")
+        
+        if resp.get("is_restrained_strike"):
+            chosen_name = resp.get("chosen_move")
+            precision_dmg = resp.get("precision_damage", 4)
+            self._print(f" [*] Precision Strike: {active_mon.display_name} will hold back with {chosen_name} for ~{precision_dmg} DMG!")
+            matching_atk = next((a for a in active_mon.attacks if a.name.lower() == chosen_name.lower()), None)
+            if matching_atk is None and active_mon.attacks:
+                matching_atk = active_mon.attacks[0]
+            if matching_atk:
+                exec_now = self._prompt(f"Execute {matching_atk.name} restrained strike right now? (y/n): ").strip().lower()
+                if exec_now in ("y", "yes", "1"):
+                    battle.set_override_player_damage(precision_dmg)
+                    res = self.battle_manager.attack(self.player, matching_atk)
+                    prev_event_cursor = self._print_battle_events(battle, res, prev_event_cursor)
+
         self._print("-" * 50 + "\n")
 
         return prev_event_cursor

@@ -20,6 +20,7 @@ var current_turn: int = 0
 var is_wild_battle: bool = true
 var events: Array = []
 var player_morale: int = 0
+var override_player_damage: int = -1
 
 # Pending actions
 var _player_action: Dictionary = {}
@@ -40,6 +41,7 @@ func start_battle(p_pokemon: PokemonInstance, o_pokemon: PokemonInstance, wild: 
 	events = []
 	_player_action = {}
 	_opponent_action = {}
+	override_player_damage = -1
 
 func reset() -> void:
 	player_pokemon = null
@@ -47,6 +49,7 @@ func reset() -> void:
 	battle_state = BattleState.NOT_STARTED
 	current_turn = 0
 	events = []
+	override_player_damage = -1
 
 # ─── Action Selection ─────────────────────────────────────────────────────────
 
@@ -57,6 +60,10 @@ func select_player_action(action_type: ActionType, param: String = "") -> void:
 ## Explicitly set opponent's chosen action (e.g. from local LLM)
 func set_override_opponent_action(action_type: ActionType, param: String = "") -> void:
 	_override_opponent_action = {"type": action_type, "param": param}
+
+## Sets precision damage for a restrained strike on the player's next attack
+func set_override_player_damage(dmg: int) -> void:
+	override_player_damage = max(1, dmg)
 
 ## Updates combat morale affecting damage multipliers
 func set_player_morale(morale: int) -> void:
@@ -239,7 +246,10 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 		
 		# Apply combat morale modifiers for player Pokemon
 		if attacker == player_pokemon:
-			if player_morale >= 5:
+			if override_player_damage >= 0:
+				damage = max(1, override_player_damage)
+				override_player_damage = -1 # Clear after single precision strike
+			elif player_morale >= 5:
 				damage = int(round(damage * 1.15))
 			elif player_morale <= -5:
 				damage = max(1, int(round(damage * 0.85)))

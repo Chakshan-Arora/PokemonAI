@@ -53,6 +53,8 @@ static func _generate_uid() -> String:
 func add_to_team(p: PokemonInstance) -> bool:
 	if team.size() >= max_team_size:
 		return false
+	if is_on_team(p):
+		return false
 	team.append(p)
 	if not is_in_collection(p):
 		collection.append(p)

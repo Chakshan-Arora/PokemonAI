@@ -6,54 +6,96 @@ const BASE_URL: String = "http://127.0.0.1:8008"
 const TIMEOUT_SECONDS: float = 25.0
 
 var is_server_online: bool = false
-var _health_request: HTTPRequest = null
 var _health_timer: Timer = null
+var _server_pid: int = -1
+var _has_attempted_autostart: bool = false
+var _is_probing_health: bool = false
 
 signal server_status_changed(is_online: bool)
 signal companion_replied(data: Dictionary)
 signal battle_decision_ready(data: Dictionary)
 signal battle_talk_replied(data: Dictionary)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
+		if _server_pid > 0 and OS.is_process_running(_server_pid):
+			print("[LLMClient] Terminating auto-started Python backend server (PID: %d)..." % _server_pid)
+			OS.kill(_server_pid)
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_health_request = HTTPRequest.new()
-	_health_request.process_mode = Node.PROCESS_MODE_ALWAYS
-	_health_request.timeout = 3.0
-	add_child(_health_request)
 	
 	_health_timer = Timer.new()
 	_health_timer.process_mode = Node.PROCESS_MODE_ALWAYS
-	_health_timer.wait_time = 4.0
+	_health_timer.wait_time = 2.5
 	_health_timer.autostart = true
 	_health_timer.timeout.connect(_check_health)
 	add_child(_health_timer)
 	
 	_check_health()
 
-func _check_health() -> void:
-	if not is_instance_valid(_health_request):
+func _try_start_backend_server() -> void:
+	if _has_attempted_autostart:
 		return
-	if _health_request.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
-		return
-	var err = _health_request.request(BASE_URL + "/health")
-	if err == OK:
-		var res = await _health_request.request_completed
-		var code = res[1]
-		var was_online = is_server_online
-		if code == 200:
-			is_server_online = true
-			if not was_online:
-				print("[LLMClient] Connected to local Pokémon LLM server at ", BASE_URL)
-				server_status_changed.emit(true)
+	_has_attempted_autostart = true
+	
+	var base_res = ProjectSettings.globalize_path("res://")
+	var repo_root = base_res.path_join("../../").simplify_path()
+	var server_script = repo_root.path_join("server.py")
+	
+	if FileAccess.file_exists(server_script):
+		print("[LLMClient] Python backend is offline. Auto-starting server at: ", server_script)
+		var pid = OS.create_process("python", [server_script])
+		if pid > 0:
+			_server_pid = pid
+			print("[LLMClient] Launched Python backend server in background (PID: %d)" % pid)
 		else:
-			is_server_online = false
-			if was_online:
-				print("[LLMClient] Lost connection to Pokémon LLM server.")
-				server_status_changed.emit(false)
+			var py_pid = OS.create_process("py", ["-3", server_script])
+			if py_pid > 0:
+				_server_pid = py_pid
+				print("[LLMClient] Launched Python backend server via py (PID: %d)" % py_pid)
+		
+		# Schedule health check after brief delay for server to bind port
+		get_tree().create_timer(1.8).timeout.connect(_check_health)
+
+func _check_health() -> void:
+	if _is_probing_health:
+		return
+	_is_probing_health = true
+	
+	var http = HTTPRequest.new()
+	http.process_mode = Node.PROCESS_MODE_ALWAYS
+	http.timeout = 2.0
+	add_child(http)
+	
+	var err = http.request(BASE_URL + "/health")
+	if err != OK:
+		http.queue_free()
+		_is_probing_health = false
+		_set_online(false)
+		_try_start_backend_server()
+		return
+	
+	var res = await http.request_completed
+	var resp_code = res[1]
+	http.queue_free()
+	_is_probing_health = false
+	
+	if resp_code == 200:
+		_set_online(true)
 	else:
-		if is_server_online:
-			is_server_online = false
-			server_status_changed.emit(false)
+		_set_online(false)
+		_try_start_backend_server()
+
+func _set_online(online: bool) -> void:
+	var was_online = is_server_online
+	is_server_online = online
+	if was_online != online:
+		if online:
+			print("[LLMClient] Connected to local Pokémon LLM server at ", BASE_URL)
+		else:
+			print("[LLMClient] Lost connection to Pokémon LLM server.")
+		server_status_changed.emit(online)
 
 ## Fetches live game data (species, attacks, items, habitats, quests, personality traits) from Python backend
 func fetch_backend_data() -> Dictionary:

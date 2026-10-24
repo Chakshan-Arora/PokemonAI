@@ -32,6 +32,7 @@ class BattleTalkIntent(str, Enum):
     WARNING = "WARNING"
     TACTICAL = "TACTICAL"
     ADVICE = "ADVICE"
+    HOLD_BACK = "HOLD_BACK"
     TAUNT = "TAUNT"
     GENERAL = "GENERAL"
 
@@ -65,6 +66,27 @@ _NEGATED_TACTICAL_PATTERNS = [
         re.IGNORECASE,
     ),
 ]
+
+_HOLD_BACK_PATTERNS = [
+    re.compile(r"\b(?:only\s+do|just\s+do|do\s+only|deal\s+only|only\s+deal|deal\s+just|just\s+deal|hit\s+for)\s+(\d+)\s*(?:damage|dmg|hp)?\b", re.IGNORECASE),
+    re.compile(r"\b(?:do|deal)\s+(\d+)\s*(?:damage|dmg|hp)\s*(?:only|max|at\s+most|now)?\b", re.IGNORECASE),
+    re.compile(r"\b(hold\s+back|be\s+gentle|pull\s+(?:your\s+)?punch(?:es)?|don'?t\s+(?:knock\s+it\s+out|faint\s+it|kill\s+it)|take\s+it\s+easy|soft\s+hit|weaken\s+it|restrain(?:ed)?\s+strike)\b", re.IGNORECASE),
+]
+
+
+def extract_damage_target(text: str) -> Optional[int]:
+    """Extracts numerical target damage from a combat command (e.g. 'only do 4 damage now')."""
+    if not isinstance(text, str):
+        return None
+    # 1. Matches "only do 4 damage", "just deal 5 dmg", "deal 4 damage"
+    m = re.search(r"\b(?:only\s+do|just\s+do|do\s+only|deal\s+only|only\s+deal|deal\s+just|just\s+deal|hit\s+for|do|deal)\s+(\d+)\s*(?:damage|dmg|hp)?\b", text, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    # 2. Matches "4 damage only", "4 dmg max"
+    m2 = re.search(r"\b(\d+)\s*(?:damage|dmg|hp)\s*(?:only|max|at\s+most|now)?\b", text, re.IGNORECASE)
+    if m2:
+        return int(m2.group(1))
+    return None
 
 _ADVICE_PATTERNS = [
     re.compile(r"\b(?:what|which|how|best|recommend|suggest|any)\b.*?\b(?:move|attack|do|use|play|beat|counter|strike)\b", re.IGNORECASE),
@@ -161,6 +183,79 @@ class BattleTalkAdvisor:
         best_score, best_move, best_rationale = scored_moves[0]
         return best_move, best_rationale
 
+    @classmethod
+    def evaluate_restrained_strike(
+        cls,
+        known_moves: List[str],
+        opponent_species_name: str,
+        target_damage: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Selects the attack with the lowest attack power and no positive type advantage (<= 1.0x).
+        Verifies target_damage < base_power of the move.
+        Calculates precision damage variance (+- 10%).
+        """
+        opp_spec = SAMPLE_SPECIES.get(opponent_species_name)
+        opp_types = []
+        if opp_spec:
+            opp_types.append(opp_spec.primary_type)
+            if opp_spec.secondary_type:
+                opp_types.append(opp_spec.secondary_type)
+
+        candidates: List[Tuple[str, int, float]] = []  # (move_name, power, multiplier)
+        for move_name in (known_moves or ["Tackle"]):
+            atk = SAMPLE_ATTACKS.get(move_name)
+            if not atk or (atk.power is not None and atk.power <= 0):
+                continue
+            power = atk.power if atk.power is not None else 40
+            multiplier = get_effectiveness_against_types(atk.type, opp_types) if opp_types else 1.0
+            candidates.append((move_name, power, multiplier))
+
+        if not candidates:
+            fallback_move = known_moves[0] if known_moves else "Tackle"
+            chosen_move = fallback_move
+            base_power = 40
+            multiplier = 1.0
+        else:
+            # Prefer moves with no type advantage: 0.0 < multiplier <= 1.0
+            no_advantage = [c for c in candidates if 0.0 < c[2] <= 1.0]
+            if no_advantage:
+                # Lowest power first; if tied, lowest multiplier first
+                no_advantage.sort(key=lambda c: (c[1], c[2]))
+                chosen_move, base_power, multiplier = no_advantage[0]
+            else:
+                # If all moves are immune or super-effective, pick lowest multiplier then lowest power
+                candidates.sort(key=lambda c: (c[2], c[1]))
+                chosen_move, base_power, multiplier = candidates[0]
+
+        target = target_damage if target_damage is not None else max(1, int(base_power * 0.1))
+
+        # Check constraint: target_damage should be less than the base damage / power of the move
+        if target >= base_power:
+            is_valid = False
+            reason = f"Requested damage ({target}) is greater than or equal to {chosen_move}'s base power ({base_power}). It can attack normally without holding back."
+            actual_damage = target
+        else:
+            is_valid = True
+            # Calculate +- 10% variance, with a minimum of 1 damage
+            variance = max(0, int(round(target * 0.10)))
+            delta = 0
+            if variance > 0:
+                import random
+                delta = random.choice([-variance, 0, variance])
+            actual_damage = max(1, target + delta)
+            reason = f"Target damage ({target}) is less than {chosen_move}'s base power ({base_power}). Holding back strength for a precision strike of ~{actual_damage} DMG."
+
+        return {
+            "chosen_move": chosen_move,
+            "base_power": base_power,
+            "multiplier": multiplier,
+            "target_damage": target,
+            "precision_damage": actual_damage,
+            "is_valid": is_valid,
+            "reason": reason,
+        }
+
 
 class BattleTalkParser:
     """
@@ -191,7 +286,27 @@ class BattleTalkParser:
                     metadata={"negated_tactical": True},
                 )
 
-        # 2. Advice requests
+        # 2. Hold back / precision strike commands (e.g. 'Bulbasaur only do 4 damage now')
+        target_dmg = extract_damage_target(stripped)
+        is_hold_back = False
+        for pattern in _HOLD_BACK_PATTERNS:
+            if pattern.search(stripped):
+                is_hold_back = True
+                break
+
+        if is_hold_back or (target_dmg is not None and any(w in stripped.lower() for w in ["damage", "dmg", "hp", "only", "just", "deal", "do", "strike", "hit"])):
+            return BattleTalkCommand(
+                text=stripped,
+                category=TalkCategory.TACTICAL,
+                intent=BattleTalkIntent.HOLD_BACK,
+                is_tactical=True,
+                metadata={
+                    "target_damage": target_dmg,
+                    "requested_precision": True,
+                },
+            )
+
+        # 3. Advice requests
         for pattern in _ADVICE_PATTERNS:
             if pattern.search(stripped):
                 return BattleTalkCommand(
@@ -447,9 +562,47 @@ class BattleTalkParser:
         morale_delta = 0
         tactical_suggestion = None
         tactical_reaction = "nod"
+        target_damage_val = None
+        precision_damage_val = None
+        chosen_move_val = None
+        is_restrained_strike_val = False
 
-        # 1. ADVICE INTENT
-        if intent == BattleTalkIntent.ADVICE.value:
+        # 1. HOLD BACK / RESTRAINED STRIKE INTENT
+        if intent == BattleTalkIntent.HOLD_BACK.value:
+            target_dmg = cmd.metadata.get("target_damage")
+            precision_eval = BattleTalkAdvisor.evaluate_restrained_strike(
+                known_moves=known_moves,
+                opponent_species_name=opp_species,
+                target_damage=target_dmg,
+            )
+            chosen_move_val = precision_eval["chosen_move"]
+            actual_damage = precision_eval["precision_damage"]
+            target_damage_val = precision_eval["target_damage"]
+            precision_damage_val = actual_damage
+            is_restrained_strike_val = precision_eval["is_valid"]
+            tactical_suggestion = chosen_move_val
+            tactical_reaction = "restrained_strike"
+            morale_delta = 2
+
+            if not is_restrained_strike_val:
+                dialogue = f"{display_name} glances back—{target_damage_val} damage is already equal to or higher than {chosen_move_val}'s normal base power ({precision_eval['base_power']})! It can attack normally without holding back."
+                emotion = "thoughtful"
+            else:
+                if temp in ["gentle", "timid"]:
+                    dialogue = f"{display_name} nods gently and pulls its strike right at the point of impact, carefully aiming for {actual_damage} damage with {chosen_move_val}!"
+                    emotion = "careful"
+                elif temp in ["brave", "adamant"]:
+                    dialogue = f"{display_name} reigns in its full strength with disciplined control, preparing {chosen_move_val} for a measured {actual_damage} damage!"
+                    emotion = "focused"
+                elif temp in ["calm", "modest"]:
+                    dialogue = f"{display_name} centers its posture with calm precision, moderating {chosen_move_val} to strike for {actual_damage} damage."
+                    emotion = "composed"
+                else:
+                    dialogue = f"{display_name} holds back its power as instructed, using {chosen_move_val} to carefully deal {actual_damage} damage!"
+                    emotion = "focused"
+
+        # 2. ADVICE INTENT
+        elif intent == BattleTalkIntent.ADVICE.value:
             tactical_suggestion = best_move
             tactical_reaction = "reposition"
             morale_delta = 3
@@ -578,6 +731,10 @@ class BattleTalkParser:
             "tactical_suggestion": tactical_suggestion,
             "momentum_tier": momentum_tier,
             "morale_effect": morale_effect,
+            "target_damage": target_damage_val,
+            "precision_damage": precision_damage_val,
+            "chosen_move": chosen_move_val,
+            "is_restrained_strike": is_restrained_strike_val,
             "confidence": 0.9,
             "source": "rule_fallback",
         }
@@ -619,10 +776,10 @@ class BattleTalkParser:
             "Given the trainer's or opponent's words, respond with JSON matching this exact schema:\n"
             "{\n"
             '  "dialogue": "<vocal cry and physical in-battle reaction>",\n'
-            '  "intent": "<PRAISE|ENCOURAGE|WARNING|TACTICAL|ADVICE|TAUNT|GENERAL>",\n'
-            '  "emotional_state": "<focused|defiant|pleased|nervous|exhausted|fired_up|combative|composed|gleeful>",\n'
+            '  "intent": "<PRAISE|ENCOURAGE|WARNING|TACTICAL|ADVICE|HOLD_BACK|TAUNT|GENERAL>",\n'
+            '  "emotional_state": "<focused|defiant|pleased|nervous|exhausted|fired_up|combative|composed|gleeful|careful>",\n'
             '  "morale_delta": <integer between -10 and +10>,\n'
-            '  "tactical_reaction": "<brace|strike|reposition|nod|hesitate>",\n'
+            '  "tactical_reaction": "<brace|strike|reposition|nod|hesitate|restrained_strike>",\n'
             '  "tactical_suggestion": "<optional attack move name or null>",\n'
             '  "momentum_tier": "<SURGING|STEADY|PRESSURED|CRITICAL>",\n'
             '  "morale_effect": "<morale buff/debuff descriptor>",\n'
@@ -662,6 +819,10 @@ class BattleTalkParser:
                 "tactical_suggestion": parsed.get("tactical_suggestion") or fallback_data.get("tactical_suggestion"),
                 "momentum_tier": str(parsed.get("momentum_tier", fallback_data.get("momentum_tier", "STEADY"))),
                 "morale_effect": str(parsed.get("morale_effect", fallback_data.get("morale_effect", "buff_morale_stable"))),
+                "target_damage": fallback_data.get("target_damage"),
+                "precision_damage": fallback_data.get("precision_damage"),
+                "chosen_move": fallback_data.get("chosen_move"),
+                "is_restrained_strike": fallback_data.get("is_restrained_strike", False),
                 "confidence": float(parsed.get("confidence", 0.9)),
                 "source": "llm_adapter",
             }

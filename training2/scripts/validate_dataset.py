@@ -84,13 +84,24 @@ def main():
     with open(schema_path, "r", encoding="utf-8") as f:
         schema = json.load(f)
 
-    data_dir = Path(__file__).resolve().parent.parent / "data" / "battle_talk"
+    if len(sys.argv) > 1:
+        data_dirs = [Path(sys.argv[1])]
+    else:
+        base_data = Path(__file__).resolve().parent.parent / "data"
+        data_dirs = [base_data / "battle_talk", base_data / "hold_back"]
+
     all_ok = True
-    for split in ["train.jsonl", "val.jsonl", "test.jsonl"]:
-        p = data_dir / split
-        if p.exists():
-            if not validate_file(p, schema):
-                all_ok = False
+    for data_dir in data_dirs:
+        if not data_dir.exists():
+            continue
+        print(f"\n==================================================")
+        print(f"Validating dataset directory: {data_dir.name}")
+        print(f"==================================================")
+        for split in ["train.jsonl", "val.jsonl", "test.jsonl"]:
+            p = data_dir / split
+            if p.exists():
+                if not validate_file(p, schema):
+                    all_ok = False
 
     sys.exit(0 if all_ok else 1)
 

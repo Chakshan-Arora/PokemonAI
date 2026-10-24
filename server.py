@@ -42,7 +42,7 @@ from src.ai.live_provider import create_live_decision_provider
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
-from src.ai.battle_talk_parser import BattleTalkParser
+from src.ai.battle_talk_parser import BattleTalkParser, BattleTalkAdvisor
 
 VERY_NEGATIVE_PHRASES = [
     "hate you", "despise you", "loathe you", "shut up", "get lost", "get out",
@@ -424,6 +424,48 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             "pokemon": _serialize_pokemon_dict(mon),
         }
 
+    @classmethod
+    def _has_active_ai_key(cls) -> bool:
+        """Checks if a valid, non-placeholder GenAI API key is configured in environment."""
+        for env_var in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "OPENAI_API_KEY"):
+            val = os.environ.get(env_var, "").strip()
+            if val and not val.startswith("YOUR_") and "placeholder" not in val.lower():
+                return True
+        return False
+
+    def _execute_rule_based_battle_decide(
+        self, active: dict[str, Any], opponent: dict[str, Any], known_moves: list[str], is_trainer: bool = False, turn: int = 1
+    ) -> dict[str, Any]:
+        """Calculates smart, instantaneous rule-based tactics using type matchups and base power."""
+        species = active.get("species", "Pokemon")
+        opp_species = opponent.get("species", "Opponent")
+        curr_hp = active.get("current_hp", 30)
+        max_hp = active.get("max_hp", 30)
+        hp_ratio = curr_hp / max(1, max_hp)
+
+        best_move, rationale = BattleTalkAdvisor.evaluate_tactical_advice(known_moves, opp_species)
+        chosen_move = best_move or (known_moves[0] if known_moves else "Tackle")
+
+        if hp_ratio <= 0.25:
+            dialogue = f"{species} fights through exhaustion, unleashing {chosen_move}!"
+            emotion = "defiant"
+        elif "super-effective" in (rationale or "").lower():
+            dialogue = f"{species} seized the tactical advantage with {chosen_move}!"
+            emotion = "confident"
+        else:
+            dialogue = f"{species} stepped forward and attacked with {chosen_move}!"
+            emotion = "focused"
+
+        return {
+            "action_type": "attack",
+            "chosen_move": chosen_move,
+            "dialogue": dialogue,
+            "emotional_state": emotion,
+            "confidence": 0.95,
+            "rationale": rationale or "Calculated rule-based optimal tactical strike.",
+            "source": "rule_based_tactics",
+        }
+
     def _handle_companion_talk(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handles companion conversation dialogue using bonding adapter with authoritative sentiment guardrails."""
         species = data.get("species", "Charmander")
@@ -675,7 +717,27 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             available_actions=["attack", "defend", "flee"],
         )
 
-        decision = self.provider.decide(agent, perception)
+        # If no active GenAI API key is configured in .env, switch immediately to rule-based tactics
+        if not self._has_active_ai_key():
+            return self._execute_rule_based_battle_decide(
+                active=active,
+                opponent=opponent,
+                known_moves=known_moves,
+                is_trainer=data.get("is_trainer_battle", False),
+                turn=data.get("current_turn", 1),
+            )
+
+        try:
+            decision = self.provider.decide(agent, perception)
+        except Exception as exc:
+            sys.stderr.write(f"[LLM Server] Cloud AI provider error in battle decide ({exc}) -> switching to rule-based tactics.\n")
+            return self._execute_rule_based_battle_decide(
+                active=active,
+                opponent=opponent,
+                known_moves=known_moves,
+                is_trainer=data.get("is_trainer_battle", False),
+                turn=data.get("current_turn", 1),
+            )
 
         # Enforce legal move constraint authoritatively
         chosen_move = decision.chosen_move
@@ -690,6 +752,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             "emotional_state": decision.emotional_state or "focused",
             "confidence": decision.confidence,
             "rationale": decision.rationale,
+            "source": "live_llm",
         }
 
     def _handle_generalized_decide(self, data: dict[str, Any]) -> dict[str, Any]:

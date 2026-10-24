@@ -8,9 +8,9 @@
         "Vine Whip"
       ],
       "awarded_level_moves": [],
-      "bond": 20,
+      "bond": 26,
       "current_hp": 24,
-      "experience": 0,
+      "experience": 200,
       "level": 5,
       "max_hp": 24,
       "nickname": "Bulbasaur",
@@ -35,16 +35,82 @@
         "speed": 0
       },
       "unique_id": "1504_2663908850"
+    },
+    {
+      "attacks": [
+        "Tackle"
+      ],
+      "awarded_level_moves": [],
+      "bond": 0,
+      "current_hp": 14,
+      "experience": 0,
+      "level": 2,
+      "max_hp": 14,
+      "nickname": "Rattata",
+      "obedience": 100,
+      "personality": {
+        "aggression": 42,
+        "confidence": 48,
+        "curiosity": 45,
+        "fear": 52,
+        "loyalty": 11,
+        "sociability": 3
+      },
+      "species": "Rattata",
+      "species_name": "Rattata",
+      "status_effects": [],
+      "trained_atk": 0,
+      "trained_def": 0,
+      "trained_spd": 0,
+      "trained_stats": {
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "unique_id": "10001"
+    },
+    {
+      "attacks": [
+        "Tackle"
+      ],
+      "awarded_level_moves": [],
+      "bond": 0,
+      "current_hp": 16,
+      "experience": 0,
+      "level": 2,
+      "max_hp": 16,
+      "nickname": "Pidgey",
+      "obedience": 100,
+      "personality": {
+        "aggression": 88,
+        "confidence": 82,
+        "curiosity": 70,
+        "fear": 26,
+        "loyalty": 27,
+        "sociability": 34
+      },
+      "species": "Pidgey",
+      "species_name": "Pidgey",
+      "status_effects": [],
+      "trained_atk": 0,
+      "trained_def": 0,
+      "trained_spd": 0,
+      "trained_stats": {
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "unique_id": "10002"
     }
   ],
   "current_region_id": "starting_meadow",
   "discovered_landmarks": [],
   "discovered_regions": [],
-  "game_time": 8.0,
+  "game_time": 8.19255261110935,
   "inventory": {
     "capacity": 20,
     "items": {
-      "poke_ball": 5,
+      "poke_ball": 3,
       "potion": 3
     }
   },
@@ -56,15 +122,19 @@
     "unique_id": "player_1504_1402717560"
   },
   "player_position": {
-    "x": 50.0,
-    "y": 0.5,
-    "z": 50.0
+    "x": 25.0,
+    "y": 0.100000001490116,
+    "z": 25.0
   },
   "quests": {},
-  "saved_at": "2026-10-25 02:43:15",
+  "saved_at": "2026-10-25 04:04:11",
   "schema_version": 4,
   "team": [
-    "1504_2663908850"
+    "1504_2663908850",
+    "10001",
+    "10001",
+    "10002",
+    "10002"
   ],
   "wild_action_history": []
 }

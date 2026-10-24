@@ -316,6 +316,7 @@ class Battle:
             self._status_manager = status_manager
         else:
             self._status_manager = StatusEffectManager(rng=self._rng)
+        self._override_player_damage = None
 
         if obedience_manager is not None:
             self._obedience_manager = obedience_manager
@@ -363,6 +364,10 @@ class Battle:
             if area is not None and getattr(area, "region_id", None) is not None:
                 return str(area.region_id).strip().lower()
         return None
+
+    def set_override_player_damage(self, damage: Optional[int]) -> None:
+        """Sets an exact damage override for player's next attack (precision strike)."""
+        self._override_player_damage = damage
 
     @property
     def is_wild_battle(self) -> bool:
@@ -700,6 +705,9 @@ class Battle:
             )
             dmg = dmg_res.damage
             is_crit = dmg_res.is_critical
+            if attacker is self._pokemon1 and getattr(self, '_override_player_damage', None) is not None:
+                dmg = max(1, self._override_player_damage)
+                self._override_player_damage = None
             if dmg > 0:
                 defender.take_damage(dmg)
                 if self._wild_agent is not None:

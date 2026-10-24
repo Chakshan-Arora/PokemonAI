@@ -725,11 +725,6 @@ func _process_turn_result(result: Dictionary) -> void:
 				EventBus.battle_ended.emit("victory")
 			
 			battle_engine.BattleState.CAPTURED:
-				if GameState.player and opponent_pokemon:
-					GameState.player.add_to_collection(opponent_pokemon)
-					if GameState.player.team.size() < GameState.player.max_team_size:
-						GameState.player.add_to_team(opponent_pokemon)
-					EventBus.pokemon_caught.emit(opponent_pokemon)
 				EventBus.battle_ended.emit("captured")
 			
 			battle_engine.BattleState.ESCAPED:
@@ -923,6 +918,7 @@ func _create_talk_menu() -> void:
 	
 	var presets = [
 		{"label": "💡 Ask Move Advice", "text": "What move should we use here?"},
+		{"label": "🎯 Hold Back (Only 4 DMG)", "text": "Hold back, only do 4 damage now!"},
 		{"label": "🔥 Cheer & Encourage", "text": "You can do this! Give it everything you've got!"},
 		{"label": "⭐ Praise Performance", "text": "Amazing job! That was fantastic!"},
 		{"label": "🛡️ Watch Out & Guard", "text": "Careful now! Watch out and stay on your guard!"}
@@ -1005,6 +1001,18 @@ func _send_battle_talk(msg: String) -> void:
 		
 		var tier = reply.get("momentum_tier", "STEADY")
 		_update_morale_badge(tier)
+		
+		var is_restrained = bool(reply.get("is_restrained_strike", false))
+		var chosen_move = str(reply.get("chosen_move", ""))
+		var precision_dmg = int(reply.get("precision_damage", 0))
+		
+		if is_restrained and chosen_move != "" and precision_dmg > 0:
+			# Auto-execute the restrained strike turn
+			battle_engine.set_override_player_damage(precision_dmg)
+			battle_engine.select_player_action(battle_engine.ActionType.ATTACK, chosen_move)
+			var result = battle_engine.resolve_turn()
+			_process_turn_result(result)
+			return
 		
 		var sug = reply.get("tactical_suggestion", "")
 		if sug != null and sug != "" and sug != "null":

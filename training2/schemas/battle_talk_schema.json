@@ -26,6 +26,7 @@
         "WARNING",
         "TACTICAL",
         "ADVICE",
+        "HOLD_BACK",
         "TAUNT",
         "GENERAL"
       ],
