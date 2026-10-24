@@ -25,6 +25,7 @@ class Player:
         discovered_regions: Optional[set[str]] = None,
         discovered_landmarks: Optional[set[str]] = None,
         wild_action_history: Optional[Sequence[dict[str, Any]]] = None,
+        currency: int = 500,
     ) -> None:
         if not name or not name.strip():
             raise ValueError("Player name cannot be empty.")
@@ -32,9 +33,13 @@ class Player:
         if not isinstance(max_team_size, int) or isinstance(max_team_size, bool) or max_team_size < 1:
             raise ValueError(f"max_team_size must be a positive integer, got {max_team_size}.")
 
+        if not isinstance(currency, int) or isinstance(currency, bool) or currency < 0:
+            raise ValueError(f"Currency must be a non-negative integer, got {currency}.")
+
         self._name: str = name.strip()
         self._unique_id: str = str(unique_id) if unique_id is not None else str(uuid.uuid4())
         self._max_team_size: int = max_team_size
+        self._currency: int = currency
 
         # Player's personal item inventory (independent instance per player)
         self._inventory: Inventory = inventory if inventory is not None else Inventory()
@@ -80,6 +85,33 @@ class Player:
         self._active_pokemon: Optional[Pokemon] = None
 
     # --- Properties ---
+
+    @property
+    def currency(self) -> int:
+        """The player's current balance in PokéDollars (p)."""
+        return self._currency
+
+    def add_currency(self, amount: int) -> int:
+        """Adds currency to the player's wallet. Returns the new balance."""
+        if not isinstance(amount, int) or isinstance(amount, bool) or amount < 0:
+            raise ValueError(f"Currency amount to add must be a non-negative integer, got {amount}.")
+        self._currency += amount
+        return self._currency
+
+    def spend_currency(self, amount: int) -> bool:
+        """Deducts currency if the player can afford it. Returns True if successful, False otherwise."""
+        if not isinstance(amount, int) or isinstance(amount, bool) or amount < 0:
+            raise ValueError(f"Currency amount to spend must be a non-negative integer, got {amount}.")
+        if self._currency >= amount:
+            self._currency -= amount
+            return True
+        return False
+
+    def can_afford(self, amount: int) -> bool:
+        """Checks if the player has at least `amount` currency."""
+        if not isinstance(amount, int) or isinstance(amount, bool) or amount < 0:
+            return False
+        return self._currency >= amount
 
     @property
     def inventory(self) -> Inventory:

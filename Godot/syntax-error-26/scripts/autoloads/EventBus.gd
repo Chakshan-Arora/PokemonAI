@@ -44,6 +44,8 @@ signal open_party_menu()
 signal open_inventory_ui()
 signal open_quest_journal()
 signal open_pause_menu()
+signal open_pokemart()
+signal currency_changed(new_balance, delta)
 signal close_all_menus()
 
 # Encounter signals

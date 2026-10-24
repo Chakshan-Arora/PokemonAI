@@ -57,6 +57,7 @@ func _ready() -> void:
 	EventBus.quest_updated.connect(func(_a, _b, _c, _d): update_hud())
 	EventBus.quest_completed.connect(func(_a): update_hud())
 	EventBus.quest_started.connect(func(_a): update_hud())
+	EventBus.currency_changed.connect(func(_a, _b): update_hud())
 	
 	update_hud()
 	_build_companion_dialogue_ui()
@@ -324,13 +325,48 @@ func update_hud() -> void:
 	var r_data = RegionData.get_region(GameState.current_region_id)
 	region_label.text = r_data.get("name", "Unknown Region")
 	
+	# Wallet / Currency panel
+	var wallet_panel = $TopRight.get_node_or_null("WalletPanel") as PanelContainer
+	if wallet_panel == null:
+		wallet_panel = PanelContainer.new()
+		wallet_panel.name = "WalletPanel"
+		wallet_panel.custom_minimum_size = Vector2(220, 32)
+		wallet_panel.position = Vector2(0, 75)
+		$TopRight.add_child(wallet_panel)
+		
+		var w_style = StyleBoxFlat.new()
+		w_style.bg_color = Color(0.1, 0.14, 0.22, 0.9)
+		w_style.border_color = Color(0.9, 0.75, 0.2, 0.9)
+		w_style.set_border_width_all(1)
+		w_style.set_corner_radius_all(6)
+		w_style.content_margin_left = 10
+		w_style.content_margin_right = 10
+		w_style.content_margin_top = 4
+		w_style.content_margin_bottom = 4
+		wallet_panel.add_theme_stylebox_override("panel", w_style)
+		
+		var w_hbox = HBoxContainer.new()
+		w_hbox.name = "WHBox"
+		wallet_panel.add_child(w_hbox)
+		
+		var w_lbl = Label.new()
+		w_lbl.name = "WalletLabel"
+		w_lbl.add_theme_font_size_override("font_size", 14)
+		w_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35, 1.0))
+		w_hbox.add_child(w_lbl)
+	
+	var cur_val = GameState.player.currency if GameState.player else 500
+	var wallet_lbl = wallet_panel.get_node_or_null("WHBox/WalletLabel") as Label
+	if wallet_lbl:
+		wallet_lbl.text = "💰 PokéDollars: %dp" % cur_val
+	
 	# Active Quest Tracker widget
 	var quest_tracker = $TopRight.get_node_or_null("QuestTracker") as PanelContainer
 	if quest_tracker == null:
 		quest_tracker = PanelContainer.new()
 		quest_tracker.name = "QuestTracker"
 		quest_tracker.custom_minimum_size = Vector2(220, 60)
-		quest_tracker.position = Vector2(0, 75)
+		quest_tracker.position = Vector2(0, 115)
 		$TopRight.add_child(quest_tracker)
 		
 		var q_vbox = VBoxContainer.new()

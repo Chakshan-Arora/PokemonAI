@@ -62,6 +62,7 @@ def serialize_player(player: Player) -> dict[str, Any]:
             "name": player.name,
             "unique_id": player.unique_id,
             "max_team_size": player.max_team_size,
+            "currency": player.currency,
         }
 
         # 2. Inventory
@@ -285,12 +286,16 @@ def deserialize_player(
             )
 
     # Construct Player with restored inventory
+    raw_currency = p_info.get("currency", data.get("currency", 500))
+    currency = int(raw_currency) if isinstance(raw_currency, (int, float)) and not isinstance(raw_currency, bool) and raw_currency >= 0 else 500
+
     try:
         player = Player(
             name=name,
             unique_id=player_id,
             max_team_size=max_team_size,
             inventory=inventory,
+            currency=currency,
         )
     except Exception as e:
         raise SaveDataError(f"Failed to instantiate Player: {e}") from e

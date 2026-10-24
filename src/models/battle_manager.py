@@ -677,7 +677,11 @@ class BattleManager:
                     event_id=f"quest_evt_battle_defeat_{battle.battle_id}_{battle.loser.unique_id}",
                 )
 
-            # 4. Wild encounter cleanup
+            # 4. Award battle victory currency
+            currency_reward = max(50, battle.loser.level * 25) if battle.loser is not None else 50
+            player.add_currency(currency_reward)
+
+            # 5. Wild encounter cleanup
             if battle.encounter is not None:
                 if self._encounter_manager is not None:
                     self._encounter_manager.resolve_active_encounter(

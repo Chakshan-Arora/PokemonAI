@@ -1,0 +1,138 @@
+[gd_scene load_steps=17 format=3 uid="uid://c8y3xqjPokeMartVM"]
+
+[sub_resource type="GDScript" id="GDScript_pokemart_vm"]
+script/source = "extends StaticBody3D
+
+@export var machine_name: String = \"PokéMart Vending Machine\"
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+
+func get_interaction_text() -> String:
+	return \"Use PokéMart Vending Machine\"
+
+func on_interact(_player_node: Node3D) -> void:
+	EventBus.open_pokemart.emit()
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vm_main"]
+size = Vector3(1.2, 2.2, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_blue_body"]
+albedo_color = Color(0.12, 0.38, 0.78, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+material = SubResource("Mat_blue_body")
+size = Vector3(1.1, 2.0, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_red_stripe"]
+albedo_color = Color(0.88, 0.2, 0.18, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_red_stripe"]
+material = SubResource("Mat_red_stripe")
+size = Vector3(1.12, 0.18, 0.82)
+
+[sub_resource type="StandardMaterial3D" id="Mat_white_stripe"]
+albedo_color = Color(0.96, 0.96, 0.98, 1)
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_white_stripe"]
+material = SubResource("Mat_white_stripe")
+size = Vector3(1.12, 0.08, 0.82)
+
+[sub_resource type="StandardMaterial3D" id="Mat_showcase_glass"]
+transparency = 1
+albedo_color = Color(0.35, 0.82, 0.96, 0.6)
+metallic = 0.5
+roughness = 0.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_glass"]
+material = SubResource("Mat_showcase_glass")
+size = Vector3(0.85, 0.75, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ball_display"]
+albedo_color = Color(0.9, 0.2, 0.2, 1)
+metallic = 0.2
+roughness = 0.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_ball"]
+material = SubResource("Mat_ball_display")
+radius = 0.1
+height = 0.2
+
+[sub_resource type="StandardMaterial3D" id="Mat_potion_display"]
+albedo_color = Color(0.65, 0.28, 0.85, 1)
+metallic = 0.3
+roughness = 0.3
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_potion"]
+material = SubResource("Mat_potion_display")
+top_radius = 0.07
+bottom_radius = 0.07
+height = 0.2
+
+[sub_resource type="StandardMaterial3D" id="Mat_dispenser"]
+albedo_color = Color(0.22, 0.24, 0.28, 1)
+metallic = 0.6
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_dispenser"]
+material = SubResource("Mat_dispenser")
+size = Vector3(0.75, 0.28, 0.12)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_interact"]
+radius = 2.5
+
+[node name="PokeMartVendingMachine" type="StaticBody3D" groups=["interactable"]]
+script = SubResource("GDScript_pokemart_vm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_vm_main")
+
+[node name="BodyMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+mesh = SubResource("BoxMesh_body")
+
+[node name="RedStripe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+mesh = SubResource("BoxMesh_red_stripe")
+
+[node name="WhiteStripe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.98, 0)
+mesh = SubResource("BoxMesh_white_stripe")
+
+[node name="ShowcaseGlass" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.48, 0.38)
+mesh = SubResource("BoxMesh_glass")
+
+[node name="BallDisplay" type="MeshInstance3D" parent="ShowcaseGlass"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24, 0, -0.04)
+mesh = SubResource("SphereMesh_ball")
+
+[node name="PotionDisplay" type="MeshInstance3D" parent="ShowcaseGlass"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.24, 0, -0.04)
+mesh = SubResource("CylinderMesh_potion")
+
+[node name="DispenserTray" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0.38)
+mesh = SubResource("BoxMesh_dispenser")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+billboard = 1
+text = "POKÉMART
+Vending Machine"
+font_size = 38
+outline_size = 8
+modulate = Color(0.06, 0.09, 0.16, 1)
+outline_modulate = Color(1, 1, 1, 1)
+
+[node name="Area3D" type="Area3D" parent="." groups=["interactable"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_interact")

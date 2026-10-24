@@ -13,6 +13,7 @@ var party: Array:
 		return team
 var collection: Array = []     # All caught Pokémon
 var inventory: Dictionary = {} # item_id -> quantity
+var currency: int = 500        # Currency balance in PokéDollars (p)
 var max_team_size: int = 6
 var discovered_regions: Array = []    # Array of region_id strings
 var discovered_landmarks: Array = []  # Array of landmark_id strings
@@ -39,6 +40,7 @@ static func create(p_name: String):
 	var pm = new()
 	pm.player_name = p_name
 	pm.unique_id = _generate_uid()
+	pm.currency = 500
 	# Starter inventory
 	pm.inventory = {"poke_ball": 5, "potion": 3}
 	return pm
@@ -52,8 +54,6 @@ static func _generate_uid() -> String:
 
 func add_to_team(p: PokemonInstance) -> bool:
 	if team.size() >= max_team_size:
-		return false
-	if is_on_team(p):
 		return false
 	team.append(p)
 	if not is_in_collection(p):
@@ -143,6 +143,22 @@ func has_item(item_id: String, quantity: int = 1) -> bool:
 func get_item_count(item_id: String) -> int:
 	return int(inventory.get(item_id, 0))
 
+# ─── Currency / Economy ────────────────────────────────────────────────────────
+
+func add_currency(amount: int) -> int:
+	currency += maxi(0, int(amount))
+	return currency
+
+func remove_currency(amount: int) -> bool:
+	var a = int(amount)
+	if a < 0 or currency < a:
+		return false
+	currency -= a
+	return true
+
+func can_afford(amount: int) -> bool:
+	return currency >= int(amount)
+
 # ─── Regions / Exploration ────────────────────────────────────────────────────
 
 func discover_region(region_id: String) -> bool:
@@ -228,6 +244,7 @@ func to_dict() -> Dictionary:
 		"player_name": player_name,
 		"trainer_avatar": trainer_avatar,
 		"unique_id": unique_id,
+		"currency": currency,
 		"active_pokemon_index": active_pokemon_index,
 		"team": team_data,
 		"collection": collection_data,
@@ -250,6 +267,9 @@ static func from_dict(d: Dictionary):
 	pm.player_name = d.get("player_name", "Trainer")
 	pm.trainer_avatar = d.get("trainer_avatar", "ash")
 	pm.unique_id = d.get("unique_id", "")
+	pm.currency = int(d.get("currency", d.get("player", {}).get("currency", 500)))
+	if pm.currency < 0:
+		pm.currency = 500
 	pm.active_pokemon_index = d.get("active_pokemon_index", 0)
 	var raw_inv = d.get("inventory", {"poke_ball": 5, "potion": 3})
 	pm.inventory = {}

@@ -1,5 +1,5 @@
 {
-  "active_pokemon_id": "1504_2663908850",
+  "active_pokemon_id": "1985_1843674496",
   "collected_treasures": [],
   "collection": [
     {
@@ -8,20 +8,20 @@
         "Vine Whip"
       ],
       "awarded_level_moves": [],
-      "bond": 26,
+      "bond": 20,
       "current_hp": 24,
-      "experience": 200,
+      "experience": 0,
       "level": 5,
       "max_hp": 24,
       "nickname": "Bulbasaur",
       "obedience": 100,
       "personality": {
-        "aggression": 62,
-        "confidence": 91,
-        "curiosity": 2,
-        "fear": 73,
-        "loyalty": 55,
-        "sociability": 11
+        "aggression": 3,
+        "confidence": 46,
+        "curiosity": 97,
+        "fear": 13,
+        "loyalty": 81,
+        "sociability": 73
       },
       "species": "Bulbasaur",
       "species_name": "Bulbasaur",
@@ -34,107 +34,39 @@
         "defense": 0,
         "speed": 0
       },
-      "unique_id": "1504_2663908850"
-    },
-    {
-      "attacks": [
-        "Tackle"
-      ],
-      "awarded_level_moves": [],
-      "bond": 0,
-      "current_hp": 14,
-      "experience": 0,
-      "level": 2,
-      "max_hp": 14,
-      "nickname": "Rattata",
-      "obedience": 100,
-      "personality": {
-        "aggression": 42,
-        "confidence": 48,
-        "curiosity": 45,
-        "fear": 52,
-        "loyalty": 11,
-        "sociability": 3
-      },
-      "species": "Rattata",
-      "species_name": "Rattata",
-      "status_effects": [],
-      "trained_atk": 0,
-      "trained_def": 0,
-      "trained_spd": 0,
-      "trained_stats": {
-        "attack": 0,
-        "defense": 0,
-        "speed": 0
-      },
-      "unique_id": "10001"
-    },
-    {
-      "attacks": [
-        "Tackle"
-      ],
-      "awarded_level_moves": [],
-      "bond": 0,
-      "current_hp": 16,
-      "experience": 0,
-      "level": 2,
-      "max_hp": 16,
-      "nickname": "Pidgey",
-      "obedience": 100,
-      "personality": {
-        "aggression": 88,
-        "confidence": 82,
-        "curiosity": 70,
-        "fear": 26,
-        "loyalty": 27,
-        "sociability": 34
-      },
-      "species": "Pidgey",
-      "species_name": "Pidgey",
-      "status_effects": [],
-      "trained_atk": 0,
-      "trained_def": 0,
-      "trained_spd": 0,
-      "trained_stats": {
-        "attack": 0,
-        "defense": 0,
-        "speed": 0
-      },
-      "unique_id": "10002"
+      "unique_id": "1985_1843674496"
     }
   ],
+  "currency": 500,
   "current_region_id": "starting_meadow",
   "discovered_landmarks": [],
   "discovered_regions": [],
-  "game_time": 8.19255261110935,
+  "game_time": 8.0,
   "inventory": {
     "capacity": 20,
     "items": {
-      "poke_ball": 3,
+      "poke_ball": 5,
       "potion": 3
     }
   },
   "player": {
+    "currency": 500,
     "max_team_size": 6,
     "name": "Trainer",
     "player_name": "Trainer",
     "trainer_avatar": "ash",
-    "unique_id": "player_1504_1402717560"
+    "unique_id": "player_1984_2523412446"
   },
   "player_position": {
-    "x": 25.0,
-    "y": 0.100000001490116,
-    "z": 25.0
+    "x": 50.0,
+    "y": 0.5,
+    "z": 50.0
   },
   "quests": {},
-  "saved_at": "2026-10-25 04:04:11",
+  "saved_at": "2026-10-25 04:11:59",
   "schema_version": 4,
   "team": [
-    "1504_2663908850",
-    "10001",
-    "10001",
-    "10002",
-    "10002"
+    "1985_1843674496"
   ],
   "wild_action_history": []
 }

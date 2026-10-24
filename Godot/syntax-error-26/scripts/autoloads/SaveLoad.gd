@@ -72,8 +72,10 @@ func save_game() -> bool:
 			"player_name": GameState.player.player_name,
 			"unique_id": GameState.player.unique_id,
 			"max_team_size": GameState.player.max_team_size,
-			"trainer_avatar": GameState.player.trainer_avatar
+			"trainer_avatar": GameState.player.trainer_avatar,
+			"currency": GameState.player.currency
 		},
+		"currency": GameState.player.currency,
 		"inventory": {
 			"capacity": 20,
 			"items": clean_items
@@ -181,6 +183,9 @@ func load_game() -> bool:
 	player.trainer_avatar = p_avatar
 	player.unique_id = str(player_dict.get("unique_id", player.unique_id))
 	player.max_team_size = int(player_dict.get("max_team_size", 6))
+	player.currency = int(player_dict.get("currency", save_data.get("currency", 500)))
+	if player.currency < 0:
+		player.currency = 500
 	
 	# Inventory - ensure quantities are strictly integers
 	var inv_data = save_data.get("inventory", {})
