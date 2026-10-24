@@ -183,7 +183,7 @@ func _setup_battle() -> void:
 	# Background
 	var bg_tr = $Arena/Background as TextureRect
 	if bg_tr:
-		var bg_path = "res://assets/backgrounds/battle_meadow_3d.png"
+		var bg_path = "res://assets/backgrounds/meadow.jpg"
 		var reg = GameState.current_region_id
 		if "forest" in reg: bg_path = "res://assets/backgrounds/forest.jpg"
 		elif "mountain" in reg: bg_path = "res://assets/backgrounds/mountain.jpg"
@@ -382,7 +382,7 @@ func _update_move_buttons() -> void:
 func _animate_attack(is_player: bool) -> void:
 	var sprite = player_sprite if is_player else opponent_sprite
 	var orig_pos = sprite.position
-	var target_offset = Vector2(40, -20) if is_player else Vector2(-40, 20)
+	var target_offset = Vector2(30, -15) if is_player else Vector2(-30, 15)
 	var tween = create_tween()
 	tween.tween_property(sprite, "position", orig_pos + target_offset, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(sprite, "position", orig_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -1058,7 +1058,7 @@ func _apply_time_of_day_atmosphere() -> void:
 			dim_rect.color = Color(0.20, 0.12, 0.05, 0.10)
 		"day":
 			bg_tr.modulate = Color(1.0, 1.0, 1.0, 1.0)
-			dim_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+			dim_rect.color = Color(0.0, 0.0, 0.0, 0.15)
 		"evening":
 			bg_tr.modulate = Color(1.0, 0.78, 0.65, 1.0)
 			dim_rect.color = Color(0.30, 0.10, 0.05, 0.22)
