@@ -50,6 +50,9 @@ class Pokemon:
         nickname: Optional[str] = None,
         attacks: Optional[Sequence[Attack]] = None,
         trained_stats: Optional[dict[str, int]] = None,
+        trust: Optional[float] = None,
+        affection: Optional[float] = None,
+        last_talk_time: float = 0.0,
     ) -> None:
         if not isinstance(species, PokemonSpecies):
             raise TypeError(f"species must be a PokemonSpecies instance, got {type(species).__name__}.")
@@ -72,6 +75,12 @@ class Pokemon:
         # Validate and set bond and obedience
         self.bond = bond
         self.obedience = obedience
+
+        # Validate and set trust and affection
+        self._trust: float = float(trust) if trust is not None else float(self._obedience)
+        self._affection: float = float(affection) if affection is not None else float(self._bond)
+        self._last_talk_time: float = float(last_talk_time)
+        self._awarded_max_bond_xp: bool = (self._bond >= 100)
 
         # Initialize trained combat stats (Attack, Defense, Speed)
         self._trained_stats: dict[str, int] = {
@@ -385,6 +394,64 @@ class Pokemon:
         if not (MIN_OBEDIENCE <= value <= MAX_OBEDIENCE):
             raise ValueError(f"Obedience must be between {MIN_OBEDIENCE} and {MAX_OBEDIENCE}, got {value}.")
         self._obedience = int(value)
+
+    @property
+    def trust(self) -> float:
+        """Trust level with trainer (0.0 to 100.0)."""
+        return self._trust
+
+    @trust.setter
+    def trust(self, value: float) -> None:
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise TypeError("Trust must be a float or int.")
+        self._trust = max(0.0, min(100.0, float(value)))
+        self._obedience = int(round(self._trust))
+
+    @property
+    def affection(self) -> float:
+        """Affection level with trainer (0.0 to 100.0)."""
+        return self._affection
+
+    @affection.setter
+    def affection(self, value: float) -> None:
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            raise TypeError("Affection must be a float or int.")
+        self._affection = max(0.0, min(100.0, float(value)))
+
+    @property
+    def last_talk_time(self) -> float:
+        """Timestamp or game time of last conversation."""
+        return self._last_talk_time
+
+    @last_talk_time.setter
+    def last_talk_time(self, value: float) -> None:
+        self._last_talk_time = float(value)
+
+    @property
+    def bond_multiplier(self) -> float:
+        """Returns 1.5x multiplier if both trust and affection > 50, otherwise 1.0."""
+        return 1.5 if (self._trust > 50.0 and self._affection > 50.0) else 1.0
+
+    def check_and_award_max_bond_exp(self) -> int:
+        """
+        If bond reaches 100%, awards 50% of total EXP required to go from current level to next level.
+        Returns the awarded exp amount (0 if not awarded or already awarded).
+        """
+        if self._bond >= 100 and not getattr(self, "_awarded_max_bond_xp", False):
+            self._awarded_max_bond_xp = True
+            total_needed = self.xp_for_next_level
+            bonus_xp = int(total_needed * 0.5)
+            if bonus_xp > 0:
+                self.gain_experience(bonus_xp)
+            return bonus_xp
+        elif self._bond < 100:
+            self._awarded_max_bond_xp = False
+        return 0
+
+    def decay_trust_and_affection(self, amount: float = 2.0) -> None:
+        """Decreases trust and affection by the specified amount (minimum 0)."""
+        self.trust = max(0.0, self._trust - amount)
+        self.affection = max(0.0, self._affection - amount)
 
     @property
     def attacks(self) -> list[Attack]:

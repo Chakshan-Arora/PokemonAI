@@ -520,9 +520,9 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 emotional_state = "hurt"
 
         elif sentiment == "negative":
-            # Negative comments: trust and affection MUST be 0.0
-            trust_delta = 0.0
-            affection_delta = 0.0
+            # Negative comments / critiques: trust and affection decrease by 2
+            trust_delta = -2.0
+            affection_delta = -2.0
 
             if emotional_state.lower() in ("pleased", "happy", "excited", "affectionate", "content", "bold", "confident", "joyful", "thoughtful"):
                 emotional_state = "discouraged"

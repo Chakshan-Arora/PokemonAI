@@ -113,12 +113,15 @@ func _select_pokemon(index: int) -> void:
 	type_lbl.text = "Type: " + " / ".join(p.types)
 	hp_lbl.text = "HP: %d / %d" % [p.current_hp, p.max_hp]
 	var pers_summary = p.get_dominant_traits()
-	stats_lbl.text = "Attack: %d | Defense: %d | Speed: %d\nBond: %d | Obedience: %d\nPersonality: %s (Agg:%d Cur:%d Loy:%d)" % [
+	var mult_tag = " ⭐1.5x" if (p.trust > 50.0 and p.affection > 50.0) else ""
+	stats_lbl.text = "Attack: %d | Defense: %d | Speed: %d\nBond: %d%%%s | Trust: %d%% | Affection: %d%%\nPersonality: %s (Agg:%d Cur:%d Loy:%d)" % [
 		p.effective_attack(),
 		p.effective_defense(),
 		p.effective_speed(),
-		int(p.bond),
-		int(p.obedience),
+		int(round(p.bond)),
+		mult_tag,
+		int(round(p.trust)),
+		int(round(p.affection)),
 		pers_summary,
 		int(p.personality.get("aggression", 50)),
 		int(p.personality.get("curiosity", 50)),
@@ -184,8 +187,9 @@ func _on_set_active_pressed() -> void:
 func _on_pet_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
-		p.bond = clamp(p.bond + 3.0, 0.0, 100.0)
-		var msg = "You gently patted %s! (Bond +3)" % p.get_display_name()
+		p.add_bond(3.0)
+		p.affection = clamp(p.affection + 2.0, 0.0, 100.0)
+		var msg = "You gently patted %s! (Bond +3, Affection +2)" % p.get_display_name()
 		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
 		if feedback_lbl:
 			feedback_lbl.text = "❤️ " + msg
@@ -195,7 +199,6 @@ func _on_pet_pressed() -> void:
 func _on_talk_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
-		p.obedience = clamp(p.obedience + 2.0, 0.0, 100.0)
 		
 		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
 		if feedback_lbl:
@@ -213,12 +216,18 @@ func _on_talk_pressed() -> void:
 				"Tell me something you like about our team!"
 			]
 			var random_prompt = party_prompts[randi() % party_prompts.size()]
-			var res = await LLMClient.talk_to_companion(p.species_name, random_prompt, p_name, p.obedience, p.bond)
+			var res = await LLMClient.talk_to_companion(p.species_name, random_prompt, p_name, p.trust, p.affection)
 			if not res.is_empty() and res.has("dialogue"):
 				var t_delta = float(res.get("trust_delta", 0.0))
 				var a_delta = float(res.get("affection_delta", 0.0))
-				p.obedience = clamp(p.obedience + t_delta, 0.0, 100.0)
-				p.bond = clamp(p.bond + a_delta, 0.0, 100.0)
+				p.trust = clamp(p.trust + t_delta, 0.0, 100.0)
+				p.affection = clamp(p.affection + a_delta, 0.0, 100.0)
+				p.obedience = p.trust
+				if a_delta > 0.0:
+					p.add_bond(a_delta)
+				elif a_delta < 0.0:
+					p.bond = clamp(p.bond + a_delta, 0.0, 100.0)
+				GameState.record_talk_interaction()
 				var reply = "%s: \"%s\"" % [p.get_display_name(), res["dialogue"]]
 				if feedback_lbl:
 					feedback_lbl.text = "💬 " + reply
@@ -227,7 +236,12 @@ func _on_talk_pressed() -> void:
 				_select_pokemon(_selected_index)
 				return
 		
-		var default_msg = "%s looks at you affectionately and swishes its tail! (Obedience +2)" % p.get_display_name()
+		p.trust = clamp(p.trust + 2.0, 0.0, 100.0)
+		p.affection = clamp(p.affection + 2.0, 0.0, 100.0)
+		p.obedience = p.trust
+		p.add_bond(2.0)
+		GameState.record_talk_interaction()
+		var default_msg = "%s looks at you affectionately and swishes its tail! (Trust +2, Affection +2)" % p.get_display_name()
 		if feedback_lbl:
 			feedback_lbl.text = "💬 " + default_msg
 		EventBus.show_message.emit(default_msg)
@@ -237,9 +251,12 @@ func _on_talk_pressed() -> void:
 func _on_play_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
-		p.bond = clamp(p.bond + 4.0, 0.0, 100.0)
-		p.obedience = clamp(p.obedience + 2.0, 0.0, 100.0)
-		var msg = "You played a game with %s! (Bond +4, Obedience +2)" % p.get_display_name()
+		p.add_bond(4.0)
+		p.trust = clamp(p.trust + 2.0, 0.0, 100.0)
+		p.affection = clamp(p.affection + 2.0, 0.0, 100.0)
+		p.obedience = p.trust
+		GameState.record_talk_interaction()
+		var msg = "You played a game with %s! (Bond +4, Trust +2, Affection +2)" % p.get_display_name()
 		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
 		if feedback_lbl:
 			feedback_lbl.text = "⭐ " + msg

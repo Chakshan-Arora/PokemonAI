@@ -12,6 +12,8 @@ var game_time: float = 8.0    # 0–24 hour cycle, starts at 8am
 var is_in_battle: bool = false
 var is_game_started: bool = false
 var is_paused: bool = false
+var talk_idle_timer: float = 0.0
+const TALK_DECAY_INTERVAL: float = 300.0  # 5 minutes in real gameplay seconds
 
 const GAME_TIME_RATE: float = 1.0 / 240.0  # 1 game-hour per 4 real minutes (gentle, immersive day/night cycle)
 
@@ -32,6 +34,25 @@ func _process(delta: float) -> void:
 		var new_tod = get_time_of_day()
 		if new_tod != old_tod:
 			game_time_changed.emit(game_time, new_tod)
+		
+		# Every 5 minutes without talking to active Pokemon, trust & affection decrease by 2
+		talk_idle_timer += delta
+		if talk_idle_timer >= TALK_DECAY_INTERVAL:
+			talk_idle_timer -= TALK_DECAY_INTERVAL
+			_apply_talk_decay()
+
+func record_talk_interaction() -> void:
+	talk_idle_timer = 0.0
+	var active_p = get_active_pokemon()
+	if active_p:
+		active_p.last_talk_time = game_time
+
+func _apply_talk_decay() -> void:
+	var active_p = get_active_pokemon()
+	if active_p:
+		active_p.decay_trust_and_affection(2.0)
+		EventBus.show_message.emit("💤 %s feels a bit lonely. (Trust -2, Affection -2)" % active_p.get_display_name())
+		SaveLoad.save_game()
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
@@ -42,6 +63,8 @@ func new_game(p_player_name: String, starter_species: String, avatar: String = "
 	# Create starter Pokémon at level 5
 	var starter = PokemonInstance.create(starter_species, 5)
 	starter.bond = 20.0
+	starter.trust = 50.0
+	starter.affection = 50.0
 	player.add_to_team(starter)
 	
 	# Start auto-start quests

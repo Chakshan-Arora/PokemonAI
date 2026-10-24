@@ -99,13 +99,24 @@ class BondManager:
                 reason=reason or "No bond change applied (delta is 0).",
             )
 
-        raw_target = prev_bond + delta
+        effective_delta = delta
+        if delta > 0:
+            mult = getattr(pokemon, "bond_multiplier", 1.0)
+            if mult > 1.0:
+                effective_delta = int(round(delta * mult))
+
+        raw_target = prev_bond + effective_delta
         clamped_bond = max(MIN_BOND, min(MAX_BOND, raw_target))
         was_clamped = (raw_target < MIN_BOND) or (raw_target > MAX_BOND)
         actual_change = clamped_bond - prev_bond
 
         # Apply mutation strictly to target instance
         pokemon.bond = clamped_bond
+
+        # Check and award 50% EXP bonus if bond reaches 100%
+        if clamped_bond >= MAX_BOND and prev_bond < MAX_BOND:
+            if hasattr(pokemon, "check_and_award_max_bond_exp"):
+                pokemon.check_and_award_max_bond_exp()
 
         default_reason = f"Bond changed by {actual_change:+d} ({prev_bond} -> {clamped_bond})."
         return BondChangeResult(

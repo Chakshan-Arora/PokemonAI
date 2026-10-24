@@ -203,31 +203,50 @@ func _on_companion_message_submitted(text: String) -> void:
 	GameState.set_meta("typing_active", true)
 	
 	var p_name = GameState.player.player_name if GameState.player else "Trainer"
-	var current_trust = float(active_p.obedience) if active_p else 30.0
-	var current_affection = float(active_p.bond) if active_p else 30.0
+	var current_trust = float(active_p.trust)
+	var current_affection = float(active_p.affection)
 	var res = await LLMClient.talk_to_companion(active_p.species_name, msg, p_name, current_trust, current_affection)
 	
 	if not res.is_empty():
 		var t_delta = float(res.get("trust_delta", 0.0))
 		var a_delta = float(res.get("affection_delta", 0.0))
+		var sentiment = str(res.get("sentiment", "neutral"))
 		
-		# Update active Pokémon's actual bond and obedience in GameState
-		active_p.bond = clamp(active_p.bond + a_delta, 0.0, 100.0)
-		active_p.obedience = clamp(active_p.obedience + t_delta, 0.0, 100.0)
+		# Negative critiques decrease trust and affection by 2 (or more for very negative)
+		if sentiment in ["negative", "very_negative"]:
+			t_delta = min(-2.0, t_delta)
+			a_delta = min(-2.0, a_delta)
+		
+		# Update active Pokémon's actual trust, affection, and obedience in GameState
+		active_p.trust = clamp(active_p.trust + t_delta, 0.0, 100.0)
+		active_p.affection = clamp(active_p.affection + a_delta, 0.0, 100.0)
+		active_p.obedience = active_p.trust
+		
+		# Apply bond update: 1.5x multiplier if both trust and affection > 50
+		if a_delta > 0.0:
+			active_p.add_bond(a_delta)
+		elif a_delta < 0.0:
+			active_p.bond = clamp(active_p.bond + a_delta, 0.0, 100.0)
+		
+		GameState.record_talk_interaction()
 		
 		var t_sign = "+" if t_delta > 0.0 else ""
 		var a_sign = "+" if a_delta > 0.0 else ""
 		var emo_state = str(res.get("emotional_state", "pleased")).capitalize()
+		var mult_text = " (1.5x Multiplier!)" if active_p.get_bond_multiplier() > 1.0 else ""
 		
-		companion_output_lbl.text = "%s: \"%s\"\n[State: %s | Trust: %s%.1f | Affection: %s%.1f]" % [
+		companion_output_lbl.text = "%s: \"%s\"\n[State: %s | Trust: %s%.1f | Affection: %s%.1f | Bond: %d%%%s]" % [
 			active_p.get_display_name(),
 			res.get("dialogue", ""),
 			emo_state,
 			t_sign, t_delta,
-			a_sign, a_delta
+			a_sign, a_delta,
+			int(round(active_p.bond)),
+			mult_text
 		]
 		show_notification("Spoke with %s!" % active_p.get_display_name(), 3.0)
 		SaveLoad.save_game()
+		update_hud()
 	else:
 		companion_output_lbl.text = "%s looked attentively, but couldn't answer." % active_p.get_display_name()
 
@@ -299,7 +318,9 @@ func update_hud() -> void:
 				t_icon.texture = load(a_path) as Texture2D
 			var t_name = trainer_bar.get_node_or_null("TrainerName") as Label
 			if t_name:
-				t_name.text = "%s  (Bond: %d%%)" % [GameState.player.player_name, int(active_p.bond)]
+				var has_mult = (active_p.trust > 50.0 and active_p.affection > 50.0)
+				var mult_tag = " ⭐1.5x" if has_mult else ""
+				t_name.text = "%s  (Bond: %d%%%s)" % [GameState.player.player_name, int(round(active_p.bond)), mult_tag]
 		
 		# Display PMD portrait if available
 		var hbox = $TopLeft/PokemonPanel/VBox/HBox
@@ -319,6 +340,100 @@ func update_hud() -> void:
 			portrait_tr.visible = true
 		else:
 			portrait_tr.visible = false
+
+		# Trust and Affection Meters
+		var meters_box = vbox.get_node_or_null("MetersBox") as VBoxContainer
+		if meters_box == null:
+			meters_box = VBoxContainer.new()
+			meters_box.name = "MetersBox"
+			meters_box.add_theme_constant_override("separation", 2)
+			vbox.add_child(meters_box)
+			
+			# Trust meter row
+			var trust_row = HBoxContainer.new()
+			trust_row.name = "TrustRow"
+			meters_box.add_child(trust_row)
+			
+			var t_lbl = Label.new()
+			t_lbl.name = "TLabel"
+			t_lbl.text = "🤝 Trust:"
+			t_lbl.custom_minimum_size = Vector2(70, 0)
+			t_lbl.add_theme_font_size_override("font_size", 11)
+			t_lbl.add_theme_color_override("font_color", Color(0.25, 0.55, 0.88))
+			trust_row.add_child(t_lbl)
+			
+			var t_bar = ProgressBar.new()
+			t_bar.name = "TrustBar"
+			t_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			t_bar.custom_minimum_size = Vector2(0, 8)
+			t_bar.max_value = 100.0
+			t_bar.show_percentage = false
+			var t_fill = StyleBoxFlat.new()
+			t_fill.bg_color = Color(0.2, 0.5, 0.85)
+			t_fill.set_corner_radius_all(2)
+			t_bar.add_theme_stylebox_override("fill", t_fill)
+			var t_bg = StyleBoxFlat.new()
+			t_bg.bg_color = Color(0.12, 0.16, 0.22, 0.8)
+			t_bg.set_corner_radius_all(2)
+			t_bar.add_theme_stylebox_override("background", t_bg)
+			trust_row.add_child(t_bar)
+			
+			var t_val = Label.new()
+			t_val.name = "TVal"
+			t_val.custom_minimum_size = Vector2(36, 0)
+			t_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			t_val.add_theme_font_size_override("font_size", 11)
+			t_val.add_theme_color_override("font_color", Color(0.25, 0.55, 0.88))
+			trust_row.add_child(t_val)
+			
+			# Affection meter row
+			var aff_row = HBoxContainer.new()
+			aff_row.name = "AffRow"
+			meters_box.add_child(aff_row)
+			
+			var a_lbl = Label.new()
+			a_lbl.name = "ALabel"
+			a_lbl.text = "💖 Affection:"
+			a_lbl.custom_minimum_size = Vector2(70, 0)
+			a_lbl.add_theme_font_size_override("font_size", 11)
+			a_lbl.add_theme_color_override("font_color", Color(0.88, 0.35, 0.6))
+			aff_row.add_child(a_lbl)
+			
+			var a_bar = ProgressBar.new()
+			a_bar.name = "AffBar"
+			a_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			a_bar.custom_minimum_size = Vector2(0, 8)
+			a_bar.max_value = 100.0
+			a_bar.show_percentage = false
+			var a_fill = StyleBoxFlat.new()
+			a_fill.bg_color = Color(0.85, 0.3, 0.55)
+			a_fill.set_corner_radius_all(2)
+			a_bar.add_theme_stylebox_override("fill", a_fill)
+			var a_bg = StyleBoxFlat.new()
+			a_bg.bg_color = Color(0.12, 0.16, 0.22, 0.8)
+			a_bg.set_corner_radius_all(2)
+			a_bar.add_theme_stylebox_override("background", a_bg)
+			aff_row.add_child(a_bar)
+			
+			var a_val = Label.new()
+			a_val.name = "AVal"
+			a_val.custom_minimum_size = Vector2(36, 0)
+			a_val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			a_val.add_theme_font_size_override("font_size", 11)
+			a_val.add_theme_color_override("font_color", Color(0.88, 0.35, 0.6))
+			aff_row.add_child(a_val)
+		
+		var t_bar_inst = meters_box.get_node_or_null("TrustRow/TrustBar") as ProgressBar
+		var t_val_inst = meters_box.get_node_or_null("TrustRow/TVal") as Label
+		if t_bar_inst and t_val_inst:
+			t_bar_inst.value = active_p.trust
+			t_val_inst.text = "%d%%" % int(round(active_p.trust))
+		
+		var a_bar_inst = meters_box.get_node_or_null("AffRow/AffBar") as ProgressBar
+		var a_val_inst = meters_box.get_node_or_null("AffRow/AVal") as Label
+		if a_bar_inst and a_val_inst:
+			a_bar_inst.value = active_p.affection
+			a_val_inst.text = "%d%%" % int(round(active_p.affection))
 	else:
 		pokemon_panel.visible = false
 	
