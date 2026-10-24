@@ -1,0 +1,131 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8y3xqjQuestJournalUI"]
+
+[ext_resource type="Script" path="res://scripts/ui/QuestJournalUI.gd" id="1_quest"]
+
+[node name="QuestJournalUI" type="Control" groups=["quest_journal"]]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_quest")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -440.0
+offset_top = -270.0
+offset_right = 440.0
+offset_bottom = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 14.0
+offset_right = 150.0
+offset_bottom = 44.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+text = "Quest Journal"
+horizontal_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="Panel"]
+custom_minimum_size = Vector2(80, 32)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 14.0
+offset_right = -20.0
+offset_bottom = 46.0
+grow_horizontal = 0
+text = "Close"
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 54.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="TabBar" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ActiveBtn" type="Button" parent="Panel/VBox/TabBar"]
+custom_minimum_size = Vector2(160, 34)
+layout_mode = 2
+text = "Active Quests"
+
+[node name="CompletedBtn" type="Button" parent="Panel/VBox/TabBar"]
+custom_minimum_size = Vector2(160, 34)
+layout_mode = 2
+text = "Completed Quests"
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/HBox"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBox/HBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="DetailVBox" type="VBoxContainer" parent="Panel/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Panel/VBox/HBox/DetailVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Select a quest"
+
+[node name="DescLabel" type="Label" parent="Panel/VBox/HBox/DetailVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+autowrap_mode = 2
+
+[node name="ObjectivesLabel" type="Label" parent="Panel/VBox/HBox/DetailVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 2
+
+[node name="RewardsLabel" type="Label" parent="Panel/VBox/HBox/DetailVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.4, 1)
+autowrap_mode = 2
+

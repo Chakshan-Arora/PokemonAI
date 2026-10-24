@@ -1,0 +1,307 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8y3xqjStarterChoice"]
+
+[ext_resource type="Script" path="res://scripts/ui/StarterChoice.gd" id="1_starter"]
+
+[node name="StarterChoice" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_starter")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07, 0.09, 0.14, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -250.0
+offset_top = 40.0
+offset_right = 250.0
+offset_bottom = 95.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 36
+text = "Choose Your Starter Pokémon"
+horizontal_alignment = 1
+
+[node name="DescLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 100.0
+offset_right = 300.0
+offset_bottom = 135.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Professor Oak offers you one of three regional partner Pokémon."
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -460.0
+offset_top = -180.0
+offset_right = 460.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="BulbasaurPanel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(280, 380)
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="HBoxContainer/BulbasaurPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 16.0
+offset_right = 120.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+text = "Bulbasaur"
+horizontal_alignment = 1
+
+[node name="TypeLabel" type="Label" parent="HBoxContainer/BulbasaurPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 50.0
+offset_right = 100.0
+offset_bottom = 76.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 0.4, 1)
+text = "Grass / Poison"
+horizontal_alignment = 1
+
+[node name="ColorRect" type="ColorRect" parent="HBoxContainer/BulbasaurPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -100.0
+offset_right = 50.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.3, 0.7, 0.3, 1)
+
+[node name="StatsLabel" type="Label" parent="HBoxContainer/BulbasaurPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -160.0
+offset_right = 120.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "HP: 24  ATK: 49
+DEF: 49  SPD: 45"
+horizontal_alignment = 1
+
+[node name="SelectBtn" type="Button" parent="HBoxContainer/BulbasaurPanel"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -64.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Choose Bulbasaur"
+
+[node name="CharmanderPanel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(280, 380)
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="HBoxContainer/CharmanderPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 16.0
+offset_right = 120.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+text = "Charmander"
+horizontal_alignment = 1
+
+[node name="TypeLabel" type="Label" parent="HBoxContainer/CharmanderPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 50.0
+offset_right = 100.0
+offset_bottom = 76.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.2, 1)
+text = "Fire"
+horizontal_alignment = 1
+
+[node name="ColorRect" type="ColorRect" parent="HBoxContainer/CharmanderPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -100.0
+offset_right = 50.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.4, 0.15, 1)
+
+[node name="StatsLabel" type="Label" parent="HBoxContainer/CharmanderPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -160.0
+offset_right = 120.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "HP: 22  ATK: 52
+DEF: 43  SPD: 65"
+horizontal_alignment = 1
+
+[node name="SelectBtn" type="Button" parent="HBoxContainer/CharmanderPanel"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -64.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Choose Charmander"
+
+[node name="SquirtlePanel" type="Panel" parent="HBoxContainer"]
+custom_minimum_size = Vector2(280, 380)
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="HBoxContainer/SquirtlePanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 16.0
+offset_right = 120.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 22
+text = "Squirtle"
+horizontal_alignment = 1
+
+[node name="TypeLabel" type="Label" parent="HBoxContainer/SquirtlePanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 50.0
+offset_right = 100.0
+offset_bottom = 76.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.3, 0.6, 1, 1)
+text = "Water"
+horizontal_alignment = 1
+
+[node name="ColorRect" type="ColorRect" parent="HBoxContainer/SquirtlePanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -100.0
+offset_right = 50.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.5, 0.9, 1)
+
+[node name="StatsLabel" type="Label" parent="HBoxContainer/SquirtlePanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -160.0
+offset_right = 120.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "HP: 23  ATK: 48
+DEF: 65  SPD: 43"
+horizontal_alignment = 1
+
+[node name="SelectBtn" type="Button" parent="HBoxContainer/SquirtlePanel"]
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -64.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Choose Squirtle"
+
