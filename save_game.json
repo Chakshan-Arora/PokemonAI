@@ -1,0 +1,161 @@
+{
+  "active_pokemon_id": "10001",
+  "collected_treasures": [],
+  "collection": [
+    {
+      "attacks": [
+        "Scratch",
+        "Ember"
+      ],
+      "awarded_level_moves": [],
+      "bond": 5,
+      "current_hp": 32,
+      "experience": 200,
+      "level": 5,
+      "nickname": null,
+      "obedience": 100,
+      "personality": {
+        "aggression": 50,
+        "confidence": 50,
+        "curiosity": 50,
+        "fear": 50,
+        "loyalty": 50,
+        "sociability": 50
+      },
+      "species": "Charmander",
+      "trained_stats": {
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "unique_id": "10001"
+    },
+    {
+      "attacks": [
+        "Tackle",
+        "Gust",
+        "Quick Attack",
+        "Wing Attack"
+      ],
+      "awarded_level_moves": [],
+      "bond": 0,
+      "current_hp": 48,
+      "experience": 0,
+      "level": 4,
+      "nickname": null,
+      "obedience": 100,
+      "personality": {
+        "aggression": 3,
+        "confidence": 73,
+        "curiosity": 73,
+        "fear": 18,
+        "loyalty": 53,
+        "sociability": 32
+      },
+      "species": "Pidgey",
+      "trained_stats": {
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "unique_id": "10002"
+    }
+  ],
+  "discovered_landmarks": [],
+  "discovered_regions": [
+    "starting_meadow"
+  ],
+  "inventory": {
+    "capacity": 20,
+    "items": {
+      "poke_ball": 6,
+      "potion": 4
+    }
+  },
+  "player": {
+    "max_team_size": 6,
+    "name": "Ash",
+    "unique_id": "66213600-b46a-4d79-b9dc-716792b58586"
+  },
+  "quests": {
+    "first_encounter": {
+      "is_completed": false,
+      "objective_progress": {
+        "capture_first_pokemon": {
+          "current_count": 0,
+          "is_completed": false,
+          "objective_id": "capture_first_pokemon",
+          "target_count": 1
+        }
+      },
+      "quest_id": "first_encounter",
+      "rewards_claimed": false,
+      "selected_choices": {},
+      "status": "active"
+    }
+  },
+  "saved_at": "2026-10-16T05:28:46.237519+00:00",
+  "schema_version": 4,
+  "team": [
+    "10001",
+    "10002"
+  ],
+  "wild_action_history": [
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "attack",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    },
+    {
+      "action": "capture",
+      "is_aggressive": true,
+      "is_peaceful": false,
+      "outcome": null,
+      "species_name": "Pidgey"
+    }
+  ]
+}

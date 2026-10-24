@@ -1,0 +1,815 @@
+{
+  "agents": {
+    "10001": {
+      "agent_id": "10001",
+      "beliefs": {
+        "perceived_player_intent": "neutral",
+        "situational_beliefs": {},
+        "world_beliefs": []
+      },
+      "goals": {
+        "immediate_goals": [],
+        "long_term_goals": []
+      },
+      "identity": {
+        "communication_style": "expressive",
+        "nickname": null,
+        "personality_traits": {
+          "aggression": 50,
+          "confidence": 50,
+          "curiosity": 50,
+          "fear": 50,
+          "loyalty": 50,
+          "sociability": 50
+        },
+        "species": "Charmander",
+        "temperament": "balanced"
+      },
+      "is_captured": true,
+      "is_wild": false,
+      "last_decision": {
+        "action_type": "obey",
+        "chosen_move": "Ember",
+        "confidence": 0.8,
+        "dialogue": "Char-char!",
+        "emotional_state": "confident",
+        "intent": "Finish the battle with Ember as commanded",
+        "rationale": "The opponent is already looking weak, and the trainer's tactical command to use Ember makes complete sense to finish it off.",
+        "suggested_alternative": null,
+        "target": "Bulbasaur"
+      },
+      "memory": {
+        "episodic": {
+          "episodes": [
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "ed174f03-8e4e-4fd9-82f1-ea9acc9d11e8",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:24:13.735531+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 6
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "00a8f6fa-e8b0-4e5d-8f3c-95df00515328",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 6 damage",
+              "timestamp": "2026-10-16T05:24:32.015804+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 4
+              },
+              "emotional_impact": -0.28,
+              "episode_id": "3f87a726-c3c3-4012-bf2d-dacf9ceaf871",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 4 damage from Pidgey",
+              "timestamp": "2026-10-16T05:24:32.015804+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "1388cbc1-83b5-45bc-a861-aa0156393fa9",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:24:40.308459+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 6
+              },
+              "emotional_impact": -0.32,
+              "episode_id": "dada11fd-3b76-41b6-a690-3b969777109c",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 6 damage from Pidgey",
+              "timestamp": "2026-10-16T05:24:40.308459+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "f0907fa6-a986-4e60-a8ec-aad6eb9ae5b6",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:24:45.837621+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 6
+              },
+              "emotional_impact": -0.32,
+              "episode_id": "c0dd61ca-c138-4fe0-958e-0f02cd091c93",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 6 damage from Pidgey",
+              "timestamp": "2026-10-16T05:24:45.837621+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "bdedba7b-6cf9-4352-b914-6c5c1c1fba0c",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:24:51.575390+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "7069bdcd-9304-4d68-b278-393d8f986563",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 5 damage from Pidgey",
+              "timestamp": "2026-10-16T05:24:51.575390+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "e8322ed0-0ee1-490e-b82b-a46aae2529ed",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:24:57.921480+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 4
+              },
+              "emotional_impact": -0.28,
+              "episode_id": "ef46de87-271f-4f71-bcc1-06c5d0b9d210",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 4 damage from Pidgey",
+              "timestamp": "2026-10-16T05:24:57.921480+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "850f9d9f-907f-4db6-be12-6dbfea351110",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Struck Pidgey with Ember for 5 damage",
+              "timestamp": "2026-10-16T05:25:03.043780+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Pidgey",
+                "damage": 4
+              },
+              "emotional_impact": -0.28,
+              "episode_id": "47223699-a35c-4c0e-b8c4-44cbb0162ed6",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Took 4 damage from Pidgey",
+              "timestamp": "2026-10-16T05:25:03.043780+00:00"
+            },
+            {
+              "details": {},
+              "emotional_impact": 0.2,
+              "episode_id": "99208e1c-abf0-45f0-9e81-d8d3bf7944d5",
+              "event_type": "teammate_bonding",
+              "involved_entities": [
+                "10002"
+              ],
+              "summary": "Charmander and Pidgey spent time bonding while resting for 8.0 hours.",
+              "timestamp": "2026-10-16T05:25:17.460438+00:00"
+            },
+            {
+              "details": {
+                "dialogue": "Char... mander! (low, indignant growl with a puff of smoke from the tail)",
+                "intent": "scold"
+              },
+              "emotional_impact": -0.4,
+              "episode_id": "df97682a-b465-4a20-a3e5-abe30ffac7df",
+              "event_type": "trainer_criticism",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Charmander felt disheartened by Ash's reprimand.",
+              "timestamp": "2026-10-16T05:26:56.909793+00:00"
+            },
+            {
+              "details": {
+                "dialogue": "Char... mander...",
+                "intent": "scold"
+              },
+              "emotional_impact": -0.4,
+              "episode_id": "b01c56b5-f213-461f-87c3-675cef6beed6",
+              "event_type": "trainer_criticism",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Charmander felt disheartened by Ash's reprimand.",
+              "timestamp": "2026-10-16T05:27:22.511749+00:00"
+            },
+            {
+              "details": {
+                "dialogue": "Char... mander...",
+                "intent": "conversation"
+              },
+              "emotional_impact": 0.15,
+              "episode_id": "6ccf8fc0-8e3d-41cb-bc27-dd12850dc678",
+              "event_type": "trainer_conversation",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Charmander chatted and spent peaceful time with Ash.",
+              "timestamp": "2026-10-16T05:27:41.145273+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 10
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "a3d2d804-d3d2-457e-8371-5ab527da661e",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 10 damage",
+              "timestamp": "2026-10-16T05:28:20.161299+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Bulbasaur",
+                "damage": 4
+              },
+              "emotional_impact": -0.28,
+              "episode_id": "42bec017-3218-41ac-a7b6-047b081acfec",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Took 4 damage from Bulbasaur",
+              "timestamp": "2026-10-16T05:28:20.161299+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 10
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "ab5f8164-c013-44d9-be0a-e568cd1c7001",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 10 damage",
+              "timestamp": "2026-10-16T05:28:24.153976+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Bulbasaur",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "416b969c-e7cd-4539-944d-3bcc335f0b61",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Took 5 damage from Bulbasaur",
+              "timestamp": "2026-10-16T05:28:24.154926+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 10
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "11345af9-d06f-47c6-9105-7b3a668dba2d",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 10 damage",
+              "timestamp": "2026-10-16T05:28:26.817905+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Bulbasaur",
+                "damage": 4
+              },
+              "emotional_impact": -0.28,
+              "episode_id": "52fa8da9-ef9b-4673-9007-5c4cbd73b1e7",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Took 4 damage from Bulbasaur",
+              "timestamp": "2026-10-16T05:28:26.817905+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 10
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "b87d5ec7-8377-4572-a211-f020dc6d91ba",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 10 damage",
+              "timestamp": "2026-10-16T05:28:29.775261+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Bulbasaur",
+                "damage": 2
+              },
+              "emotional_impact": -0.24,
+              "episode_id": "48c45ba4-dce7-432d-885b-31151d96e707",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Took 2 damage from Bulbasaur",
+              "timestamp": "2026-10-16T05:28:29.775261+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 9
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "91443d40-db7b-4af9-991b-fae709a91dd6",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 9 damage",
+              "timestamp": "2026-10-16T05:28:33.165965+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Bulbasaur",
+                "damage": 2
+              },
+              "emotional_impact": -0.24,
+              "episode_id": "82786c98-0170-40ba-97ca-8885f3d5ec18",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Took 2 damage from Bulbasaur",
+              "timestamp": "2026-10-16T05:28:33.165965+00:00"
+            },
+            {
+              "details": {
+                "attack": "Ember",
+                "damage": 9
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "2a052520-6d8f-43ba-b507-bb1b09b7a9ad",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10003"
+              ],
+              "summary": "Struck Bulbasaur with Ember for 9 damage",
+              "timestamp": "2026-10-16T05:28:37.055062+00:00"
+            },
+            {
+              "details": {},
+              "emotional_impact": 0.35,
+              "episode_id": "c411c70a-3ada-4cae-a43e-1317682e6069",
+              "event_type": "battle_victory",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Achieved victory in battle under Ash's guidance",
+              "timestamp": "2026-10-16T05:28:37.055062+00:00"
+            }
+          ],
+          "max_episodes": 50
+        },
+        "long_term": {
+          "learned_tendencies": [],
+          "persistent_goals": [],
+          "preferences": {}
+        },
+        "working": {
+          "active_intention": {
+            "intent": "Finish the battle with Ember as commanded"
+          },
+          "immediate_context": {},
+          "max_recent_interactions": 15,
+          "recent_interactions": []
+        }
+      },
+      "relationships": {
+        "10002": {
+          "affection": 3.0,
+          "entity_id": "10002",
+          "entity_name": "Pidgey",
+          "entity_type": "teammate_pokemon",
+          "familiarity": 5.0,
+          "respect": 0.0,
+          "significant_memories": [
+            "99208e1c-abf0-45f0-9e81-d8d3bf7944d5"
+          ],
+          "stage": "stranger",
+          "trust": 0.0
+        },
+        "66213600-b46a-4d79-b9dc-716792b58586": {
+          "affection": 18.0,
+          "entity_id": "66213600-b46a-4d79-b9dc-716792b58586",
+          "entity_name": "Ash",
+          "entity_type": "trainer",
+          "familiarity": 28.5,
+          "respect": 3.0,
+          "significant_memories": [
+            "df97682a-b465-4a20-a3e5-abe30ffac7df",
+            "b01c56b5-f213-461f-87c3-675cef6beed6",
+            "6ccf8fc0-8e3d-41cb-bc27-dd12850dc678",
+            "c411c70a-3ada-4cae-a43e-1317682e6069"
+          ],
+          "stage": "acquaintance",
+          "trust": 26.0
+        }
+      }
+    },
+    "10002": {
+      "agent_id": "10002",
+      "beliefs": {
+        "perceived_player_intent": "neutral",
+        "situational_beliefs": {},
+        "world_beliefs": []
+      },
+      "goals": {
+        "immediate_goals": [],
+        "long_term_goals": []
+      },
+      "identity": {
+        "communication_style": "expressive",
+        "nickname": null,
+        "personality_traits": {
+          "aggression": 3,
+          "confidence": 73,
+          "curiosity": 73,
+          "fear": 18,
+          "loyalty": 53,
+          "sociability": 32
+        },
+        "species": "Pidgey",
+        "temperament": "curious"
+      },
+      "is_captured": true,
+      "is_wild": false,
+      "last_decision": {
+        "action_type": "attack",
+        "chosen_move": "Quick Attack",
+        "confidence": 0.75,
+        "dialogue": "Pid-gee!",
+        "emotional_state": "cautious",
+        "intent": "Strike the wounded Charmander with a fast attack to end the battle before taking more damage",
+        "rationale": "My HP is low at 35%, so I need to strike quickly and decisively while the opponent is also wounded, relying on my speed to finish this.",
+        "suggested_alternative": null,
+        "target": "Charmander"
+      },
+      "memory": {
+        "episodic": {
+          "episodes": [
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "d8858c4a-2539-4b46-9535-e4d2cde807aa",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:13.735531+00:00"
+            },
+            {
+              "details": {},
+              "emotional_impact": 0.1,
+              "episode_id": "6a5fcc51-e4fb-4f12-b6fa-0e4bab306ead",
+              "event_type": "encounter_inspect",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Since the trainer didn't give a specific command and my curiosity is high, I want to take a moment to look over this fiery challenger before deciding how to act.",
+              "timestamp": "2026-10-16T05:24:13.736540+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 6
+              },
+              "emotional_impact": -0.32,
+              "episode_id": "efee1a73-33c4-4c5c-b2d7-f30badd66870",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 6 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:32.015804+00:00"
+            },
+            {
+              "details": {
+                "attack": "Gust",
+                "damage": 4
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "fbe32814-a5a6-4cff-b769-61adbcea6af4",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Gust for 4 damage",
+              "timestamp": "2026-10-16T05:24:32.015804+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "fc1d5e83-c921-46bc-89b6-a09332d2f869",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:40.308459+00:00"
+            },
+            {
+              "details": {
+                "attack": "Wing Attack",
+                "damage": 6
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "1b370b29-3151-416b-95bd-26f55baf3f31",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Wing Attack for 6 damage",
+              "timestamp": "2026-10-16T05:24:40.308459+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "894152b2-b0c2-4ba4-99d5-c26b5a2b84f2",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:45.837621+00:00"
+            },
+            {
+              "details": {
+                "attack": "Wing Attack",
+                "damage": 6
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "af4fb274-3d9f-4cc9-989c-960e103cdcd1",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Wing Attack for 6 damage",
+              "timestamp": "2026-10-16T05:24:45.837621+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "f2faeb81-674a-45e5-b1f2-a8d40263d341",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:51.575390+00:00"
+            },
+            {
+              "details": {
+                "attack": "Wing Attack",
+                "damage": 5
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "ff17b35d-667a-4f73-8d78-24f189b9f96d",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Wing Attack for 5 damage",
+              "timestamp": "2026-10-16T05:24:51.575390+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "b7755e77-9813-4545-9dab-94c1d17f42a7",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:24:57.921480+00:00"
+            },
+            {
+              "details": {
+                "attack": "Quick Attack",
+                "damage": 4
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "2ef44b2d-ec64-4a6f-b9b2-8cfe4fc754a8",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Quick Attack for 4 damage",
+              "timestamp": "2026-10-16T05:24:57.921480+00:00"
+            },
+            {
+              "details": {
+                "attacker": "Charmander",
+                "damage": 5
+              },
+              "emotional_impact": -0.3,
+              "episode_id": "a24d8745-5a6b-4dca-9d38-89b51395ed06",
+              "event_type": "combat_damage",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586",
+                "10001"
+              ],
+              "summary": "Took 5 damage from Charmander",
+              "timestamp": "2026-10-16T05:25:03.043780+00:00"
+            },
+            {
+              "details": {
+                "attack": "Quick Attack",
+                "damage": 4
+              },
+              "emotional_impact": 0.2,
+              "episode_id": "5e994ed8-6030-49ce-a6f6-b5c0b29b60d0",
+              "event_type": "combat_strike",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Struck Charmander with Quick Attack for 4 damage",
+              "timestamp": "2026-10-16T05:25:03.043780+00:00"
+            },
+            {
+              "details": {},
+              "emotional_impact": -0.15,
+              "episode_id": "a752e72a-9a47-41e4-b5d8-1803551f9cf2",
+              "event_type": "encounter_captured",
+              "involved_entities": [
+                "66213600-b46a-4d79-b9dc-716792b58586"
+              ],
+              "summary": "Captured by Ash",
+              "timestamp": "2026-10-16T05:25:05.906428+00:00"
+            },
+            {
+              "details": {},
+              "emotional_impact": 0.2,
+              "episode_id": "17f6695e-d4e6-49d1-9bcc-7fbf299dd162",
+              "event_type": "teammate_bonding",
+              "involved_entities": [
+                "10001"
+              ],
+              "summary": "Charmander and Pidgey spent time bonding while resting for 8.0 hours.",
+              "timestamp": "2026-10-16T05:25:17.460438+00:00"
+            }
+          ],
+          "max_episodes": 50
+        },
+        "long_term": {
+          "learned_tendencies": [],
+          "persistent_goals": [],
+          "preferences": {}
+        },
+        "working": {
+          "active_intention": {
+            "intent": "Strike the wounded Charmander with a fast attack to end the battle before taking more damage"
+          },
+          "immediate_context": {},
+          "max_recent_interactions": 15,
+          "recent_interactions": []
+        }
+      },
+      "relationships": {
+        "10001": {
+          "affection": 3.0,
+          "entity_id": "10001",
+          "entity_name": "Charmander",
+          "entity_type": "teammate_pokemon",
+          "familiarity": 5.0,
+          "respect": 0.0,
+          "significant_memories": [
+            "17f6695e-d4e6-49d1-9bcc-7fbf299dd162"
+          ],
+          "stage": "stranger",
+          "trust": 0.0
+        },
+        "66213600-b46a-4d79-b9dc-716792b58586": {
+          "affection": 0.0,
+          "entity_id": "66213600-b46a-4d79-b9dc-716792b58586",
+          "entity_name": "Ash",
+          "entity_type": "trainer",
+          "familiarity": 14.0,
+          "respect": 0.0,
+          "significant_memories": [
+            "d8858c4a-2539-4b46-9535-e4d2cde807aa",
+            "6a5fcc51-e4fb-4f12-b6fa-0e4bab306ead",
+            "efee1a73-33c4-4c5c-b2d7-f30badd66870",
+            "fc1d5e83-c921-46bc-89b6-a09332d2f869",
+            "894152b2-b0c2-4ba4-99d5-c26b5a2b84f2",
+            "f2faeb81-674a-45e5-b1f2-a8d40263d341",
+            "b7755e77-9813-4545-9dab-94c1d17f42a7",
+            "a24d8745-5a6b-4dca-9d38-89b51395ed06",
+            "a752e72a-9a47-41e4-b5d8-1803551f9cf2"
+          ],
+          "stage": "wary",
+          "trust": -14.0
+        }
+      }
+    }
+  },
+  "global_memory": [],
+  "metadata": {},
+  "saved_at": "2026-10-16T05:23:56.164162+00:00",
+  "schema_version": 1
+}

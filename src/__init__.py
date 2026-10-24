@@ -1,0 +1,3 @@
+"""
+Pokémon game foundation package.
+"""
