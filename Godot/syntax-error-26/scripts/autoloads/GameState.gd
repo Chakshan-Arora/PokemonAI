@@ -35,8 +35,9 @@ func _process(delta: float) -> void:
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
-func new_game(p_player_name: String, starter_species: String) -> void:
+func new_game(p_player_name: String, starter_species: String, avatar: String = "calem") -> void:
 	player = PlayerModel.create(p_player_name)
+	player.trainer_avatar = avatar
 	
 	# Create starter Pokémon at level 5
 	var starter = PokemonInstance.create(starter_species, 5)

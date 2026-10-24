@@ -5,6 +5,7 @@ const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const QuestData = preload("res://scripts/data/QuestData.gd")
 
 var player_name: String = "Trainer"
+var trainer_avatar: String = "calem"
 var unique_id: String = ""
 var team: Array = []           # Array of PokemonInstance (max 6)
 var collection: Array = []     # All caught Pokémon
@@ -214,6 +215,7 @@ func to_dict() -> Dictionary:
 		collection_data.append(p.to_dict())
 	return {
 		"player_name": player_name,
+		"trainer_avatar": trainer_avatar,
 		"unique_id": unique_id,
 		"active_pokemon_index": active_pokemon_index,
 		"team": team_data,
@@ -235,6 +237,7 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var pm = new()
 	pm.player_name = d.get("player_name", "Trainer")
+	pm.trainer_avatar = d.get("trainer_avatar", "calem")
 	pm.unique_id = d.get("unique_id", "")
 	pm.active_pokemon_index = d.get("active_pokemon_index", 0)
 	pm.inventory = d.get("inventory", {"poke_ball": 5, "potion": 3}).duplicate()

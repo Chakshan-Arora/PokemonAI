@@ -88,6 +88,28 @@ func _setup_battle() -> void:
 		is_wild = not GameState.get_meta("is_trainer_battle")
 		GameState.remove_meta("is_trainer_battle")
 	
+	# Dynamic region battle background
+	var bg_rect = $Arena/Background as ColorRect
+	if bg_rect:
+		var bg_tr = bg_rect.get_node_or_null("BattleBG") as TextureRect
+		if bg_tr == null:
+			bg_tr = TextureRect.new()
+			bg_tr.name = "BattleBG"
+			bg_tr.layout_mode = 1
+			bg_tr.anchors_preset = Control.PRESET_FULL_RECT
+			bg_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			bg_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+			bg_rect.add_child(bg_tr)
+		
+		var bg_path = "res://assets/backgrounds/meadow.jpg"
+		var reg = GameState.current_region_id
+		if "forest" in reg: bg_path = "res://assets/backgrounds/forest.jpg"
+		elif "mountain" in reg: bg_path = "res://assets/backgrounds/mountain.jpg"
+		elif "ruin" in reg or "haunted" in reg: bg_path = "res://assets/backgrounds/ruins.jpg"
+		
+		if ResourceLoader.exists(bg_path):
+			bg_tr.texture = load(bg_path) as Texture2D
+	
 	battle_engine.start_battle(player_pokemon, opponent_pokemon, is_wild)
 	
 	_update_ui()
@@ -186,16 +208,43 @@ func _update_ui() -> void:
 		else:
 			opp_port_tr.visible = false
 	
-	# Update move buttons
+	# Update move buttons with stylized type colors
 	if player_pokemon:
 		for i in range(move_btns.size()):
 			if i < player_pokemon.attacks.size():
 				var atk_name = player_pokemon.attacks[i]
 				var atk_data = AttackData.get_attack(atk_name)
+				var atk_type = atk_data.get("type", "Normal")
 				move_btns[i].visible = true
-				move_btns[i].text = "%s (%s)" % [atk_name, atk_data.get("type", "Normal")]
+				move_btns[i].text = "%s [%s]\nPwr:%d  Acc:%d%%" % [
+					atk_name,
+					atk_type,
+					atk_data.get("power", 0),
+					atk_data.get("accuracy", 100)
+				]
+				var tcolor = PokemonData.TYPE_COLORS.get(atk_type, Color(0.7, 0.7, 0.7))
+				move_btns[i].modulate = tcolor.lightened(0.3)
 			else:
 				move_btns[i].visible = false
+
+func _animate_attack(is_player: bool) -> void:
+	var sprite = player_sprite if is_player else opponent_sprite
+	var orig_pos = sprite.position
+	var target_offset = Vector2(25, -12) if is_player else Vector2(-25, 12)
+	var tween = create_tween()
+	tween.tween_property(sprite, "position", orig_pos + target_offset, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "position", orig_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+func _animate_hit(is_player_hit: bool) -> void:
+	var sprite = player_sprite if is_player_hit else opponent_sprite
+	var orig_x = sprite.position.x
+	var tween = create_tween()
+	sprite.modulate = Color(2.2, 0.35, 0.35)
+	tween.tween_property(sprite, "position:x", orig_x - 10, 0.05)
+	tween.tween_property(sprite, "position:x", orig_x + 10, 0.05)
+	tween.tween_property(sprite, "position:x", orig_x - 5, 0.05)
+	tween.tween_property(sprite, "position:x", orig_x, 0.05)
+	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 
 func _show_action_menu() -> void:
 	action_menu.visible = true
@@ -367,8 +416,14 @@ func _process_turn_result(result: Dictionary) -> void:
 		var etype = e.get("type", "")
 		match etype:
 			"attack_used":
-				_queue_message("%s used %s!" % [e.get("attacker", ""), e.get("attack", "")])
+				var atkr = e.get("attacker", "")
+				var is_p = (atkr == player_pokemon.get_display_name() or atkr == player_pokemon.species_name)
+				_animate_attack(is_p)
+				_queue_message("%s used %s!" % [atkr, e.get("attack", "")])
 			"damage_dealt":
+				var def_name = e.get("defender", "")
+				var is_p_hit = (def_name == player_pokemon.get_display_name() or def_name == player_pokemon.species_name)
+				_animate_hit(is_p_hit)
 				var eff = e.get("effectiveness", 1.0)
 				var text = "Dealt %d damage!" % e.get("damage", 0)
 				if eff > 1.0: text += " Super effective!"

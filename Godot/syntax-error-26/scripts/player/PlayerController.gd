@@ -35,6 +35,15 @@ signal interaction_triggered(object_node: Node3D)
 
 func _ready() -> void:
 	add_to_group("player")
+	
+	# Detach camera pivot from player rotation to eliminate feedback loop
+	if camera_pivot:
+		camera_pivot.top_level = true
+		camera_pivot.global_position = global_position + Vector3(0, 1.4, 0)
+		camera_pivot.rotation_degrees.y = camera_rotation_y
+		if camera_arm:
+			camera_arm.rotation_degrees.x = camera_rotation_x
+	
 	# Create encounter system
 	encounter_system = load("res://scripts/systems/EncounterSystem.gd").new()
 	add_child(encounter_system)
@@ -68,6 +77,10 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if GameState.is_in_battle or GameState.is_paused:
 		return
+	
+	# Keep camera following player position smoothly
+	if camera_pivot:
+		camera_pivot.global_position = global_position + Vector3(0, 1.4, 0)
 	
 	# Gravity
 	if not is_on_floor():

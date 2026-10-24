@@ -63,9 +63,13 @@ func _update_starter_panel(species_name: String) -> void:
 
 func _on_starter_chosen(species_name: String) -> void:
 	var player_name = "Trainer"
+	var avatar = "calem"
 	if GameState.has_meta("pending_player_name"):
 		player_name = GameState.get_meta("pending_player_name")
 		GameState.remove_meta("pending_player_name")
+	if GameState.has_meta("pending_trainer_avatar"):
+		avatar = GameState.get_meta("pending_trainer_avatar")
+		GameState.remove_meta("pending_trainer_avatar")
 	
-	GameState.new_game(player_name, species_name)
+	GameState.new_game(player_name, species_name, avatar)
 	get_tree().change_scene_to_file("res://scenes/World.tscn")

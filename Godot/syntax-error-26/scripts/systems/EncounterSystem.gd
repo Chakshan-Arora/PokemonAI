@@ -6,8 +6,8 @@ const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const RegionData = preload("res://scripts/data/RegionData.gd")
 const SpawnSystem = preload("res://scripts/systems/SpawnSystem.gd")
 
-const MIN_STEPS_BEFORE_ENCOUNTER: int = 1
-const MAX_STEPS_BEFORE_ENCOUNTER: int = 10
+const MIN_STEPS_BEFORE_ENCOUNTER: int = 15
+const MAX_STEPS_BEFORE_ENCOUNTER: int = 35
 
 var _steps_until_encounter: int = 0
 var _in_tall_grass: bool = false
