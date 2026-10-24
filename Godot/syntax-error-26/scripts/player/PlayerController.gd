@@ -64,7 +64,7 @@ func _ready() -> void:
 			avatar = str(GameState.get_meta("player_avatar"))
 		elif GameState.player and GameState.player.trainer_avatar != "":
 			var a = GameState.player.trainer_avatar.to_lower()
-			avatar = "girl" if (a == "girl" or a == "serena") else "boy"
+			avatar = "girl" if (a == "girl" or a == "misty" or a == "serena") else "boy"
 			
 		var is_girl = (avatar in ["girl", "misty", "serena", "may"])
 		if is_girl:

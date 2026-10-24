@@ -168,7 +168,7 @@ func load_game() -> bool:
 		save_data = json.data
 	var player_dict = save_data.get("player", {})
 	var p_name = player_dict.get("name", player_dict.get("player_name", "Trainer"))
-	var p_avatar = player_dict.get("trainer_avatar", "calem")
+	var p_avatar = player_dict.get("trainer_avatar", "ash")
 	
 	var player = PlayerModel.create(p_name)
 	player.trainer_avatar = p_avatar

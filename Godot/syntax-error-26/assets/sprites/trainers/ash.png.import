@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bylx6wrc4f74q"
-path="res://.godot/imported/brendan_walk.png-4fbfafe6b5afaed64aeb3661c92998f6.ctex"
+uid="uid://b0jy47mcmyb81"
+path="res://.godot/imported/ash.png-f785d4503c3e023a066f34e27c7a2884.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/trainers/brendan_walk.png"
-dest_files=["res://.godot/imported/brendan_walk.png-4fbfafe6b5afaed64aeb3661c92998f6.ctex"]
+source_file="res://assets/sprites/trainers/ash.png"
+dest_files=["res://.godot/imported/ash.png-f785d4503c3e023a066f34e27c7a2884.ctex"]
 
 [params]
 

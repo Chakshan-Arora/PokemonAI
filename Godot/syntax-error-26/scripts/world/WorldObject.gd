@@ -60,7 +60,7 @@ func _setup_visuals() -> void:
 			sprite_3d.pixel_size = 0.04
 			sprite_3d.position.y = 1.12
 	elif object_type == "npc":
-		var tex = load("res://assets/sprites/trainers/red.png")
+		var tex = load("res://assets/sprites/trainers/ash.png")
 		if tex:
 			sprite_3d.texture = tex
 			sprite_3d.pixel_size = 0.045

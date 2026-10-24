@@ -1,14 +1,14 @@
 [gd_scene load_steps=10 format=3 uid="uid://c8y3xqjDialogueNPC"]
 
 [ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
-[ext_resource type="Texture2D" path="res://assets/sprites/trainers/red.png" id="2_red"]
+[ext_resource type="Texture2D" path="res://assets/sprites/trainers/ash.png" id="2_ash"]
 
 [sub_resource type="GDScript" id="GDScript_dialogue_npc"]
 script/source = "extends StaticBody3D
 
 @export var npc_id: String = \"guide\"
 @export var npc_name: String = \"Guide\"
-@export_enum(\"red\", \"calem\", \"serena\", \"koji\") var sprite_variant: String = \"red\"
+@export_enum(\"ash\", \"misty\", \"koji\", \"professor_oak\") var sprite_variant: String = \"ash\"
 @export_multiline var dialogue_text: String = \"Welcome to the Pokémon world! Talk with your Pokémon often to deepen your bond.\"
 
 @onready var label_3d: Label3D = $Label3D
@@ -64,7 +64,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 billboard = 2
 texture_filter = 0
 pixel_size = 0.045
-texture = ExtResource("2_red")
+texture = ExtResource("2_ash")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)

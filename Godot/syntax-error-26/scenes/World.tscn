@@ -18,7 +18,6 @@
 [ext_resource type="PackedScene" path="res://scenes/world/RockProp.tscn" id="16_rockprop"]
 [ext_resource type="PackedScene" path="res://scenes/world/RuinsPillarProp.tscn" id="17_pillar"]
 [ext_resource type="PackedScene" path="res://scenes/world/SignProp.tscn" id="18_signprop"]
-[ext_resource type="PackedScene" path="res://scenes/world/CampfireProp.tscn" id="19_campfire"]
 [ext_resource type="PackedScene" path="res://scenes/npc/DialogueNPC.tscn" id="20_dialognpc"]
 [ext_resource type="PackedScene" path="res://scenes/world/PlayerHouse.tscn" id="21_playerhouse"]
 [ext_resource type="PackedScene" path="res://scenes/world/OakHouse.tscn" id="22_oakhouse"]
@@ -444,7 +443,7 @@ sign_text = "Wide open plains. Prepare for tactical battles."
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 255, 0, 245)
 npc_id = "trail_ranger"
 npc_name = "Park Ranger Logan"
-sprite_variant = "calem"
+sprite_variant = "ash"
 dialogue_text = "Greetings, explorer. The ancient shrine holds legendary secrets for those with keen eyes."
 
 [node name="LakesideBerryBush" parent="WorldObjects" instance=ExtResource("3_wobj")]

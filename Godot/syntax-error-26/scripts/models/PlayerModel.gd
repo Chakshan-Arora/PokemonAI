@@ -240,7 +240,7 @@ func to_dict() -> Dictionary:
 static func from_dict(d: Dictionary):
 	var pm = new()
 	pm.player_name = d.get("player_name", "Trainer")
-	pm.trainer_avatar = d.get("trainer_avatar", "calem")
+	pm.trainer_avatar = d.get("trainer_avatar", "ash")
 	pm.unique_id = d.get("unique_id", "")
 	pm.active_pokemon_index = d.get("active_pokemon_index", 0)
 	pm.inventory = d.get("inventory", {"poke_ball": 5, "potion": 3}).duplicate()
