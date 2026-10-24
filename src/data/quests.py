@@ -259,6 +259,123 @@ RESEARCH_SPECIALIZATION = QuestDefinition(
     ),
 )
 
+# 10. Lakeside Waters: Explore the Crystal Lakeside
+LAKESIDE_EXPEDITION = QuestDefinition(
+    quest_id="lakeside_expedition",
+    name="Lakeside Waters",
+    description="Explore the tranquil shores of Crystal Lakeside and gather fresh Oran berries.",
+    objectives=(
+        QuestObjective(
+            objective_id="discover_lakeside",
+            objective_type=ObjectiveType.DISCOVER_REGION,
+            description="Discover Crystal Lakeside",
+            target_count=1,
+            target_region="lakeside",
+        ),
+        QuestObjective(
+            objective_id="forage_lake_berries",
+            objective_type=ObjectiveType.INTERACT_OBJECT,
+            description="Gather berries from the Lakeside Berry Bush",
+            target_count=1,
+            target_object="lakeside_berry_bush",
+        ),
+    ),
+    prerequisites=("first_encounter",),
+    rewards={"potion": 2, "super_potion": 1},
+)
+
+# 11. Mountain Ascent: Scale the rugged Mountain Pass
+MOUNTAIN_ASCENT = QuestDefinition(
+    quest_id="mountain_ascent",
+    name="Ascent of Mountain Pass",
+    description="Scale the steep trails of Mountain Pass and inspect the trail marker.",
+    objectives=(
+        QuestObjective(
+            objective_id="discover_mountain_pass",
+            objective_type=ObjectiveType.DISCOVER_REGION,
+            description="Discover Mountain Pass",
+            target_count=1,
+            target_region="mountain_pass",
+        ),
+        QuestObjective(
+            objective_id="inspect_mountain_sign",
+            objective_type=ObjectiveType.DISCOVER_LANDMARK,
+            description="Discover Mountain Pass Sign landmark",
+            target_count=1,
+            target_landmark="mountain_pass_sign",
+        ),
+    ),
+    prerequisites=("trailblazer",),
+    rewards={"super_potion": 2, "antidote": 2},
+)
+
+# 12. Shadows of the Haunted Ruins
+RUINS_OF_SHADOW = QuestDefinition(
+    quest_id="ruins_of_shadow",
+    name="Shadows of the Haunted Ruins",
+    description="Venture into the mysterious Haunted Ruins and recover ancient relics.",
+    objectives=(
+        QuestObjective(
+            objective_id="discover_haunted_ruins",
+            objective_type=ObjectiveType.DISCOVER_REGION,
+            description="Discover Haunted Ruins",
+            target_count=1,
+            target_region="haunted_ruins",
+        ),
+        QuestObjective(
+            objective_id="recover_ruins_treasure",
+            objective_type=ObjectiveType.INTERACT_OBJECT,
+            description="Open the Ruins Treasure Chest",
+            target_count=1,
+            target_object="ruins_treasure_chest",
+        ),
+    ),
+    prerequisites=("shrine_investigation",),
+    rewards={"hyper_potion": 1, "poke_ball": 3},
+)
+
+# 13. Mastering the Tall Grass Plains
+PLAINS_EXPLORATION = QuestDefinition(
+    quest_id="plains_exploration",
+    name="Mastering the Tall Grass Plains",
+    description="Cross the wide Tall Grass Plains and discover the ancient Plains Landmark Stone.",
+    objectives=(
+        QuestObjective(
+            objective_id="discover_tall_grass_plains",
+            objective_type=ObjectiveType.DISCOVER_REGION,
+            description="Discover Tall Grass Plains",
+            target_count=1,
+            target_region="tall_grass_plains",
+        ),
+        QuestObjective(
+            objective_id="discover_plains_stone",
+            objective_type=ObjectiveType.DISCOVER_LANDMARK,
+            description="Discover Plains Landmark Stone",
+            target_count=1,
+            target_landmark="plains_landmark_stone",
+        ),
+    ),
+    prerequisites=("first_encounter",),
+    rewards={"super_potion": 1, "poke_ball": 3},
+)
+
+# 14. Pallet Town Journey: Explore Pallet Town and venture into Route 1 wild grass
+PALLET_TOWN_JOURNEY = QuestDefinition(
+    quest_id="pallet_town_journey",
+    name="Pallet Town Journey",
+    description="Venture past Ash's House, Oak's Lab, and into the tall wild grass of Route 1.",
+    objectives=(
+        QuestObjective(
+            objective_id="capture_route1_pokemon",
+            objective_type=ObjectiveType.CAPTURE_ANY,
+            description="Capture any wild Pokemon in Route 1 tall grass",
+            target_count=1,
+        ),
+    ),
+    prerequisites=(),
+    rewards={"potion": 2, "poke_ball": 5},
+)
+
 # Quest Catalog Registry
 QUEST_CATALOG: dict[str, QuestDefinition] = {
     FIRST_ENCOUNTER.quest_id: FIRST_ENCOUNTER,
@@ -270,6 +387,11 @@ QUEST_CATALOG: dict[str, QuestDefinition] = {
     TRAILBLAZER.quest_id: TRAILBLAZER,
     SHRINE_INVESTIGATION.quest_id: SHRINE_INVESTIGATION,
     RESEARCH_SPECIALIZATION.quest_id: RESEARCH_SPECIALIZATION,
+    LAKESIDE_EXPEDITION.quest_id: LAKESIDE_EXPEDITION,
+    MOUNTAIN_ASCENT.quest_id: MOUNTAIN_ASCENT,
+    RUINS_OF_SHADOW.quest_id: RUINS_OF_SHADOW,
+    PLAINS_EXPLORATION.quest_id: PLAINS_EXPLORATION,
+    PALLET_TOWN_JOURNEY.quest_id: PALLET_TOWN_JOURNEY,
 }
 
 

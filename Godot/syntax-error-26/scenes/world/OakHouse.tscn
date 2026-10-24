@@ -1,0 +1,120 @@
+[gd_scene load_steps=13 format=3 uid="uid://c8y3xqjOakHouse"]
+
+[sub_resource type="GDScript" id="GDScript_oak_house"]
+script/source = "extends StaticBody3D
+
+@export var house_name: String = \"Oak's Residence\"
+@onready var label_3d: Label3D = $Label3D
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+	if is_instance_valid(label_3d):
+		label_3d.text = house_name
+
+func get_interaction_text() -> String:
+	return \"Knock on Oak's Door\"
+
+func on_interact(_player_node: Node3D) -> void:
+	if GameState.player != null and not GameState.player.team.is_empty():
+		for p in GameState.player.team:
+			p.friendship = clampi(p.friendship + 15, 0, 255)
+		EventBus.hud_update_requested.emit()
+	EventBus.show_message.emit(\"Daisy Oak: Hello Ash! Grandpa is at his Research Lab just south of here. Have some warm tea! (Your Pokémon feel happier!)\")
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_house"]
+size = Vector3(7.6, 4.5, 6.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_cream_walls"]
+albedo_color = Color(0.92, 0.94, 0.96, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_walls"]
+material = SubResource("Mat_cream_walls")
+size = Vector3(7.5, 3.2, 6.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_blue_roof"]
+albedo_color = Color(0.18, 0.42, 0.76, 1)
+roughness = 0.55
+
+[sub_resource type="PrismMesh" id="PrismMesh_roof"]
+material = SubResource("Mat_blue_roof")
+left_to_right = 0.5
+size = Vector3(8.2, 2.2, 6.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_door"]
+albedo_color = Color(0.38, 0.22, 0.12, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_door"]
+material = SubResource("Mat_door")
+size = Vector3(1.2, 2.2, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="Mat_window"]
+albedo_color = Color(0.65, 0.88, 0.98, 1)
+metallic = 0.4
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_window"]
+material = SubResource("Mat_window")
+size = Vector3(1.2, 1.2, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_flowerbox"]
+albedo_color = Color(0.85, 0.35, 0.45, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_flowerbox"]
+material = SubResource("Mat_flowerbox")
+size = Vector3(1.3, 0.25, 0.3)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_door_area"]
+radius = 2.4
+
+[node name="OakHouse" type="StaticBody3D" groups=["interactable"]]
+script = SubResource("GDScript_oak_house")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+shape = SubResource("BoxShape3D_house")
+
+[node name="WallsMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+mesh = SubResource("BoxMesh_walls")
+
+[node name="RoofMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.3, 0)
+mesh = SubResource("PrismMesh_roof")
+
+[node name="DoorMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.05)
+mesh = SubResource("BoxMesh_door")
+
+[node name="WindowLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 1.8, 3.05)
+mesh = SubResource("BoxMesh_window")
+
+[node name="FlowerBoxLeft" type="MeshInstance3D" parent="WindowLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.65, 0.12)
+mesh = SubResource("BoxMesh_flowerbox")
+
+[node name="WindowRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 1.8, 3.05)
+mesh = SubResource("BoxMesh_window")
+
+[node name="FlowerBoxRight" type="MeshInstance3D" parent="WindowRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.65, 0.12)
+mesh = SubResource("BoxMesh_flowerbox")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.6, 0)
+billboard = 1
+text = "Oak's Residence"
+font_size = 24
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.8)
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 3.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_door_area")
+

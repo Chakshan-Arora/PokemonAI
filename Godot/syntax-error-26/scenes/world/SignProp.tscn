@@ -1,0 +1,75 @@
+[gd_scene load_steps=10 format=3 uid="uid://c8y3xqjSignProp"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/sign.png" id="2_sign"]
+
+[sub_resource type="GDScript" id="GDScript_sign"]
+script/source = "extends StaticBody3D
+
+@export var sign_title: String = \"Signpost\"
+@export_multiline var sign_text: String = \"A wooden signpost stands quietly here.\"
+
+@onready var label_3d: Label3D = $Label3D
+@onready var sprite_3d: Sprite3D = $Sprite3D
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+	if is_instance_valid(label_3d):
+		label_3d.text = sign_title
+
+func get_interaction_text() -> String:
+	return \"Read \" + sign_title
+
+func on_interact(_player_node: Node3D) -> void:
+	EventBus.show_message.emit(sign_text)
+"
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_sign"]
+height = 1.2
+radius = 0.35
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_shadow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(1.0, 1.0)
+orientation = 1
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_area"]
+radius = 2.2
+
+[node name="SignProp" type="StaticBody3D" groups=["interactable"]]
+script = SubResource("GDScript_sign")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("CylinderShape3D_sign")
+
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.045
+texture = ExtResource("2_sign")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+billboard = 1
+text = "Signpost"
+font_size = 20
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.8)
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("SphereShape3D_area")
+

@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://c8y3xqjWorld"]
+[gd_scene load_steps=45 format=3 uid="uid://c8y3xqjWorld"]
 
 [ext_resource type="Script" path="res://scripts/world/World.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
@@ -15,6 +15,16 @@
 [ext_resource type="Texture2D" path="res://assets/textures/grass_tile.png" id="13_grass"]
 [ext_resource type="Texture2D" path="res://assets/textures/path_tile.png" id="14_path"]
 [ext_resource type="Texture2D" path="res://assets/textures/rock_tile.png" id="15_rock"]
+[ext_resource type="PackedScene" path="res://scenes/world/RockProp.tscn" id="16_rockprop"]
+[ext_resource type="PackedScene" path="res://scenes/world/RuinsPillarProp.tscn" id="17_pillar"]
+[ext_resource type="PackedScene" path="res://scenes/world/SignProp.tscn" id="18_signprop"]
+[ext_resource type="PackedScene" path="res://scenes/world/CampfireProp.tscn" id="19_campfire"]
+[ext_resource type="PackedScene" path="res://scenes/npc/DialogueNPC.tscn" id="20_dialognpc"]
+[ext_resource type="PackedScene" path="res://scenes/world/PlayerHouse.tscn" id="21_playerhouse"]
+[ext_resource type="PackedScene" path="res://scenes/world/OakHouse.tscn" id="22_oakhouse"]
+[ext_resource type="PackedScene" path="res://scenes/world/OakLab.tscn" id="23_oaklab"]
+[ext_resource type="PackedScene" path="res://scenes/world/TallGrassPatch.tscn" id="24_tallgrass"]
+[ext_resource type="PackedScene" path="res://scenes/world/TownFence.tscn" id="25_townfence"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_top_color = Color(0.38, 0.65, 0.98, 1)
@@ -72,8 +82,26 @@ transparency = 1
 albedo_color = Color(0.2, 0.5, 0.85, 0.85)
 roughness = 0.1
 
+[sub_resource type="StandardMaterial3D" id="Mat_ruins"]
+albedo_color = Color(0.28, 0.22, 0.35, 1)
+albedo_texture = ExtResource("15_rock")
+texture_filter = 0
+uv1_scale = Vector3(18, 18, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_plains"]
+albedo_color = Color(0.42, 0.65, 0.25, 1)
+albedo_texture = ExtResource("13_grass")
+texture_filter = 0
+uv1_scale = Vector3(18, 18, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_path"]
 size = Vector3(6, 0.05, 50)
+
+[sub_resource type="BoxMesh" id="BoxMesh_path_h"]
+size = Vector3(8, 0.05, 3.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_path_route1"]
+size = Vector3(5, 0.05, 30)
 
 [sub_resource type="StandardMaterial3D" id="Mat_dirtpath"]
 albedo_texture = ExtResource("14_path")
@@ -125,11 +153,41 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0.05, 155)
 mesh = SubResource("BoxMesh_region")
 surface_material_override/0 = SubResource("Mat_lake")
 
+[node name="RuinsZone" type="MeshInstance3D" parent="RegionZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 155, 0.05, 205)
+mesh = SubResource("BoxMesh_region")
+surface_material_override/0 = SubResource("Mat_ruins")
+
+[node name="PlainsZone" type="MeshInstance3D" parent="RegionZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 255, 0.05, 145)
+mesh = SubResource("BoxMesh_region")
+surface_material_override/0 = SubResource("Mat_plains")
+
 [node name="Paths" type="Node3D" parent="."]
 
 [node name="PathToOak" type="MeshInstance3D" parent="Paths"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, 25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, 30)
 mesh = SubResource("BoxMesh_path")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathToAshHouse" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 0.04, 27)
+mesh = SubResource("BoxMesh_path_h")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathToOakHouse" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 0.04, 27)
+mesh = SubResource("BoxMesh_path_h")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathToOakLab" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 0.04, 43.5)
+mesh = SubResource("BoxMesh_path_h")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathToRoute1" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, -5)
+mesh = SubResource("BoxMesh_path_route1")
 surface_material_override/0 = SubResource("Mat_dirtpath")
 
 [node name="PathToForest" type="MeshInstance3D" parent="Paths"]
@@ -187,13 +245,135 @@ prop_type = "bush"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 12)
 prop_type = "bush"
 
+[node name="MountainBoulder1" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 330, 0, 25)
+rock_type = "boulder"
+
+[node name="MountainBoulder2" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 365, 0, 40)
+rock_type = "boulder"
+
+[node name="LakeBoulder1" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 140)
+rock_type = "boulder"
+
+[node name="LakeRock1" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 175)
+rock_type = "rock"
+
+[node name="ForestRock1" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 145, 0, 60)
+rock_type = "rock"
+
+[node name="ForestBoulder1" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170, 0, 90)
+rock_type = "boulder"
+
+[node name="ShrinePillar1" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 238, 0, 238)
+pillar_variant = "standard"
+
+[node name="ShrinePillar2" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 262, 0, 238)
+pillar_variant = "standard"
+
+[node name="ShrinePillar3" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 238, 0, 262)
+pillar_variant = "standard"
+
+[node name="ShrinePillar4" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 262, 0, 262)
+pillar_variant = "standard"
+
+[node name="RuinsPillar1" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 0, 190)
+pillar_variant = "spectral"
+
+[node name="RuinsPillar2" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 165, 0, 210)
+pillar_variant = "spectral"
+
+[node name="RuinsPillar3" parent="Decorations" instance=ExtResource("17_pillar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 225)
+pillar_variant = "spectral"
+
+[node name="PlainsStone" parent="Decorations" instance=ExtResource("16_rockprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250, 0, 140)
+rock_type = "rock"
+
 [node name="Player" parent="." instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.1, 25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.1, 28)
+
+[node name="PalletTown" type="Node3D" parent="."]
+
+[node name="AshsHouse" parent="PalletTown" instance=ExtResource("21_playerhouse")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 24)
+
+[node name="OaksHouse" parent="PalletTown" instance=ExtResource("22_oakhouse")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 24)
+
+[node name="OaksLab" parent="PalletTown" instance=ExtResource("23_oaklab")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 36, 0, 48)
+
+[node name="TownSign" parent="PalletTown" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 26)
+sign_title = "Pallet Town"
+sign_text = "Pallet Town - Shades of your journey await! Ash's House (West) | Oak's House (East) | Oak's Lab (South)"
+
+[node name="FenceAshWest1" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 8, 0, 20)
+
+[node name="FenceAshWest2" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 8, 0, 24)
+
+[node name="FenceAshWest3" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 8, 0, 28)
+
+[node name="FenceAshFront" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 30)
+
+[node name="FenceOakEast1" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 42, 0, 20)
+
+[node name="FenceOakEast2" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 42, 0, 24)
+
+[node name="FenceOakEast3" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 42, 0, 28)
+
+[node name="FenceOakFront" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 30)
+
+[node name="FenceSouth1" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 56)
+
+[node name="FenceSouth2" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 56)
+
+[node name="FenceSouth3" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 56)
+
+[node name="FenceSouth4" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 56)
+
+[node name="WildTallGrass" type="Node3D" parent="."]
+
+[node name="TallGrassPatch1" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 4)
+
+[node name="TallGrassPatch2" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 4)
+
+[node name="TallGrassPatch3" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -8)
+
+[node name="TallGrassPatch4" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -8)
 
 [node name="WorldObjects" type="Node3D" parent="."]
 
 [node name="Campfire" parent="WorldObjects" instance=ExtResource("3_wobj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 36)
 object_id = "campfire_rest"
 object_name = "Campfire & Rest Area"
 object_type = "landmark"
@@ -209,11 +389,11 @@ interaction_text = "Route 1: Pathway to Viridian City. Watch for wild Pokémon i
 region_id = "starting_meadow"
 
 [node name="ProfOak" parent="WorldObjects" instance=ExtResource("3_wobj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 41)
 object_id = "npc_prof_oak"
 object_name = "Professor Oak"
 object_type = "npc"
-interaction_text = "Hello there, young Trainer! The world of Pokémon is vast and full of wonderful mysteries."
+interaction_text = "Hello there, young Trainer! Welcome to my Pokémon Research Laboratory. Outside town to the north lies Route 1, where wild Pokémon live in the tall grass. Study them with care!"
 region_id = "starting_meadow"
 
 [node name="BerryBush" parent="WorldObjects" instance=ExtResource("3_wobj")]
@@ -248,6 +428,57 @@ object_type = "landmark"
 interaction_text = "You discovered the Thunder Stone Shrine! A crackling elemental energy lingers in the air."
 region_id = "ancient_shrine_grounds"
 
+[node name="LakeSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 120)
+sign_title = "Crystal Lakeside Pier"
+sign_text = "Crystal Lakeside: Clear waters home to aquatic Pokémon."
+
+[node name="MountainSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 320, 0, 30)
+sign_title = "Mountain Pass Trail"
+sign_text = "Danger: High elevation, boulders and rugged rock Pokémon."
+
+[node name="RuinsSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0, 170)
+sign_title = "Crumbling Ruins"
+sign_text = "Beware the chilling mist. Spectral lights linger after dark."
+
+[node name="PlainsSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 220, 0, 120)
+sign_title = "Tall Grass Plains"
+sign_text = "Wide open plains. Prepare for tactical battles."
+
+[node name="RangerLogan" parent="WorldObjects" instance=ExtResource("20_dialognpc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 255, 0, 245)
+npc_id = "trail_ranger"
+npc_name = "Park Ranger Logan"
+sprite_variant = "calem"
+dialogue_text = "Greetings, explorer. The ancient shrine holds legendary secrets for those with keen eyes."
+
+[node name="LakesideBerryBush" parent="WorldObjects" instance=ExtResource("3_wobj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, 150)
+object_id = "lakeside_berry_bush"
+object_name = "Lakeside Berry Bush"
+object_type = "resource_node"
+interaction_text = "You gathered fresh berries along the lake! (Obtained 1x Potion)"
+rewards = {
+"potion": 1
+}
+respawn_duration = 60.0
+region_id = "lakeside"
+
+[node name="RuinsTreasure" parent="WorldObjects" instance=ExtResource("3_wobj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 200)
+object_id = "ruins_treasure_chest"
+object_name = "Ruins Treasure Chest"
+object_type = "treasure"
+interaction_text = "You opened the ruins treasure chest! (Obtained 2x Super Potion, 1x Antidote)"
+rewards = {
+"antidote": 1,
+"super_potion": 2
+}
+region_id = "haunted_ruins"
+
 [node name="Trainers" type="Node3D" parent="."]
 
 [node name="TrainerKoji" parent="Trainers" instance=ExtResource("5_npc")]
@@ -258,6 +489,78 @@ dialogue_intro = "Hey there! Let's see how strong your Pokemon are!"
 dialogue_defeat = "Wow, your team is remarkably well trained!"
 team_species = Array[String](["Geodude", "Machop"])
 team_levels = Array[int]([4, 5])
+
+[node name="TrainerJoey" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 0, 45)
+trainer_id = "youngster_joey"
+trainer_name = "Youngster Joey"
+dialogue_intro = "Hi! I like shorts! They're comfy and easy to wear!"
+dialogue_defeat = "I lost?! My top percentage team!"
+team_species = Array[String](["Rattata"])
+team_levels = Array[int]([4])
+
+[node name="TrainerHaley" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, 25)
+trainer_id = "lass_haley"
+trainer_name = "Lass Haley"
+dialogue_intro = "You looked at me, so we have to battle!"
+dialogue_defeat = "Oh no! My cute Pokemon!"
+team_species = Array[String](["Pidgey"])
+team_levels = Array[int]([4])
+
+[node name="BugCatcherSammy" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 165, 0, 75)
+trainer_id = "bug_catcher_sammy"
+trainer_name = "Bug Catcher Sammy"
+dialogue_intro = "I spent all morning hunting Bug Pokemon in the trees!"
+dialogue_defeat = "My bugs couldn't hold out..."
+team_species = Array[String](["Caterpie", "Butterfree"])
+team_levels = Array[int]([4, 5])
+
+[node name="SailorBob" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 0, 135)
+trainer_id = "sailor_bob"
+trainer_name = "Sailor Bob"
+dialogue_intro = "Ahoy! The lake breeze makes my Pokemon eager for a bout!"
+dialogue_defeat = "Washed out! You're a fine navigator!"
+team_species = Array[String](["Poliwag", "Squirtle"])
+team_levels = Array[int]([5, 6])
+
+[node name="HikerDavid" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 345, 0, 50)
+trainer_id = "hiker_david"
+trainer_name = "Hiker David"
+dialogue_intro = "Mountain climbing toughens you up! Let's see your stamina!"
+dialogue_defeat = "Whoa! You knocked the wind right out of me!"
+team_species = Array[String](["Geodude", "Machop"])
+team_levels = Array[int]([5, 6])
+
+[node name="PsychicEdward" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 155, 0, 205)
+trainer_id = "psychic_edward"
+trainer_name = "Psychic Edward"
+dialogue_intro = "I foresaw your arrival... and your imminent defeat."
+dialogue_defeat = "My vision was clouded... your power defies prediction."
+team_species = Array[String](["Gastly", "Abra"])
+team_levels = Array[int]([6, 7])
+
+[node name="AceTrainerKira" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 265, 0, 150)
+trainer_id = "ace_trainer_kira"
+trainer_name = "Ace Trainer Kira"
+dialogue_intro = "I only battle trainers who take strategy seriously. Ready?"
+dialogue_defeat = "Incredible tactical execution. You've earned this win."
+team_species = Array[String](["Pikachu", "Pidgeotto"])
+team_levels = Array[int]([7, 8])
+
+[node name="GymLeaderBrock" parent="Trainers" instance=ExtResource("5_npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 380, 0, 65)
+trainer_id = "gym_leader_brock"
+trainer_name = "Gym Leader Brock"
+dialogue_intro = "I'm Brock! My rock-hard determination will test your limits!"
+dialogue_defeat = "I took you for granted. As proof of your victory, take this!"
+team_species = Array[String](["Geodude", "Onix"])
+team_levels = Array[int]([9, 10])
 
 [node name="WildPokemonSpawns" type="Node3D" parent="."]
 
@@ -300,6 +603,21 @@ level = 4
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 0, 190)
 species_name = "Gastly"
 level = 5
+
+[node name="Abra" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160, 0, 215)
+species_name = "Abra"
+level = 6
+
+[node name="Squirtle" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 0, 160)
+species_name = "Squirtle"
+level = 5
+
+[node name="Machop" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 360, 0, 55)
+species_name = "Machop"
+level = 6
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 

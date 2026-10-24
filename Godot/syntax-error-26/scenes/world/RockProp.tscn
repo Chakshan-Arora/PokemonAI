@@ -1,0 +1,59 @@
+[gd_scene load_steps=9 format=3 uid="uid://c8y3xqjRockProp"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/rock.png" id="2_rock"]
+
+[sub_resource type="GDScript" id="GDScript_rockprop"]
+script/source = "extends StaticBody3D
+
+@export_enum(\"rock\", \"boulder\") var rock_type: String = \"rock\"
+@onready var sprite: Sprite3D = $Sprite3D
+
+func _ready() -> void:
+	if is_instance_valid(sprite):
+		if rock_type == \"boulder\":
+			var tex = load(\"res://assets/sprites/world/boulder.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.05
+				sprite.position.y = 0.55
+		else:
+			var tex = load(\"res://assets/sprites/world/rock.png\")
+			if tex:
+				sprite.texture = tex
+				sprite.pixel_size = 0.065
+				sprite.position.y = 0.75
+"
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_rock"]
+height = 1.0
+radius = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_shadow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(1.5, 1.5)
+orientation = 1
+
+[node name="RockProp" type="StaticBody3D"]
+script = SubResource("GDScript_rockprop")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("CylinderShape3D_rock")
+
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.065
+texture = ExtResource("2_rock")
+
