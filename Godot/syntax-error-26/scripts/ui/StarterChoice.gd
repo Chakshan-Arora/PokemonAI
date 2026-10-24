@@ -12,6 +12,7 @@ const PokemonData = preload("res://scripts/data/PokemonData.gd")
 const STARTERS = ["Bulbasaur", "Charmander", "Squirtle"]
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	bulbasaur_btn.pressed.connect(_on_starter_chosen.bind("Bulbasaur"))
 	charmander_btn.pressed.connect(_on_starter_chosen.bind("Charmander"))
 	squirtle_btn.pressed.connect(_on_starter_chosen.bind("Squirtle"))

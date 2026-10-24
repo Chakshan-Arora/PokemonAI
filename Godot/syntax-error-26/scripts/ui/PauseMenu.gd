@@ -37,15 +37,21 @@ func toggle_menu() -> void:
 	else:
 		show_menu()
 
+func _process(_delta: float) -> void:
+	if visible and Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func show_menu() -> void:
 	visible = true
 	GameState.pause_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	status_lbl.text = ""
 	resume_btn.grab_focus()
 
 func hide_menu() -> void:
 	visible = false
 	GameState.resume_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _on_party_pressed() -> void:
 	hide_menu()

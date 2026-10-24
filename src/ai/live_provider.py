@@ -21,13 +21,20 @@ from src.ai.perception import AgentPerception
 
 
 # Default configuration constants and placeholders
-GEMINI_API_KEY_DEFAULT = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY_DEFAULT = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 GEMINI_API_KEY_PLACEHOLDER = "YOUR_GEMINI_API_KEY_HERE"
 OPENAI_API_KEY_PLACEHOLDER = "YOUR_OPENAI_API_KEY_HERE"
 
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
-DEFAULT_GEMINI_FALLBACK_MODELS = ("gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-pro")
-DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+DEFAULT_GEMINI_FALLBACK_MODELS = (
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
+    "gemini-3.5-flash-lite",
+)
+DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
 
 DEFAULT_REQUEST_TIMEOUT = 10.0
 DEFAULT_MAX_RETRIES = 2
@@ -192,11 +199,13 @@ Respond ONLY with a single JSON object conforming to this exact structure:
   "intent": "<short summary of your immediate goal or action>",
   "target": "<target entity name or null>",
   "chosen_move": "<move name from Known Moves if attacking or suggesting, or null>",
-  "dialogue": "<your verbal cry, expression, or gesture in quotes, e.g. 'Pikachu!' or 'Pika pi!'>",
-  "emotional_state": "<current feeling, e.g. confident, cautious, anxious, defiant, curious, affectionate, exhausted>",
+  "dialogue": "<your authentic cry and dialogue, e.g. 'Bulba! *perks up alertly* (Hello Trainer! Ready to explore!)'>",
+  "emotional_state": "<current feeling, e.g. confident, cautious, anxious, defiant, curious, affectionate, happy, hurt, discouraged, exhausted>",
   "rationale": "<internal reasoning explaining why you chose this based on your traits and context>",
   "confidence": <float from 0.0 to 1.0>,
-  "suggested_alternative": "<move name from Known Moves if action_type is suggest, else null>"
+  "suggested_alternative": "<move name from Known Moves if action_type is suggest, else null>",
+  "trust_delta": <float delta from -5.0 to +5.0 reflecting relationship impact, or 0.0>,
+  "affection_delta": <float delta from -5.0 to +5.0 reflecting relationship impact, or 0.0>
 }}
 """
 
@@ -699,6 +708,16 @@ def create_live_decision_provider(
         provider = OpenAIDecisionProvider(
             api_key=api_key,
             model_name=model_name or DEFAULT_OPENAI_MODEL,
+            base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            timeout=timeout,
+            http_client=http_client,
+        )
+    elif ptype == "ollama":
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+        provider = OpenAIDecisionProvider(
+            api_key=api_key or "ollama",
+            model_name=model_name or os.environ.get("OLLAMA_MODEL", "qwen2.5:3b"),
+            base_url=base_url,
             timeout=timeout,
             http_client=http_client,
         )
@@ -712,36 +731,61 @@ def create_live_decision_provider(
                 allow_mock_fallback=allow_mock_fallback,
             )
 
-        has_gemini = bool(
-            os.environ.get("GEMINI_API_KEY")
-            or os.environ.get("GOOGLE_API_KEY")
-            or (GEMINI_API_KEY_DEFAULT and GEMINI_API_KEY_DEFAULT != GEMINI_API_KEY_PLACEHOLDER)
+        # Check explicit api_key or env vars
+        resolved_gemini_key = (
+            api_key if (api_key and (api_key.startswith("AIza") or "gemini" in (model_name or "").lower()))
+            else (
+                os.environ.get("GEMINI_API_KEY")
+                or os.environ.get("GOOGLE_API_KEY")
+                or (GEMINI_API_KEY_DEFAULT and GEMINI_API_KEY_DEFAULT != GEMINI_API_KEY_PLACEHOLDER)
+            )
         )
-        has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+        resolved_openai_key = (
+            api_key if (api_key and (api_key.startswith("sk-") or "gpt" in (model_name or "").lower()))
+            else os.environ.get("OPENAI_API_KEY")
+        )
 
-        if has_gemini:
+        if resolved_gemini_key:
             provider = GeminiDecisionProvider(
-                api_key=api_key,
+                api_key=resolved_gemini_key,
                 model_name=model_name or DEFAULT_GEMINI_MODEL,
                 timeout=timeout,
                 http_client=http_client,
             )
-        elif has_openai:
+        elif resolved_openai_key:
             provider = OpenAIDecisionProvider(
-                api_key=api_key,
+                api_key=resolved_openai_key,
                 model_name=model_name or DEFAULT_OPENAI_MODEL,
+                base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+                timeout=timeout,
+                http_client=http_client,
+            )
+        elif os.environ.get("OPENAI_BASE_URL") or os.environ.get("OLLAMA_BASE_URL"):
+            base_url = os.environ.get("OPENAI_BASE_URL") or os.environ.get("OLLAMA_BASE_URL")
+            provider = OpenAIDecisionProvider(
+                api_key=api_key or "ollama",
+                model_name=model_name or os.environ.get("OLLAMA_MODEL", "qwen2.5:3b"),
+                base_url=base_url,
                 timeout=timeout,
                 http_client=http_client,
             )
         else:
-            # Default to Gemini with placeholder
-            provider = GeminiDecisionProvider(
-                api_key=api_key or GEMINI_API_KEY_PLACEHOLDER,
-                model_name=model_name or DEFAULT_GEMINI_MODEL,
-                timeout=timeout,
-                http_client=http_client,
-            )
+            # Check if generic api_key was provided without recognized prefix
+            if api_key and api_key != GEMINI_API_KEY_PLACEHOLDER and api_key != OPENAI_API_KEY_PLACEHOLDER:
+                provider = GeminiDecisionProvider(
+                    api_key=api_key,
+                    model_name=model_name or DEFAULT_GEMINI_MODEL,
+                    timeout=timeout,
+                    http_client=http_client,
+                )
+            else:
+                provider = GeminiDecisionProvider(
+                    api_key=GEMINI_API_KEY_PLACEHOLDER,
+                    model_name=model_name or DEFAULT_GEMINI_MODEL,
+                    timeout=timeout,
+                    http_client=http_client,
+                )
     else:
-        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', 'local', or 'auto'.")
+        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', 'ollama', 'local', or 'auto'.")
 
     return LiveAIDecisionProvider(active_provider=provider, allow_mock_fallback=allow_mock_fallback)

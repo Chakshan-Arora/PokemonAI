@@ -13,6 +13,7 @@ func _ready() -> void:
 	
 	GameState.exit_battle()
 	GameState.resume_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	
 	# Restore player position from saved/previous state
 	if player_node and GameState.player and GameState.player.player_position != Vector3.ZERO:

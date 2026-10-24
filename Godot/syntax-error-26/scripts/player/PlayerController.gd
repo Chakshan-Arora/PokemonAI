@@ -87,26 +87,16 @@ func _is_typing() -> bool:
 		return true
 	return false
 
+func _is_in_menu() -> bool:
+	return GameState.is_any_menu_open() or _is_typing()
+
 func _input(event: InputEvent) -> void:
-	# If player is typing into any text input (e.g. Companion LLM chat, name input),
-	# ignore all hotkeys (I, P, J, E, Space, Enter, menus, etc.) so typing stays 100% focused
-	if _is_typing():
-		_release_mouse()
-		return
-	
-	if GameState.is_in_battle or GameState.is_paused:
+	# If player is in any menu, battle, or typing, ALWAYS release mouse and ignore world hotkeys
+	if _is_in_menu():
 		_release_mouse()
 		return
 
-	# Toggle/acquire mouse capture on click in game window
-	if event is InputEventMouseButton and event.pressed:
-		if not GameState.is_in_battle and not GameState.is_paused:
-			if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
-				if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-					is_mouse_captured = true
-
-	# Mouse wheel zoom
+	# Mouse wheel zoom in world
 	if event is InputEventMouseButton and is_instance_valid(camera_arm):
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			camera_arm.spring_length = max(2.0, camera_arm.spring_length - 0.5)
@@ -116,7 +106,7 @@ func _input(event: InputEvent) -> void:
 	# Camera look with mouse motion: works when captured OR when drag-clicking with Left or Right button
 	if event is InputEventMouseMotion:
 		var should_rotate = (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		if should_rotate and not GameState.is_in_battle and not GameState.is_paused:
+		if should_rotate and not _is_in_menu():
 			camera_rotation_y -= event.relative.x * CAMERA_SENSITIVITY
 			camera_rotation_x -= event.relative.y * CAMERA_SENSITIVITY
 			camera_rotation_x = clamp(camera_rotation_x, CAMERA_MIN_X, CAMERA_MAX_X)
@@ -150,12 +140,25 @@ func _input(event: InputEvent) -> void:
 		_release_mouse()
 		EventBus.open_pause_menu.emit()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _is_in_menu():
+		_release_mouse()
+		return
+
+	# Only acquire mouse capture when clicking directly into 3D world (outside of menus/UI/battles)
+	if event is InputEventMouseButton and event.pressed:
+		if not _is_in_menu():
+			if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+				if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+					is_mouse_captured = true
+
 func _release_mouse() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	is_mouse_captured = false
 
 func _physics_process(delta: float) -> void:
-	if GameState.is_in_battle or GameState.is_paused:
+	if _is_in_menu():
 		_release_mouse()
 		return
 	

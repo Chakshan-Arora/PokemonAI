@@ -20,11 +20,14 @@ import sys
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
+from dotenv import load_dotenv
 
-# Ensure project root is in sys.path
+# Ensure project root is in sys.path and load environment variables
 repo_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(repo_root))
+load_dotenv()
+load_dotenv(repo_root / ".env")
 
 from export_backend_data import build_backend_data
 from src.models.save_manager import load_game, save_game, serialize_player, deserialize_player
@@ -33,6 +36,8 @@ from src.models.habitat import TimeOfDay
 from src.data.species import SAMPLE_SPECIES
 from src.models.personality import Personality
 from src.models.pokemon import Pokemon
+from src.ai.decision_provider import DecisionProvider, FallbackDecisionHandler
+from src.ai.live_provider import create_live_decision_provider
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
@@ -194,7 +199,7 @@ def _serialize_pokemon_dict(mon: Pokemon) -> dict[str, Any]:
 
 
 class LLMBridgeHandler(BaseHTTPRequestHandler):
-    provider: LocalModelDecisionProvider = None
+    provider: DecisionProvider = None
 
     def _send_json_response(self, status: int, data: dict[str, Any]) -> None:
         body = json.dumps(data).encode("utf-8")
@@ -445,6 +450,11 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         )
 
         decision = self.provider.decide(agent, perception)
+
+        # Guard against defensive battle fallback dialogue leaking into companion talk
+        if not decision.dialogue or "held its ground defensively" in decision.dialogue.lower():
+            decision = FallbackDecisionHandler.create_fallback(agent, perception, Exception("Companion dialogue rescue"))
+
         print(f"[Companion Talk] {species} -> \"{decision.dialogue}\" ({decision.emotional_state}) [Sentiment: {sentiment}]")
 
         # Parse raw decision deltas from model
@@ -611,27 +621,55 @@ class ReusableHTTPServer(HTTPServer):
     allow_reuse_address = True
 
 
-def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
+def run_server(
+    host: str = "127.0.0.1",
+    port: int = 8008,
+    provider_type: str = "auto",
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+) -> None:
     print("=" * 60)
-    print(" Syntax Error 26 — Local Pokémon LLM Bridge Server")
+    print(" Syntax Error 26 — Pokémon AI & LLM Bridge Server")
     print(f" Target: http://{host}:{port}")
     print("=" * 60)
 
     try:
         server = ReusableHTTPServer((host, port), LLMBridgeHandler)
     except OSError as err:
-        if err.errno == 48:
+        if err.errno in (48, 10048):
             print(f"\n[!] Port {port} is already in use by another instance.")
-            print(f"    To see what is using it: lsof -i :{port}")
-            print(f"    Or specify another port: python3 server.py --port {port+1}\n")
+            print(f"    Or specify another port: python server.py --port {port+1}\n")
             sys.exit(1)
         raise
 
-    print("Initializing LocalModelDecisionProvider (4-bit MLX weights)...")
-    provider = LocalModelDecisionProvider(allow_mock_fallback=True)
-    provider.load_model()
+    print(f"Initializing AI Decision Provider (mode: {provider_type})...")
+    provider = create_live_decision_provider(
+        provider_type=provider_type,
+        api_key=api_key,
+        model_name=model,
+        allow_mock_fallback=True,
+    )
+    if hasattr(provider, "load_model"):
+        try:
+            provider.load_model()
+        except Exception:
+            pass
+
     LLMBridgeHandler.provider = provider
-    print(f"[OK] Local LLM Model Loaded and Ready on http://{host}:{port}!")
+
+    # Log active provider status
+    if hasattr(provider, "is_configured") and provider.is_configured():
+        act_p = getattr(provider, "active_provider", provider)
+        p_name = getattr(act_p, "provider_name", type(act_p).__name__)
+        m_name = getattr(act_p, "model_name", "default")
+        print(f"[OK] Live Cloud AI Provider Connected: {p_name} ({m_name})")
+    elif getattr(provider, "is_loaded", False):
+        print(f"[OK] Local LLM Model Loaded: {getattr(provider, 'model_name_or_path', 'Local')}")
+    else:
+        print("[OK] Autonomous Companion Engine Active (Offline Mode).")
+        print("     To connect live Cloud LLM, set GEMINI_API_KEY or OPENAI_API_KEY in .env")
+
+    print(f"[OK] LLM Bridge Server Ready and Listening on http://{host}:{port}!")
 
     try:
         server.serve_forever()
@@ -642,8 +680,23 @@ def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run Local Pokemon LLM HTTP Server")
+    parser = argparse.ArgumentParser(description="Run Pokemon AI LLM HTTP Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host address")
     parser.add_argument("--port", type=int, default=8008, help="Port number")
+    parser.add_argument(
+        "--provider",
+        default=os.environ.get("POKEMON_AI_PROVIDER", "auto"),
+        help="AI Provider: auto, gemini, openai, ollama, local, mock"
+    )
+    parser.add_argument(
+        "--api-key",
+        default=os.environ.get("GEMINI_API_KEY") or os.environ.get("OPENAI_API_KEY"),
+        help="API Key for live cloud AI"
+    )
+    parser.add_argument(
+        "--model",
+        default=os.environ.get("POKEMON_AI_MODEL"),
+        help="Model name override (e.g. gemini-2.5-flash, gpt-4o-mini)"
+    )
     args = parser.parse_args()
-    run_server(args.host, args.port)
+    run_server(args.host, args.port, provider_type=args.provider, api_key=args.api_key, model=args.model)

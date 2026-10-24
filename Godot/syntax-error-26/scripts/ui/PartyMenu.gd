@@ -17,6 +17,7 @@ const PokemonData = preload("res://scripts/data/PokemonData.gd")
 @onready var close_btn: Button = $Panel/CloseBtn
 
 var _selected_index: int = 0
+var _prev_selected_index: int = -1
 
 func _ready() -> void:
 	add_to_group("party_menu")
@@ -30,9 +31,15 @@ func _input(event: InputEvent) -> void:
 		hide_menu()
 		get_viewport().set_input_as_handled()
 
+func _process(_delta: float) -> void:
+	if visible and Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func show_menu() -> void:
 	visible = true
 	GameState.pause_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_prev_selected_index = -1
 	_refresh_list()
 	if GameState.player != null and not GameState.player.team.is_empty():
 		_select_pokemon(0)
@@ -40,6 +47,7 @@ func show_menu() -> void:
 func hide_menu() -> void:
 	visible = false
 	GameState.resume_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	EventBus.hud_update_requested.emit()
 
 func _refresh_list() -> void:
@@ -144,6 +152,19 @@ func _select_pokemon(index: int) -> void:
 		interact_box.add_child(play_btn)
 		
 		detail_panel.add_child(interact_box)
+	
+	var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
+	if feedback_lbl == null:
+		feedback_lbl = Label.new()
+		feedback_lbl.name = "FeedbackLabel"
+		feedback_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		feedback_lbl.add_theme_font_size_override("font_size", 13)
+		feedback_lbl.add_theme_color_override("font_color", Color(0.18, 0.32, 0.55, 1.0))
+		detail_panel.add_child(feedback_lbl)
+	
+	if index != _prev_selected_index:
+		_prev_selected_index = index
+		feedback_lbl.text = ""
 
 func _on_set_active_pressed() -> void:
 	if GameState.player != null:
@@ -156,13 +177,21 @@ func _on_pet_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
 		p.bond = clamp(p.bond + 3.0, 0.0, 100.0)
-		EventBus.show_message.emit("You gently patted %s! (Bond +3)" % p.get_display_name())
+		var msg = "You gently patted %s! (Bond +3)" % p.get_display_name()
+		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
+		if feedback_lbl:
+			feedback_lbl.text = "❤️ " + msg
+		EventBus.show_message.emit(msg)
 		_select_pokemon(_selected_index)
 
 func _on_talk_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
 		p.obedience = clamp(p.obedience + 2.0, 0.0, 100.0)
+		
+		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
+		if feedback_lbl:
+			feedback_lbl.text = "💬 Talking with %s..." % p.get_display_name()
 		
 		if LLMClient:
 			EventBus.show_message.emit("%s is thinking..." % p.get_display_name())
@@ -182,12 +211,18 @@ func _on_talk_pressed() -> void:
 				var a_delta = float(res.get("affection_delta", 0.0))
 				p.obedience = clamp(p.obedience + t_delta, 0.0, 100.0)
 				p.bond = clamp(p.bond + a_delta, 0.0, 100.0)
-				EventBus.show_message.emit("%s: \"%s\"" % [p.get_display_name(), res["dialogue"]])
+				var reply = "%s: \"%s\"" % [p.get_display_name(), res["dialogue"]]
+				if feedback_lbl:
+					feedback_lbl.text = "💬 " + reply
+				EventBus.show_message.emit(reply)
 				SaveLoad.save_game()
 				_select_pokemon(_selected_index)
 				return
 		
-		EventBus.show_message.emit("%s looks at you affectionately and swishes its tail! (Obedience +2)" % p.get_display_name())
+		var default_msg = "%s looks at you affectionately and swishes its tail! (Obedience +2)" % p.get_display_name()
+		if feedback_lbl:
+			feedback_lbl.text = "💬 " + default_msg
+		EventBus.show_message.emit(default_msg)
 		SaveLoad.save_game()
 		_select_pokemon(_selected_index)
 
@@ -196,5 +231,9 @@ func _on_play_pressed() -> void:
 		var p: PokemonInstance = GameState.player.team[_selected_index]
 		p.bond = clamp(p.bond + 4.0, 0.0, 100.0)
 		p.obedience = clamp(p.obedience + 2.0, 0.0, 100.0)
-		EventBus.show_message.emit("You played a game with %s! (Bond +4, Obedience +2)" % p.get_display_name())
+		var msg = "You played a game with %s! (Bond +4, Obedience +2)" % p.get_display_name()
+		var feedback_lbl = detail_panel.get_node_or_null("FeedbackLabel") as Label
+		if feedback_lbl:
+			feedback_lbl.text = "⭐ " + msg
+		EventBus.show_message.emit(msg)
 		_select_pokemon(_selected_index)

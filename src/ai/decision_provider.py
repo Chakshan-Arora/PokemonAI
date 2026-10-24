@@ -131,6 +131,10 @@ class MockDecisionProvider(DecisionProvider):
 
             # 4. Standard cooperation / Obey
             if command:
+                in_battle = perception.environment_context.get("in_battle", False)
+                if not in_battle and (command not in known_moves or "interact" in perception.available_actions):
+                    return FallbackDecisionHandler._create_companion_fallback(agent, perception, Exception("Mock companion dialogue"))
+
                 chosen_attack = command if command in known_moves else primary_move
                 return AgentDecision(
                     action_type=AgentActionType.OBEY,
@@ -181,14 +185,143 @@ class FallbackDecisionHandler:
     Provides safe, non-crashing fallback decisions if a decision provider times out or fails.
     """
 
-    @staticmethod
-    def create_fallback(agent: PokemonAgent, perception: AgentPerception, error: Exception) -> AgentDecision:
+    SPECIES_CRIES = {
+        "Pikachu": ("Pika!", "Pika-pi!", "Pikachu!"),
+        "Charmander": ("Char!", "Chaaar!", "Charmander!"),
+        "Squirtle": ("Squirtle!", "Squirt!", "Squirtle-squirt!"),
+        "Bulbasaur": ("Bulba!", "Bulbasaur!", "Saur-bulba!"),
+        "Eevee": ("Vee!", "Eevee!", "Eev-vee!"),
+        "Pidgey": ("Pidgey!", "Pidge-pidge!"),
+        "Rattata": ("Ratta!", "Rattata!"),
+        "Geodude": ("Geo!", "Geodude!"),
+        "Gastly": ("Gast!", "Gast-ly!"),
+        "Machop": ("Chop!", "Machop!"),
+    }
+
+    @classmethod
+    def _create_companion_fallback(
+        cls, agent: PokemonAgent, perception: AgentPerception, error: Exception
+    ) -> AgentDecision:
+        species = agent.species or "Pokemon"
+        cries = cls.SPECIES_CRIES.get(species, (f"{species}!", f"{species}!"))
+        cry = cries[0]
+
+        tc = perception.trainer_context or {}
+        trainer_name = tc.get("trainer_name") or "Trainer"
+        command = str(tc.get("command") or "").strip()
+        sentiment = tc.get("sentiment")
+
+        traits = agent.identity.personality_traits if hasattr(agent.identity, "personality_traits") else {}
+        conf = traits.get("confidence", 50)
+        soc = traits.get("sociability", 50)
+        loyalty = traits.get("loyalty", 50)
+
+        # Classify sentiment from message if not provided
+        cmd_lower = command.lower()
+        if not sentiment:
+            if any(w in cmd_lower for w in ("hate", "stupid", "useless", "worst", "pathetic", "ugly", "trash", "die", "garbage", "shut up")):
+                sentiment = "very_negative"
+            elif any(w in cmd_lower for w in ("bad", "mistake", "disappointed", "slow", "clumsy", "stop it", "quit it", "not good")):
+                sentiment = "negative"
+            elif any(w in cmd_lower for w in ("good", "great", "awesome", "proud", "love", "amazing", "wonderful", "best", "friend", "thank", "nice")):
+                sentiment = "positive"
+            else:
+                sentiment = "neutral"
+
+        if sentiment == "very_negative":
+            emotional_state = "hurt"
+            trust_delta = -3.0
+            affection_delta = -4.0
+            dialogue = f"{cry}... *flinches back with wide, hurt eyes, shrinking away* (Why would you say that to me...?)"
+            intent = "React with hurt feelings to harsh words"
+        elif sentiment == "negative":
+            emotional_state = "discouraged"
+            trust_delta = 0.0
+            affection_delta = 0.0
+            dialogue = f"{cry}... *droops its head apologetically and looks down* (I'm sorry, {trainer_name}... I will try harder.)"
+            intent = "Apologize and reflect on trainer criticism"
+        elif sentiment == "positive":
+            emotional_state = "happy"
+            trust_delta = 2.5
+            affection_delta = 3.5
+            if conf >= 70:
+                dialogue = f"{cries[-1]} *puffs out chest proudly with a bright grin* (Knew I had it in me! Thanks for believing in me, {trainer_name}!)"
+            elif soc >= 65 or loyalty >= 65:
+                dialogue = f"{cry} *beams with joy, happily bouncing and nuzzling against your hand* (Thank you so much, {trainer_name}! I love being your partner!)"
+            else:
+                dialogue = f"{cry} *beams brightly, eyes sparkling with appreciation* (Thank you, {trainer_name}! That means a lot to me!)"
+            intent = "Express joy and appreciation for trainer praise"
+        else:
+            # Neutral / Casual conversation
+            trust_delta = 0.5
+            affection_delta = 0.5
+            if any(g in cmd_lower for g in ("hello", "hey", "hi ", "hi!", "good morning", "good evening", "greetings")):
+                emotional_state = "content"
+                dialogue = f"{cry} *perks up alertly and gives a cheerful, friendly wave* (Hello {trainer_name}! It's great to be out here with you!)"
+                intent = "Greet trainer cheerfully"
+            elif any(q in cmd_lower for q in ("how are you", "feeling", "how you doing", "you okay", "are you okay")):
+                emotional_state = "content"
+                dialogue = f"{cry} *stretches comfortably and gives a lively chirp* (I'm feeling great and ready for our next adventure!)"
+                intent = "Share current mood and readiness"
+            elif any(f in cmd_lower for f in ("hungry", "food", "eat", "lunch", "dinner", "breakfast", "berry", "snack", "treat")):
+                emotional_state = "excited"
+                dialogue = f"{cry}! *eyes sparkle at the mention of food, eagerly patting its tummy* (Ooh, yes please! I'd love a delicious berry treat right about now!)"
+                intent = "Eagerly accept the idea of food"
+            elif any(t in cmd_lower for t in ("battle", "train", "gym", "fight", "strong", "power", "ready")):
+                emotional_state = "confident"
+                dialogue = f"{cries[-1]} *strikes an energetic battle pose with sharp determination* (I'm all warmed up and ready to show our strength!)"
+                intent = "Show determination for battle training"
+            elif any(w in cmd_lower for w in ("where", "explore", "route", "town", "what should", "next", "go", "think")):
+                emotional_state = "curious"
+                dialogue = f"{cry} *tilts head curiously, scanning the horizon with keen interest* (Wherever you lead, I'm right behind you! Let's go explore!)"
+                intent = "Express excitement to explore the world"
+            else:
+                emotional_state = "thoughtful"
+                dialogue = f"{cry} *swishes tail and looks up at you with bright, attentive eyes* (I'm right here with you, {trainer_name}. What's on your mind?)"
+                intent = "Listen attentively to trainer"
+
+        return AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent=intent,
+            chosen_move=None,
+            dialogue=dialogue,
+            emotional_state=emotional_state,
+            rationale=f"Autonomous companion interaction (provider fallback: {error})",
+            confidence=0.85,
+            trust_delta=trust_delta,
+            affection_delta=affection_delta,
+        )
+
+    @classmethod
+    def create_fallback(cls, agent: PokemonAgent, perception: AgentPerception, error: Exception) -> AgentDecision:
         """Generates a safe fallback decision."""
         known_moves = perception.physical_state.get("known_moves", [])
         primary_move = known_moves[0] if known_moves else None
+        in_battle = perception.environment_context.get("in_battle", False)
 
         if agent.is_captured:
-            # Safe defensive/hesitation fallback for owned Pokemon
+            tc = perception.trainer_context or {}
+            command_str = str(tc.get("command") or "").strip()
+            command_intent = str(tc.get("command_intent") or "").lower()
+            known_moves_lower = [m.lower() for m in known_moves]
+            is_move_order = command_str.lower() in known_moves_lower or command_intent in ("attack", "offensive")
+
+            is_chat_intent = command_intent in (
+                "talk", "conversation", "praise", "scold", "insult", "criticism", "inquire_goals", "discuss_release"
+            ) or tc.get("relationship_stage") == "companion"
+            is_chat_context = bool((perception.environment_context or {}).get("interaction_type") in ("talk", "chat", "companion"))
+
+            # Out-of-battle companion chat is when trainer speaks to companion outside combat
+            is_companion_chat = (
+                not in_battle
+                and bool(command_str)
+                and not is_move_order
+                and (is_chat_intent or is_chat_context or "interact" in perception.available_actions)
+            )
+            if is_companion_chat:
+                return cls._create_companion_fallback(agent, perception, error)
+
+            # Safe defensive/hesitation fallback for owned Pokemon in battle
             return AgentDecision(
                 action_type=AgentActionType.DEFEND,
                 intent="Defensive posture fallback due to communication delay",

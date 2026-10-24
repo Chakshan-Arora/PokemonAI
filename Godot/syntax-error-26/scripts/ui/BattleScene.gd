@@ -55,6 +55,8 @@ var _battle_concluded: bool = false
 var _waiting_for_continue: bool = false
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	GameState.is_in_battle = true
 	battle_engine = load("res://scripts/systems/BattleEngine.gd").new()
 	add_child(battle_engine)
 	
@@ -76,6 +78,10 @@ func _ready() -> void:
 		move_btns[i].pressed.connect(_on_move_selected.bind(i))
 	
 	_setup_battle()
+
+func _process(_delta: float) -> void:
+	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _style_action_buttons() -> void:
 	var btns = [fight_btn, bag_btn, pokemon_btn, run_btn]

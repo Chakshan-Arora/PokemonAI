@@ -130,6 +130,7 @@ func _trigger_battle() -> void:
 	
 	var wild_p = PokemonInstance.create(species_name, level)
 	GameState.set_meta("wild_pokemon_for_battle", wild_p.to_dict())
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	GameState.enter_battle()
 	
 	EventBus.battle_started.emit(

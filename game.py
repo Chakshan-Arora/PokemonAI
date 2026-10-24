@@ -14,10 +14,14 @@ Provides a text-based, menu-driven adventure experience connecting:
 Decoupled I/O via injectable input_fn and output_fn for 100% automated testability.
 """
 import math
+import os
 import random
 import sys
 from pathlib import Path
 from typing import Callable, Optional, Sequence, Union, Any
+from dotenv import load_dotenv
+load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from src.models.pokemon_type import PokemonType
 from src.models.species import PokemonSpecies

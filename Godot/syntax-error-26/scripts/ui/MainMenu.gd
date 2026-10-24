@@ -14,6 +14,7 @@ extends Control
 var selected_avatar: String = "calem"
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	continue_btn.pressed.connect(_on_continue_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)

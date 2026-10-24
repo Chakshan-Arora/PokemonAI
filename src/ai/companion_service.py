@@ -325,6 +325,12 @@ class CompanionService:
             impact = 0.15
             rel.adjust_familiarity(2.0)
 
+        # Ensure companion dialogue never uses combat defense fallback text
+        if not dialogue or "held its ground defensively" in dialogue.lower():
+            from src.ai.decision_provider import FallbackDecisionHandler
+            fb = FallbackDecisionHandler.create_fallback(agent, perception, Exception("Companion dialogue rescue"))
+            dialogue = fb.dialogue
+
         # Record episodic memory
         ep = agent.record_experience(
             event_type=event_type,

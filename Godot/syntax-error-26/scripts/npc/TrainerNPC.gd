@@ -51,6 +51,7 @@ func on_interact(_player_node: Node3D) -> void:
 	GameState.set_meta("is_trainer_battle", true)
 	GameState.set_meta("trainer_name", trainer_name)
 	GameState.set_meta("trainer_id", trainer_id)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	GameState.enter_battle()
 	
 	_is_defeated = true

@@ -19,20 +19,32 @@ const QuestData = preload("res://scripts/data/QuestData.gd")
 @onready var interact_prompt: PanelContainer = $CenterPrompt/InteractPrompt
 @onready var prompt_label: Label = $CenterPrompt/InteractPrompt/PromptLabel
 
-@onready var message_banner: PanelContainer = $TopCenter/MessageBanner
-@onready var message_label: Label = $TopCenter/MessageBanner/MessageLabel
+@onready var notification_layer: CanvasLayer = find_child("NotificationLayer", true, false) as CanvasLayer
+@onready var notification_root: Control = find_child("NotificationRoot", true, false) as Control
 
-@onready var dialogue_box: PanelContainer = get_node_or_null("DialogueBox")
-@onready var dialogue_label: Label = get_node_or_null("DialogueBox/HBox/VBox/DialogueLabel")
-@onready var speaker_label: Label = get_node_or_null("DialogueBox/HBox/VBox/SpeakerLabel")
-@onready var dialogue_portrait: TextureRect = get_node_or_null("DialogueBox/HBox/Portrait")
+@onready var message_banner: PanelContainer = find_child("MessageBanner", true, false) as PanelContainer
+@onready var message_label: Label = find_child("MessageLabel", true, false) as Label
+
+@onready var dialogue_box: PanelContainer = find_child("DialogueBox", true, false) as PanelContainer
+@onready var dialogue_label: Label = (dialogue_box.get_node_or_null("HBox/VBox/DialogueLabel") as Label) if dialogue_box else null
+@onready var speaker_label: Label = (dialogue_box.get_node_or_null("HBox/VBox/SpeakerLabel") as Label) if dialogue_box else null
+@onready var dialogue_portrait: TextureRect = (dialogue_box.get_node_or_null("HBox/Portrait") as TextureRect) if dialogue_box else null
 
 var _banner_timer: float = 0.0
 var _dialogue_timer: float = 0.0
 
 func _ready() -> void:
+	add_to_group("hud")
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	if notification_layer:
+		notification_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	interact_prompt.visible = false
-	message_banner.visible = false
+	if message_banner:
+		message_banner.visible = false
+		message_banner.gui_input.connect(_on_message_banner_gui_input)
+	if dialogue_box:
+		dialogue_box.visible = false
+		dialogue_box.gui_input.connect(_on_dialogue_box_gui_input)
 	
 	EventBus.hud_update_requested.connect(update_hud)
 	EventBus.region_discovered.connect(_on_region_discovered)
@@ -82,6 +94,7 @@ var _dialogue_tween: Tween = null
 func _build_companion_dialogue_ui() -> void:
 	companion_panel = PanelContainer.new()
 	companion_panel.name = "CompanionChatPanel"
+	companion_panel.add_to_group("companion_chat")
 	companion_panel.anchors_preset = Control.PRESET_CENTER
 	companion_panel.anchor_left = 0.5
 	companion_panel.anchor_top = 0.5
@@ -136,7 +149,8 @@ func _build_companion_dialogue_ui() -> void:
 	companion_send_btn.pressed.connect(func(): _on_companion_message_submitted(companion_input.text))
 	input_hbox.add_child(companion_send_btn)
 	
-	add_child(companion_panel)
+	var target_parent = notification_root if notification_root else (notification_layer if notification_layer else self)
+	target_parent.add_child(companion_panel)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -161,6 +175,7 @@ func _toggle_companion_chat() -> void:
 				companion_input.grab_focus()
 		else:
 			GameState.set_meta("typing_active", false)
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			if companion_input and companion_input.has_focus():
 				companion_input.release_focus()
 
@@ -168,6 +183,7 @@ func _close_companion_chat() -> void:
 	if companion_panel:
 		companion_panel.visible = false
 		GameState.set_meta("typing_active", false)
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		if companion_input and companion_input.has_focus():
 			companion_input.release_focus()
 
@@ -387,34 +403,75 @@ func set_interaction_prompt(visible_state: bool, text: String = "") -> void:
 	if visible_state:
 		prompt_label.text = "[E] " + text
 
+func _on_dialogue_box_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if dialogue_box:
+			dialogue_box.visible = false
+			_dialogue_timer = 0.0
+
+func _on_message_banner_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if message_banner:
+			message_banner.visible = false
+			_banner_timer = 0.0
+
 func show_notification(text: String, duration: float = 3.0) -> void:
 	if dialogue_box and text.length() > 22:
 		# Show rich dialogue box with portrait and typewriter effect
 		var speaker = "Notice"
 		var portrait_path = ""
-		if "Oak" in text:
-			speaker = "Professor Oak"
-			portrait_path = "res://assets/sprites/trainers/red.png"
-		elif "Koji" in text:
-			speaker = "Trainer Koji"
-			portrait_path = "res://assets/sprites/trainers/koji.png"
-		elif "campfire" in text.to_lower() or "healed" in text.to_lower():
-			speaker = "Campfire Rest Area"
-			portrait_path = "res://assets/sprites/world/campfire.png"
-		elif "sign" in text.to_lower() or "route" in text.to_lower():
-			speaker = "Wooden Signpost"
-			portrait_path = "res://assets/sprites/world/sign.png"
-		elif "obtained" in text.to_lower() or "cache" in text.to_lower():
-			speaker = "Item Recovery"
-			portrait_path = "res://assets/sprites/items/poke_ball.png"
-		elif "shrine" in text.to_lower():
-			speaker = "Ancient Shrine"
-			portrait_path = "res://assets/sprites/world/rock.png"
+		var custom_tex: Texture2D = null
+		
+		# Check if message is from or about a Pokemon in player's team or database
+		var detected_p: PokemonInstance = null
+		if ":" in text:
+			var prefix = text.split(":", true, 1)[0].strip_edges()
+			if GameState.player:
+				for member in GameState.player.team:
+					if member.get_display_name() == prefix or member.species_name == prefix:
+						detected_p = member
+						break
+			if detected_p == null and not PokemonData.get_species(prefix).is_empty():
+				speaker = prefix
+				custom_tex = PokemonData.get_portrait_texture(prefix)
+		
+		if detected_p:
+			speaker = detected_p.get_display_name()
+			custom_tex = PokemonData.get_portrait_texture(detected_p.species_name)
+		elif GameState.player:
+			for member in GameState.player.team:
+				if member.get_display_name() in text or member.species_name in text:
+					speaker = member.get_display_name()
+					custom_tex = PokemonData.get_portrait_texture(member.species_name)
+					break
+		
+		if speaker == "Notice":
+			if "Oak" in text:
+				speaker = "Professor Oak"
+				portrait_path = "res://assets/sprites/trainers/red.png"
+			elif "Koji" in text:
+				speaker = "Trainer Koji"
+				portrait_path = "res://assets/sprites/trainers/koji.png"
+			elif "campfire" in text.to_lower() or "healed" in text.to_lower():
+				speaker = "Campfire Rest Area"
+				portrait_path = "res://assets/sprites/world/campfire.png"
+			elif "sign" in text.to_lower() or "route" in text.to_lower():
+				speaker = "Wooden Signpost"
+				portrait_path = "res://assets/sprites/world/sign.png"
+			elif "obtained" in text.to_lower() or "cache" in text.to_lower():
+				speaker = "Item Recovery"
+				portrait_path = "res://assets/sprites/items/poke_ball.png"
+			elif "shrine" in text.to_lower():
+				speaker = "Ancient Shrine"
+				portrait_path = "res://assets/sprites/world/rock.png"
 		
 		if speaker_label:
 			speaker_label.text = speaker
 		if dialogue_portrait:
-			if portrait_path != "" and ResourceLoader.exists(portrait_path):
+			if custom_tex != null:
+				dialogue_portrait.texture = custom_tex
+				dialogue_portrait.visible = true
+			elif portrait_path != "" and ResourceLoader.exists(portrait_path):
 				dialogue_portrait.texture = load(portrait_path)
 				dialogue_portrait.visible = true
 			else:
@@ -425,13 +482,16 @@ func show_notification(text: String, duration: float = 3.0) -> void:
 			if _dialogue_tween and _dialogue_tween.is_valid():
 				_dialogue_tween.kill()
 			_dialogue_tween = create_tween()
+			_dialogue_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 			_dialogue_tween.tween_property(dialogue_label, "visible_ratio", 1.0, 0.4)
 		
 		dialogue_box.visible = true
 		_dialogue_timer = duration + 0.5
 	else:
-		message_label.text = text
-		message_banner.visible = true
+		if message_label:
+			message_label.text = text
+		if message_banner:
+			message_banner.visible = true
 		_banner_timer = duration
 
 func _on_region_changed(region_id: String) -> void:
