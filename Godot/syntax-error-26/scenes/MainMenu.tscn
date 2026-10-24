@@ -71,27 +71,33 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -150.0
-offset_top = -40.0
+offset_top = -60.0
 offset_right = 150.0
-offset_bottom = 180.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="NewGameBtn" type="Button" parent="VBoxContainer" unique_id=1548906679]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "New Game"
 
 [node name="ContinueBtn" type="Button" parent="VBoxContainer" unique_id=803018280]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Continue"
 
+[node name="SettingsBtn" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "⚙️ Settings"
+
 [node name="QuitBtn" type="Button" parent="VBoxContainer" unique_id=861374107]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Quit Game"
@@ -152,3 +158,61 @@ text = "Choose Starter Pokemon"
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Back"
+
+[node name="SettingsPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -130.0
+offset_right = 200.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Game Settings"
+horizontal_alignment = 1
+
+[node name="RenderDistanceBox" type="VBoxContainer" parent="SettingsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RenderDistanceLabel" type="Label" parent="SettingsPanel/VBox/RenderDistanceBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 15
+text = "Render Distance: 250 m"
+horizontal_alignment = 1
+
+[node name="RenderDistanceSlider" type="HSlider" parent="SettingsPanel/VBox/RenderDistanceBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+min_value = 30.0
+max_value = 600.0
+step = 10.0
+value = 250.0
+
+[node name="CloseSettingsBtn" type="Button" parent="SettingsPanel/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Back to Menu"

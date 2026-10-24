@@ -4,6 +4,7 @@ extends Control
 @onready var main_buttons_container: VBoxContainer = $VBoxContainer
 @onready var new_game_btn: Button = $VBoxContainer/NewGameBtn
 @onready var continue_btn: Button = $VBoxContainer/ContinueBtn
+@onready var settings_btn: Button = find_child("SettingsBtn", true, false) as Button
 @onready var quit_btn: Button = $VBoxContainer/QuitBtn
 @onready var dialog_panel: Panel = $DialogPanel
 @onready var player_name_input: LineEdit = $DialogPanel/VBox/NameInput
@@ -11,16 +12,36 @@ extends Control
 @onready var back_btn: Button = $DialogPanel/VBox/BackBtn
 @onready var save_info_label: Label = $VBoxContainer/SaveInfoLabel
 
+@onready var settings_panel: Panel = find_child("SettingsPanel", true, false) as Panel
+@onready var render_distance_slider: HSlider = find_child("RenderDistanceSlider", true, false) as HSlider
+@onready var render_distance_label: Label = find_child("RenderDistanceLabel", true, false) as Label
+@onready var close_settings_btn: Button = find_child("CloseSettingsBtn", true, false) as Button
+
 var selected_avatar: String = "ash"
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	new_game_btn.pressed.connect(_on_new_game_pressed)
 	continue_btn.pressed.connect(_on_continue_pressed)
+	if is_instance_valid(settings_btn):
+		settings_btn.pressed.connect(_on_settings_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
 	start_btn.pressed.connect(_on_start_pressed)
 	back_btn.pressed.connect(_on_back_pressed)
+	if is_instance_valid(close_settings_btn):
+		close_settings_btn.pressed.connect(_on_close_settings_pressed)
+	
+	if is_instance_valid(render_distance_slider):
+		render_distance_slider.min_value = GameState.MIN_RENDER_DISTANCE
+		render_distance_slider.max_value = GameState.MAX_RENDER_DISTANCE
+		render_distance_slider.step = 10.0
+		render_distance_slider.value = GameState.get_render_distance()
+		_update_render_distance_label(render_distance_slider.value)
+		render_distance_slider.value_changed.connect(_on_render_distance_changed)
+	
 	dialog_panel.visible = false
+	if is_instance_valid(settings_panel):
+		settings_panel.visible = false
 	main_buttons_container.visible = true
 	
 	# Setup avatar buttons in dialog panel
@@ -126,3 +147,38 @@ func _on_back_pressed() -> void:
 	dialog_panel.visible = false
 	main_buttons_container.visible = true
 	new_game_btn.grab_focus()
+
+func _on_settings_pressed() -> void:
+	main_buttons_container.visible = false
+	if is_instance_valid(settings_panel):
+		settings_panel.visible = true
+		if is_instance_valid(render_distance_slider):
+			render_distance_slider.value = GameState.get_render_distance()
+			_update_render_distance_label(render_distance_slider.value)
+			render_distance_slider.grab_focus()
+
+func _on_close_settings_pressed() -> void:
+	if is_instance_valid(settings_panel):
+		settings_panel.visible = false
+	main_buttons_container.visible = true
+	if is_instance_valid(settings_btn):
+		settings_btn.grab_focus()
+
+func _on_render_distance_changed(val: float) -> void:
+	GameState.set_render_distance(val)
+	_update_render_distance_label(val)
+
+func _update_render_distance_label(val: float) -> void:
+	var preset = ""
+	if val <= 60.0:
+		preset = " (Very Near)"
+	elif val <= 150.0:
+		preset = " (Near)"
+	elif val <= 300.0:
+		preset = " (Medium)"
+	elif val <= 450.0:
+		preset = " (Far)"
+	else:
+		preset = " (Ultra)"
+	if is_instance_valid(render_distance_label):
+		render_distance_label.text = "Render Distance: %d m%s" % [int(val), preset]

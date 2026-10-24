@@ -5,6 +5,8 @@ extends Control
 @onready var party_btn: Button = $Panel/VBox/PartyBtn
 @onready var bag_btn: Button = $Panel/VBox/BagBtn
 @onready var quests_btn: Button = $Panel/VBox/QuestsBtn
+@onready var render_distance_lbl: Label = $Panel/VBox/RenderDistanceBox/RenderDistanceLabel
+@onready var render_distance_slider: HSlider = $Panel/VBox/RenderDistanceBox/RenderDistanceSlider
 @onready var save_btn: Button = $Panel/VBox/SaveBtn
 @onready var menu_btn: Button = $Panel/VBox/MenuBtn
 @onready var quit_btn: Button = $Panel/VBox/QuitBtn
@@ -22,6 +24,18 @@ func _ready() -> void:
 	save_btn.pressed.connect(_on_save_pressed)
 	menu_btn.pressed.connect(_on_menu_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
+	
+	render_distance_slider.min_value = GameState.MIN_RENDER_DISTANCE
+	render_distance_slider.max_value = GameState.MAX_RENDER_DISTANCE
+	render_distance_slider.step = 10.0
+	render_distance_slider.value = GameState.get_render_distance()
+	_update_render_distance_display(render_distance_slider.value)
+	render_distance_slider.value_changed.connect(_on_render_distance_value_changed)
+	
+	quests_btn.focus_neighbor_bottom = render_distance_slider.get_path()
+	render_distance_slider.focus_neighbor_top = quests_btn.get_path()
+	render_distance_slider.focus_neighbor_bottom = save_btn.get_path()
+	save_btn.focus_neighbor_top = render_distance_slider.get_path()
 	
 	resume_btn.focus_neighbor_top = quit_btn.get_path()
 	quit_btn.focus_neighbor_bottom = resume_btn.get_path()
@@ -60,7 +74,29 @@ func show_menu() -> void:
 	GameState.pause_game()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	status_lbl.text = ""
+	if is_instance_valid(render_distance_slider):
+		render_distance_slider.value = GameState.get_render_distance()
+		_update_render_distance_display(render_distance_slider.value)
 	resume_btn.grab_focus()
+
+func _on_render_distance_value_changed(val: float) -> void:
+	GameState.set_render_distance(val)
+	_update_render_distance_display(val)
+
+func _update_render_distance_display(val: float) -> void:
+	var preset = ""
+	if val <= 60.0:
+		preset = " (Very Near)"
+	elif val <= 150.0:
+		preset = " (Near)"
+	elif val <= 300.0:
+		preset = " (Medium)"
+	elif val <= 450.0:
+		preset = " (Far)"
+	else:
+		preset = " (Ultra)"
+	if is_instance_valid(render_distance_lbl):
+		render_distance_lbl.text = "Render Distance: %d m%s" % [int(val), preset]
 
 func hide_menu() -> void:
 	visible = false

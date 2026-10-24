@@ -29,10 +29,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -220.0
-offset_right = 160.0
-offset_bottom = 220.0
+offset_left = -170.0
+offset_top = -260.0
+offset_right = 170.0
+offset_bottom = 260.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -42,12 +42,12 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 20.0
+offset_top = 18.0
 offset_right = -20.0
-offset_bottom = -20.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Panel/VBox"]
 layout_mode = 2
@@ -74,6 +74,28 @@ text = "Item Bag"
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Quest Journal"
+
+[node name="SettingsSep" type="HSeparator" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="RenderDistanceBox" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="RenderDistanceLabel" type="Label" parent="Panel/VBox/RenderDistanceBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 13
+text = "Render Distance: 250 m"
+horizontal_alignment = 1
+
+[node name="RenderDistanceSlider" type="HSlider" parent="Panel/VBox/RenderDistanceBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+min_value = 30.0
+max_value = 600.0
+step = 10.0
+value = 250.0
 
 [node name="SaveBtn" type="Button" parent="Panel/VBox"]
 custom_minimum_size = Vector2(0, 36)

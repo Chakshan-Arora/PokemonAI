@@ -12,8 +12,9 @@ const QuestData = preload("res://scripts/data/QuestData.gd")
 @onready var hp_bar: ProgressBar = $TopLeft/PokemonPanel/VBox/HPBar
 @onready var hp_text_lbl: Label = $TopLeft/PokemonPanel/VBox/HPTextLabel
 
-@onready var time_label: Label = $TopRight/TimePanel/VBox/TimeLabel
-@onready var tod_label: Label = $TopRight/TimePanel/VBox/TODLabel
+@onready var time_label: Label = find_child("TimeLabel", true, false) as Label
+@onready var tod_label: Label = find_child("TODLabel", true, false) as Label
+@onready var settings_btn: Button = find_child("SettingsBtn", true, false) as Button
 
 @onready var region_label: Label = $BottomLeft/RegionPanel/VBox/RegionLabel
 @onready var interact_prompt: PanelContainer = $CenterPrompt/InteractPrompt
@@ -36,6 +37,10 @@ var _dialogue_timer: float = 0.0
 func _ready() -> void:
 	add_to_group("hud")
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if is_instance_valid(settings_btn):
+		settings_btn.pressed.connect(func():
+			EventBus.open_pause_menu.emit()
+		)
 	if notification_layer:
 		notification_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	interact_prompt.visible = false

@@ -185,6 +185,8 @@ func _ready() -> void:
 				_env_res.sky.sky_material = _sky_mat
 	
 	update_day_night_cycle(GameState.game_time)
+	EventBus.render_distance_changed.connect(_on_render_distance_changed)
+	_on_render_distance_changed(GameState.get_render_distance())
 	EventBus.hud_update_requested.emit()
 
 func _process(_delta: float) -> void:
@@ -232,3 +234,15 @@ func update_day_night_cycle(time: float) -> void:
 	var pitch = lerpf(k1.pitch, k2.pitch, factor)
 	var yaw_rad = lerp_angle(deg_to_rad(k1.yaw), deg_to_rad(k2.yaw), factor)
 	sun_light.rotation_degrees = Vector3(pitch, rad_to_deg(yaw_rad), 0.0)
+	
+	if _env_res and _env_res.fog_enabled and _sky_mat:
+		_env_res.fog_light_color = _sky_mat.sky_horizon_color
+
+func _on_render_distance_changed(val: float) -> void:
+	if _env_res:
+		_env_res.fog_enabled = true
+		_env_res.fog_mode = Environment.FOG_MODE_DEPTH
+		_env_res.fog_depth_begin = val * 0.55
+		_env_res.fog_depth_end = val
+		if _sky_mat:
+			_env_res.fog_light_color = _sky_mat.sky_horizon_color

@@ -49,6 +49,10 @@ signal interaction_triggered(object_node: Node3D)
 func _ready() -> void:
 	add_to_group("player")
 	
+	# Apply and listen for render distance changes
+	EventBus.render_distance_changed.connect(_on_render_distance_changed)
+	_on_render_distance_changed(GameState.get_render_distance())
+	
 	# Detach camera pivot from player rotation to eliminate feedback loop
 	if is_instance_valid(camera_pivot):
 		camera_pivot.top_level = true
@@ -399,3 +403,7 @@ func _on_open_quest_journal() -> void:
 	var quest_ui = get_tree().get_first_node_in_group("quest_journal")
 	if is_instance_valid(quest_ui):
 		quest_ui.show_menu()
+
+func _on_render_distance_changed(val: float) -> void:
+	if is_instance_valid(camera):
+		camera.far = val

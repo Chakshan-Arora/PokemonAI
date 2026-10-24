@@ -47,6 +47,7 @@ signal open_pause_menu()
 signal open_pokemart()
 signal currency_changed(new_balance, delta)
 signal close_all_menus()
+signal render_distance_changed(new_distance)
 
 # Encounter signals
 signal wild_encounter_triggered(species_name, level)

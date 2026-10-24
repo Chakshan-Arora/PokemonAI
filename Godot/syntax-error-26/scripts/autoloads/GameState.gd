@@ -25,8 +25,31 @@ signal region_changed(new_region_id: String)
 signal game_started()
 signal game_over()
 
+var render_distance: float = 250.0
+const MIN_RENDER_DISTANCE: float = 30.0
+const MAX_RENDER_DISTANCE: float = 600.0
+
 func _ready() -> void:
-	pass
+	_load_settings()
+
+func _load_settings() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load("user://settings.cfg") == OK:
+		render_distance = clampf(float(cfg.get_value("graphics", "render_distance", 250.0)), MIN_RENDER_DISTANCE, MAX_RENDER_DISTANCE)
+
+func _save_settings() -> void:
+	var cfg = ConfigFile.new()
+	var _err = cfg.load("user://settings.cfg")
+	cfg.set_value("graphics", "render_distance", render_distance)
+	cfg.save("user://settings.cfg")
+
+func set_render_distance(val: float) -> void:
+	render_distance = clampf(val, MIN_RENDER_DISTANCE, MAX_RENDER_DISTANCE)
+	_save_settings()
+	EventBus.render_distance_changed.emit(render_distance)
+
+func get_render_distance() -> float:
+	return render_distance
 
 func _process(delta: float) -> void:
 	if is_game_started and not is_in_battle and not is_paused:
