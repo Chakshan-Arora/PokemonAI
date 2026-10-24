@@ -1900,7 +1900,7 @@
     "starting_meadow": {
       "id": "starting_meadow",
       "name": "Starting Meadow",
-      "description": "A sunlit clearing of soft green grass, welcoming new trainers with sweet berry bushes.",
+      "description": "A sunlit town and clearing where new trainers begin their journey. Features Ash's House, Oak's Residence, Oak's Pok\u00e9mon Research Lab, and Route 1 tall grass.",
       "discovery_text": "You have stepped into the Starting Meadow! Warm sunlight illuminates the open clearing.",
       "bounds": {
         "x1": 0.0,
@@ -2170,6 +2170,146 @@
       "prerequisites": [
         "first_encounter"
       ]
+    },
+    "lakeside_expedition": {
+      "id": "lakeside_expedition",
+      "name": "Lakeside Waters",
+      "description": "Explore the tranquil shores of Crystal Lakeside and gather fresh Oran berries.",
+      "objectives": [
+        {
+          "objective_id": "discover_lakeside",
+          "type": "discover_region",
+          "description": "Discover Crystal Lakeside",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        },
+        {
+          "objective_id": "forage_lake_berries",
+          "type": "interact_object",
+          "description": "Gather berries from the Lakeside Berry Bush",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 2,
+        "super_potion": 1
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "mountain_ascent": {
+      "id": "mountain_ascent",
+      "name": "Ascent of Mountain Pass",
+      "description": "Scale the steep trails of Mountain Pass and inspect the trail marker.",
+      "objectives": [
+        {
+          "objective_id": "discover_mountain_pass",
+          "type": "discover_region",
+          "description": "Discover Mountain Pass",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        },
+        {
+          "objective_id": "inspect_mountain_sign",
+          "type": "discover_landmark",
+          "description": "Discover Mountain Pass Sign landmark",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "super_potion": 2,
+        "antidote": 2
+      },
+      "prerequisites": [
+        "trailblazer"
+      ]
+    },
+    "ruins_of_shadow": {
+      "id": "ruins_of_shadow",
+      "name": "Shadows of the Haunted Ruins",
+      "description": "Venture into the mysterious Haunted Ruins and recover ancient relics.",
+      "objectives": [
+        {
+          "objective_id": "discover_haunted_ruins",
+          "type": "discover_region",
+          "description": "Discover Haunted Ruins",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        },
+        {
+          "objective_id": "recover_ruins_treasure",
+          "type": "interact_object",
+          "description": "Open the Ruins Treasure Chest",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "hyper_potion": 1,
+        "poke_ball": 3
+      },
+      "prerequisites": [
+        "shrine_investigation"
+      ]
+    },
+    "plains_exploration": {
+      "id": "plains_exploration",
+      "name": "Mastering the Tall Grass Plains",
+      "description": "Cross the wide Tall Grass Plains and discover the ancient Plains Landmark Stone.",
+      "objectives": [
+        {
+          "objective_id": "discover_tall_grass_plains",
+          "type": "discover_region",
+          "description": "Discover Tall Grass Plains",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        },
+        {
+          "objective_id": "discover_plains_stone",
+          "type": "discover_landmark",
+          "description": "Discover Plains Landmark Stone",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "super_potion": 1,
+        "poke_ball": 3
+      },
+      "prerequisites": [
+        "first_encounter"
+      ]
+    },
+    "pallet_town_journey": {
+      "id": "pallet_town_journey",
+      "name": "Pallet Town Journey",
+      "description": "Venture past Ash's House, Oak's Lab, and into the tall wild grass of Route 1.",
+      "objectives": [
+        {
+          "objective_id": "capture_route1_pokemon",
+          "type": "capture_any",
+          "description": "Capture any wild Pokemon in Route 1 tall grass",
+          "target_count": 1,
+          "target_species": null,
+          "target_item": null
+        }
+      ],
+      "rewards": {
+        "potion": 2,
+        "poke_ball": 5
+      },
+      "prerequisites": []
     }
   }
 }
