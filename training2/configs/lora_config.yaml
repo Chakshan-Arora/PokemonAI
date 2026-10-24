@@ -1,8 +1,8 @@
-# LoRA Configuration for Battle Talk Dialogue & Morale Model (MLX / Hugging Face)
+# LoRA Configuration for Battle Talk Dialogue & Morale Model (MLX / Apple Silicon)
 fine_tune_type: lora
 num_layers: 16
-grad_checkpoint: true
-max_seq_length: 512
+grad_checkpoint: false
+max_seq_length: 256
 mask_prompt: true
 
 lora_parameters:
