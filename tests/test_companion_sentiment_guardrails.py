@@ -211,8 +211,8 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
         self.assertGreater(res["new_affection"], 30.0)
         self.assertEqual(res["emotional_state"], "happy")
 
-    def test_relationship_values_clamped_at_zero_and_hundred(self) -> None:
-        # Near 0
+    def test_relationship_values_clamped_at_bounds_and_refuses_to_battle(self) -> None:
+        # Dropping below 0
         self.mock_provider.decide.return_value = AgentDecision(
             action_type=AgentActionType.INTERACT,
             intent="talk",
@@ -227,8 +227,11 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
             "trust": 1.0,
             "affection": 1.0,
         })
-        self.assertGreaterEqual(res_min["new_trust"], 0.0)
-        self.assertGreaterEqual(res_min["new_affection"], 0.0)
+        self.assertEqual(res_min["new_trust"], -4.0)
+        self.assertEqual(res_min["new_affection"], -4.0)
+        self.assertTrue(res_min["refuses_to_battle"])
+        self.assertGreaterEqual(res_min["new_trust"], -100.0)
+        self.assertGreaterEqual(res_min["new_affection"], -100.0)
 
         # Near 100
         self.mock_provider.decide.return_value = AgentDecision(
@@ -247,6 +250,7 @@ class TestServerCompanionTalkGuardrails(unittest.TestCase):
         })
         self.assertLessEqual(res_max["new_trust"], 100.0)
         self.assertLessEqual(res_max["new_affection"], 100.0)
+        self.assertFalse(res_max["refuses_to_battle"])
 
 
 class TestTrustAffectionBondMechanics(unittest.TestCase):
@@ -303,6 +307,58 @@ class TestTrustAffectionBondMechanics(unittest.TestCase):
         self.pokemon.decay_trust_and_affection(2.0)
         self.assertEqual(self.pokemon.trust, 58.0)
         self.assertEqual(self.pokemon.affection, 38.0)
+
+    def test_refuses_to_battle_when_trust_and_affection_below_zero(self) -> None:
+        self.pokemon.trust = -1.0
+        self.pokemon.affection = -1.0
+        self.assertTrue(self.pokemon.refuses_to_battle)
+        self.assertFalse(self.pokemon.can_battle)
+
+        # At 0.0 or positive, does not refuse
+        self.pokemon.trust = 0.0
+        self.pokemon.affection = 0.0
+        self.assertFalse(self.pokemon.refuses_to_battle)
+        self.assertTrue(self.pokemon.can_battle)
+
+    def test_decay_can_push_trust_and_affection_below_zero(self) -> None:
+        self.pokemon.trust = 1.0
+        self.pokemon.affection = 1.0
+        self.pokemon.decay_trust_and_affection(2.0)
+        self.assertEqual(self.pokemon.trust, -1.0)
+        self.assertEqual(self.pokemon.affection, -1.0)
+        self.assertTrue(self.pokemon.refuses_to_battle)
+
+    def test_battle_rejects_attack_when_refusing_to_battle(self) -> None:
+        from src.models.battle import Battle
+        from src.models.pokemon import Pokemon
+        from src.data.species import CHARMANDER
+        from src.models.personality import Personality
+        from src.data.attacks import QUICK_ATTACK, TACKLE
+
+        opp_pers = Personality(50, 50, 50, 50, 50, 50)
+        opp = Pokemon(species=CHARMANDER, personality=opp_pers, level=5)
+        self.pokemon.assign_attack(QUICK_ATTACK)
+        opp.assign_attack(TACKLE)
+
+        # Set below 0
+        self.pokemon.trust = -2.0
+        self.pokemon.affection = -2.0
+        self.assertTrue(self.pokemon.refuses_to_battle)
+
+        battle = Battle(pokemon1=self.pokemon, pokemon2=opp)
+        battle.start()
+
+        # select_attack raises ValueError
+        with self.assertRaises(ValueError) as ctx:
+            battle.select_attack(self.pokemon, QUICK_ATTACK)
+        self.assertIn("refuses to battle", str(ctx.exception))
+
+        # Restoring trust and affection allows battle
+        self.pokemon.trust = 10.0
+        self.pokemon.affection = 10.0
+        self.assertFalse(self.pokemon.refuses_to_battle)
+        battle.select_attack(self.pokemon, QUICK_ATTACK)
+        self.assertEqual(battle._selected_attacks[self.pokemon.unique_id], QUICK_ATTACK)
 
 
 if __name__ == "__main__":

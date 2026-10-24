@@ -205,6 +205,11 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 	if attacker.is_fainted():
 		return evts
 	
+	# Check refusal to battle due to negative trust and affection
+	if attacker.refuses_to_battle():
+		evts.append({"type": "message", "text": "%s refused to battle for you! (Trust & Affection below 0)" % attacker.get_display_name()})
+		return evts
+	
 	var attack_data = AttackData.get_attack(attack_name)
 	if attack_data.is_empty():
 		evts.append({"type": "message", "text": "%s tried to use an unknown move!" % attacker.nickname})

@@ -602,8 +602,8 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             if not emotional_state or emotional_state.lower() in ("hurt", "angry"):
                 emotional_state = "thoughtful"
 
-        new_trust = round(max(0.0, min(100.0, trust + trust_delta)), 1)
-        new_affection = round(max(0.0, min(100.0, affection + affection_delta)), 1)
+        new_trust = round(max(-100.0, min(100.0, trust + trust_delta)), 1)
+        new_affection = round(max(-100.0, min(100.0, affection + affection_delta)), 1)
 
         return {
             "species": species,
@@ -617,6 +617,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             "affection_delta": round(affection_delta, 1),
             "new_trust": new_trust,
             "new_affection": new_affection,
+            "refuses_to_battle": (new_trust < 0.0 and new_affection < 0.0),
         }
 
     def _handle_battle_talk(self, data: dict[str, Any]) -> dict[str, Any]:

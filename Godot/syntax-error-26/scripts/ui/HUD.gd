@@ -318,8 +318,13 @@ func update_hud() -> void:
 			var t_name = trainer_bar.get_node_or_null("TrainerName") as Label
 			if t_name:
 				var has_mult = (active_p.trust > 50.0 and active_p.affection > 50.0)
-				var mult_tag = " ⭐1.5x" if has_mult else ""
-				t_name.text = "%s  (Bond: %d%%%s)" % [GameState.player.player_name, int(round(active_p.bond)), mult_tag]
+				var refuses = active_p.refuses_to_battle()
+				var status_tag = ""
+				if refuses:
+					status_tag = " ⚠️Refuses Battle"
+				elif has_mult:
+					status_tag = " ⭐1.5x"
+				t_name.text = "%s  (Bond: %d%%%s)" % [GameState.player.player_name, int(round(active_p.bond)), status_tag]
 		
 		# Display PMD portrait if available
 		var hbox = $TopLeft/PokemonPanel/VBox/HBox
@@ -425,14 +430,22 @@ func update_hud() -> void:
 		var t_bar_inst = meters_box.get_node_or_null("TrustRow/TrustBar") as ProgressBar
 		var t_val_inst = meters_box.get_node_or_null("TrustRow/TVal") as Label
 		if t_bar_inst and t_val_inst:
-			t_bar_inst.value = active_p.trust
+			t_bar_inst.value = max(0.0, active_p.trust)
 			t_val_inst.text = "%d%%" % int(round(active_p.trust))
+			if refuses:
+				t_val_inst.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+			else:
+				t_val_inst.add_theme_color_override("font_color", Color(0.25, 0.55, 0.88))
 		
 		var a_bar_inst = meters_box.get_node_or_null("AffRow/AffBar") as ProgressBar
 		var a_val_inst = meters_box.get_node_or_null("AffRow/AVal") as Label
 		if a_bar_inst and a_val_inst:
-			a_bar_inst.value = active_p.affection
+			a_bar_inst.value = max(0.0, active_p.affection)
 			a_val_inst.text = "%d%%" % int(round(active_p.affection))
+			if refuses:
+				a_val_inst.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
+			else:
+				a_val_inst.add_theme_color_override("font_color", Color(0.88, 0.35, 0.6))
 	else:
 		pokemon_panel.visible = false
 	

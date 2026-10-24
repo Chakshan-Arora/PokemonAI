@@ -76,9 +76,15 @@ func check_and_award_max_bond_exp() -> int:
 	return 0
 
 func decay_trust_and_affection(amount: float = 2.0) -> void:
-	trust = clamp(trust - amount, 0.0, 100.0)
-	affection = clamp(affection - amount, 0.0, 100.0)
-	obedience = trust
+	trust = clamp(trust - amount, -100.0, 100.0)
+	affection = clamp(affection - amount, -100.0, 100.0)
+	obedience = clamp(trust, 0.0, 100.0)
+
+func refuses_to_battle() -> bool:
+	return trust < 0.0 and affection < 0.0
+
+func can_battle() -> bool:
+	return not is_fainted() and not refuses_to_battle()
 
 func heal_full() -> int:
 	var old = current_hp

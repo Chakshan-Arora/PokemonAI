@@ -600,6 +600,9 @@ class Battle:
         if pokemon.is_fainted:
             raise ValueError(f"Fainted Pokemon '{pokemon.display_name}' cannot select an attack.")
 
+        if getattr(pokemon, "refuses_to_battle", False):
+            raise ValueError(f"Pokemon '{pokemon.display_name}' refuses to battle for you! (Trust and affection fell below 0).")
+
         if not isinstance(attack, Attack):
             raise TypeError(f"attack must be an Attack instance, got {type(attack).__name__}.")
 
@@ -1237,6 +1240,14 @@ class Battle:
                     action_type=action.action_type,
                     battle_state=self._state,
                     error_type="POKEMON_FAINTED",
+                )
+            if getattr(self._pokemon1, "refuses_to_battle", False):
+                return BattleActionResult(
+                    accepted=False,
+                    reason=f"Active Pokemon '{self._pokemon1.display_name}' refuses to battle for you! (Trust and affection fell below 0).",
+                    action_type=action.action_type,
+                    battle_state=self._state,
+                    error_type="REFUSES_TO_BATTLE",
                 )
             if action.attack not in self._pokemon1.attacks:
                 return BattleActionResult(

@@ -211,6 +211,9 @@ func _setup_battle() -> void:
 		_queue_message("%s wants to battle!" % t_name)
 		_queue_message("%s sent out %s!" % [t_name, opponent_pokemon.get_display_name()])
 	
+	if player_pokemon and player_pokemon.refuses_to_battle():
+		_queue_message("⚠️ %s turns away and refuses to battle for you! (Trust & Affection below 0)" % player_pokemon.get_display_name())
+	
 	if has_node("/root/BattleTransition"):
 		var bt = get_node("/root/BattleTransition")
 		bt.play_battle_intro_animation()
@@ -405,6 +408,9 @@ func _show_action_menu() -> void:
 	fight_btn.grab_focus()
 
 func _on_fight_pressed() -> void:
+	if player_pokemon and player_pokemon.refuses_to_battle():
+		_queue_message("%s refuses to battle for you! (Trust & Affection below 0)" % player_pokemon.get_display_name())
+		return
 	action_menu.visible = false
 	moves_menu.visible = true
 	if bag_menu: bag_menu.visible = false
@@ -415,6 +421,10 @@ func _on_fight_pressed() -> void:
 
 func _on_move_selected(index: int) -> void:
 	if player_pokemon == null or index >= player_pokemon.attacks.size():
+		return
+	if player_pokemon.refuses_to_battle():
+		_queue_message("%s refuses to battle for you!" % player_pokemon.get_display_name())
+		_show_action_menu()
 		return
 	var chosen_attack = player_pokemon.attacks[index]
 	moves_menu.visible = false

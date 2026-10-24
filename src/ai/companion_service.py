@@ -399,6 +399,17 @@ class CompanionService:
         active_provider = provider or create_live_decision_provider(provider_type="auto")
         decision = agent.decide(perception=perception, provider=active_provider, pokemon=pokemon)
 
+        # Complete refusal check if trust and affection fall below 0
+        if getattr(pokemon, "refuses_to_battle", False):
+            return CompanionBattleDisposition(
+                action_type=AgentActionType.DISOBEY,
+                chosen_attack=None,
+                dialogue=f"{pokemon.display_name} ignores you completely and refuses to battle for you!",
+                is_obedient=False,
+                rationale="Trust and affection fell below 0, causing complete refusal to battle.",
+                confidence=1.0,
+            )
+
         # Heuristic obedience check:
         # A companion is fully obedient if trust > -20 and relationship is not RESENTFUL
         is_resentful = (rel.stage == RelationshipStage.RESENTFUL or rel.trust <= -40.0)

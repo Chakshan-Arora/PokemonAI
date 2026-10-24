@@ -397,26 +397,26 @@ class Pokemon:
 
     @property
     def trust(self) -> float:
-        """Trust level with trainer (0.0 to 100.0)."""
+        """Trust level with trainer (-100.0 to 100.0)."""
         return self._trust
 
     @trust.setter
     def trust(self, value: float) -> None:
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             raise TypeError("Trust must be a float or int.")
-        self._trust = max(0.0, min(100.0, float(value)))
-        self._obedience = int(round(self._trust))
+        self._trust = max(-100.0, min(100.0, float(value)))
+        self._obedience = max(0, min(100, int(round(self._trust))))
 
     @property
     def affection(self) -> float:
-        """Affection level with trainer (0.0 to 100.0)."""
+        """Affection level with trainer (-100.0 to 100.0)."""
         return self._affection
 
     @affection.setter
     def affection(self, value: float) -> None:
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             raise TypeError("Affection must be a float or int.")
-        self._affection = max(0.0, min(100.0, float(value)))
+        self._affection = max(-100.0, min(100.0, float(value)))
 
     @property
     def last_talk_time(self) -> float:
@@ -449,9 +449,22 @@ class Pokemon:
         return 0
 
     def decay_trust_and_affection(self, amount: float = 2.0) -> None:
-        """Decreases trust and affection by the specified amount (minimum 0)."""
-        self.trust = max(0.0, self._trust - amount)
-        self.affection = max(0.0, self._affection - amount)
+        """Decreases trust and affection by the specified amount (minimum -100)."""
+        self.trust = max(-100.0, self._trust - amount)
+        self.affection = max(-100.0, self._affection - amount)
+
+    @property
+    def refuses_to_battle(self) -> bool:
+        """
+        Returns True if both trust and affection have fallen below 0.
+        When True, the Pokémon refuses to battle for the trainer.
+        """
+        return self._trust < 0.0 and self._affection < 0.0
+
+    @property
+    def can_battle(self) -> bool:
+        """Returns True if the Pokémon is conscious and willing to battle."""
+        return not self.is_fainted and not self.refuses_to_battle
 
     @property
     def attacks(self) -> list[Attack]:
