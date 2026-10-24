@@ -19,7 +19,7 @@ def run_training(
     num_iters: int = 600,
     learning_rate: float = 1e-4,
     save_every: int = 200,
-    max_seq_length: int = 256,
+    max_seq_length: int = 520,
     val_batches: int = 25,
 ) -> None:
     print("=" * 60)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", default="mlx-community/Qwen2.5-3B-Instruct-4bit", help="Base model name or path")
     parser.add_argument("--iters", type=int, default=600, help="Training iterations")
     parser.add_argument("--batch-size", type=int, default=4, help="Batch size")
-    parser.add_argument("--max-seq-length", type=int, default=256, help="Max sequence length")
+    parser.add_argument("--max-seq-length", type=int, default=520, help="Max sequence length")
     args = parser.parse_args()
 
     repo_dir = Path(__file__).resolve().parent.parent.parent
