@@ -85,3 +85,10 @@ static func has_item(item_id: String) -> bool:
 
 static func get_all_item_ids() -> Array:
 	return ITEMS.keys()
+
+## Returns Texture2D for the item icon, or null if missing
+static func get_item_texture(item_id: String) -> Texture2D:
+	var path = "res://assets/sprites/items/%s.png" % item_id
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null

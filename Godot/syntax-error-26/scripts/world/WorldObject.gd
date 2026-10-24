@@ -68,6 +68,13 @@ func on_interact(_player_node: Node3D) -> void:
 	# Show interaction message
 	EventBus.show_message.emit(interaction_text, 4.0)
 	
+	# Handle campfire rest healing
+	if object_id == "campfire_rest" and GameState.player != null:
+		for p in GameState.player.team:
+			p.heal_to_full()
+			p.clear_all_statuses()
+		EventBus.hud_update_requested.emit()
+	
 	# Grant rewards if any
 	if not rewards.is_empty() and GameState.player != null:
 		for item_id in rewards:

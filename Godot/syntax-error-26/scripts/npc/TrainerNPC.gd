@@ -26,12 +26,18 @@ func _ready() -> void:
 		mesh_instance.material_override = mat
 
 func get_interaction_text() -> String:
-	return "Battle " + trainer_name if not _is_defeated else "Talk to " + trainer_name
+	var def = _is_defeated
+	if GameState.player and GameState.player.is_trainer_defeated(trainer_id):
+		def = true
+	return "Battle " + trainer_name if not def else "Talk to " + trainer_name
 
 func on_interact(_player_node: Node3D) -> void:
-	if _is_defeated:
+	if _is_defeated or (GameState.player and GameState.player.is_trainer_defeated(trainer_id)):
 		EventBus.show_message.emit(dialogue_defeat, 4.0)
 		return
+	
+	if _player_node and GameState.player:
+		GameState.player.player_position = _player_node.global_position
 	
 	EventBus.show_message.emit(dialogue_intro, 3.0)
 	
@@ -43,6 +49,7 @@ func on_interact(_player_node: Node3D) -> void:
 	GameState.set_meta("wild_pokemon_for_battle", opp_p.to_dict())
 	GameState.set_meta("is_trainer_battle", true)
 	GameState.set_meta("trainer_name", trainer_name)
+	GameState.set_meta("trainer_id", trainer_id)
 	GameState.enter_battle()
 	
 	_is_defeated = true

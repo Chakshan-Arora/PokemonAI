@@ -3,6 +3,7 @@ extends Control
 
 const RegionData = preload("res://scripts/data/RegionData.gd")
 const ItemData = preload("res://scripts/data/ItemData.gd")
+const PokemonData = preload("res://scripts/data/PokemonData.gd")
 
 @onready var pokemon_panel: PanelContainer = $TopLeft/PokemonPanel
 @onready var pokemon_name_lbl: Label = $TopLeft/PokemonPanel/VBox/HBox/NameLabel
@@ -55,6 +56,25 @@ func update_hud() -> void:
 		hp_bar.max_value = active_p.max_hp
 		hp_bar.value = active_p.current_hp
 		hp_text_lbl.text = "%d / %d HP" % [active_p.current_hp, active_p.max_hp]
+		
+		# Display PMD portrait if available
+		var hbox = $TopLeft/PokemonPanel/VBox/HBox
+		var portrait_tr = hbox.get_node_or_null("Portrait") as TextureRect
+		if portrait_tr == null:
+			portrait_tr = TextureRect.new()
+			portrait_tr.name = "Portrait"
+			portrait_tr.custom_minimum_size = Vector2(36, 36)
+			portrait_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			portrait_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			hbox.add_child(portrait_tr)
+			hbox.move_child(portrait_tr, 0)
+		
+		var p_tex = PokemonData.get_portrait_texture(active_p.species_name)
+		if p_tex:
+			portrait_tr.texture = p_tex
+			portrait_tr.visible = true
+		else:
+			portrait_tr.visible = false
 	else:
 		pokemon_panel.visible = false
 	

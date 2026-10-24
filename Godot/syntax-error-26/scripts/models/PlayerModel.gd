@@ -14,6 +14,7 @@ var discovered_regions: Array = []    # Array of region_id strings
 var discovered_landmarks: Array = []  # Array of landmark_id strings
 var interacted_objects: Dictionary = {} # object_id -> {count, last_time}
 var active_pokemon_index: int = 0
+var defeated_trainers: Array = []
 var active_quest_ids: Array = []
 var completed_quest_ids: Array = []
 var active_quests: Array:
@@ -169,6 +170,14 @@ func has_interacted(object_id: String) -> bool:
 func interaction_count(object_id: String) -> int:
 	return interacted_objects.get(object_id, {}).get("count", 0)
 
+func is_trainer_defeated(trainer_id: String) -> bool:
+	return trainer_id in defeated_trainers
+
+func record_trainer_defeat(trainer_id: String) -> void:
+	if trainer_id not in defeated_trainers:
+		defeated_trainers.append(trainer_id)
+		total_battles += 1
+
 # ─── Quest Tracking ───────────────────────────────────────────────────────────
 
 func start_quest(quest_id: String) -> void:
@@ -212,6 +221,7 @@ func to_dict() -> Dictionary:
 		"inventory": inventory.duplicate(),
 		"discovered_regions": discovered_regions.duplicate(),
 		"discovered_landmarks": discovered_landmarks.duplicate(),
+		"defeated_trainers": defeated_trainers.duplicate(),
 		"interacted_objects": interacted_objects.duplicate(true),
 		"active_quest_ids": active_quest_ids.duplicate(),
 		"completed_quest_ids": completed_quest_ids.duplicate(),
@@ -230,6 +240,7 @@ static func from_dict(d: Dictionary):
 	pm.inventory = d.get("inventory", {"poke_ball": 5, "potion": 3}).duplicate()
 	pm.discovered_regions = d.get("discovered_regions", []).duplicate()
 	pm.discovered_landmarks = d.get("discovered_landmarks", []).duplicate()
+	pm.defeated_trainers = d.get("defeated_trainers", []).duplicate()
 	pm.interacted_objects = d.get("interacted_objects", {}).duplicate(true)
 	pm.active_quest_ids = d.get("active_quest_ids", []).duplicate()
 	pm.completed_quest_ids = d.get("completed_quest_ids", []).duplicate()

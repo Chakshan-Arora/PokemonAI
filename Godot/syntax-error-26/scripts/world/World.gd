@@ -14,6 +14,10 @@ func _ready() -> void:
 	GameState.exit_battle()
 	GameState.resume_game()
 	
+	# Restore player position from saved/previous state
+	if player_node and GameState.player and GameState.player.player_position != Vector3.ZERO:
+		player_node.global_position = GameState.player.player_position
+	
 	# Update region on start
 	if player_node:
 		var reg = RegionData.get_region_at_position(player_node.global_position.x, player_node.global_position.z)

@@ -30,8 +30,20 @@ func _ready() -> void:
 	if label_3d:
 		label_3d.text = "%s Lv.%d" % [species_name, level]
 	
-	# Apply species color
-	if mesh_instance:
+	# Apply species sprite or color
+	var sprite_tex = PokemonData.get_front_sprite_texture(species_name)
+	if sprite_tex:
+		var s3d = Sprite3D.new()
+		s3d.name = "Sprite3D"
+		s3d.texture = sprite_tex
+		s3d.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		s3d.pixel_size = 0.016
+		s3d.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		s3d.position = Vector3(0, 0.75, 0)
+		add_child(s3d)
+		if mesh_instance:
+			mesh_instance.visible = false
+	elif mesh_instance:
 		var mat = StandardMaterial3D.new()
 		mat.albedo_color = PokemonData.get_species_color(species_name)
 		mesh_instance.material_override = mat
@@ -102,6 +114,10 @@ func _pick_new_wander_target() -> void:
 func _trigger_battle() -> void:
 	if GameState.is_in_battle:
 		return
+	var player = get_tree().get_first_node_in_group("player")
+	if player and GameState.player:
+		GameState.player.player_position = player.global_position
+	
 	var wild_p = PokemonInstance.create(species_name, level)
 	GameState.set_meta("wild_pokemon_for_battle", wild_p.to_dict())
 	GameState.enter_battle()

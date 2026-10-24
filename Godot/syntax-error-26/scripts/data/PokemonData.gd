@@ -227,3 +227,24 @@ static func get_all_species_names() -> Array:
 ## Returns the starter species names
 static func get_starters() -> Array:
 	return ["Bulbasaur", "Charmander", "Squirtle"]
+
+## Returns the PMD portrait texture for a species, or null if not found
+static func get_portrait_texture(species_name: String) -> Texture2D:
+	var path = "res://assets/sprites/portraits/%s.png" % species_name
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+## Returns the battle front sprite texture for a species
+static func get_front_sprite_texture(species_name: String) -> Texture2D:
+	var path = "res://assets/sprites/pokemon/%s_front.png" % species_name
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+## Returns the battle back sprite texture for a species
+static func get_back_sprite_texture(species_name: String) -> Texture2D:
+	var path = "res://assets/sprites/pokemon/%s_back.png" % species_name
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null

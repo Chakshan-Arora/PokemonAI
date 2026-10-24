@@ -45,7 +45,21 @@ func _update_starter_panel(species_name: String) -> void:
 	if type_lbl:
 		type_lbl.text = " / ".join(sd["types"])
 	if color_rect:
-		color_rect.color = PokemonData.get_species_color(species_name)
+		var sprite_tr = color_rect.get_node_or_null("SpriteTex") as TextureRect
+		if sprite_tr == null:
+			sprite_tr = TextureRect.new()
+			sprite_tr.name = "SpriteTex"
+			sprite_tr.layout_mode = 1
+			sprite_tr.anchors_preset = Control.PRESET_FULL_RECT
+			sprite_tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			sprite_tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			color_rect.add_child(sprite_tr)
+		var p_tex = PokemonData.get_front_sprite_texture(species_name)
+		if p_tex:
+			sprite_tr.texture = p_tex
+			color_rect.color = Color(0.15, 0.2, 0.28, 0.5)
+		else:
+			color_rect.color = PokemonData.get_species_color(species_name)
 
 func _on_starter_chosen(species_name: String) -> void:
 	var player_name = "Trainer"
