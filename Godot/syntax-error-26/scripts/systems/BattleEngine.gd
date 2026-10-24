@@ -19,6 +19,7 @@ var battle_state: BattleState = BattleState.NOT_STARTED
 var current_turn: int = 0
 var is_wild_battle: bool = true
 var events: Array = []
+var player_morale: int = 0
 
 # Pending actions
 var _player_action: Dictionary = {}
@@ -56,6 +57,11 @@ func select_player_action(action_type: ActionType, param: String = "") -> void:
 ## Explicitly set opponent's chosen action (e.g. from local LLM)
 func set_override_opponent_action(action_type: ActionType, param: String = "") -> void:
 	_override_opponent_action = {"type": action_type, "param": param}
+
+## Updates combat morale affecting damage multipliers
+func set_player_morale(morale: int) -> void:
+	player_morale = clampi(morale, -10, 10)
+
 
 ## Resolve a full turn. Returns dict with all turn events.
 func resolve_turn() -> Dictionary:
@@ -231,6 +237,13 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 		var calc_result = DamageCalculator.calculate_from_pokemon(attacker, defender, attack_name)
 		var damage = calc_result["damage"]
 		
+		# Apply combat morale modifiers for player Pokemon
+		if attacker == player_pokemon:
+			if player_morale >= 5:
+				damage = int(round(damage * 1.15))
+			elif player_morale <= -5:
+				damage = max(1, int(round(damage * 0.85)))
+		
 		# Handle Ghost vs Normal immunity
 		var type_eff = calc_result["type_effectiveness"]
 		if type_eff == 0.0:
@@ -252,6 +265,11 @@ func _execute_attack(attacker: PokemonInstance, defender: PokemonInstance, attac
 			"defender_hp": defender.current_hp,
 			"defender_max_hp": defender.max_hp
 		})
+		
+		if attacker == player_pokemon and player_morale >= 5:
+			evts.append({"type": "message", "text": "✨ Surging morale boosted %s's strike (+15%% damage)!" % attacker.nickname})
+		elif attacker == player_pokemon and player_morale <= -5:
+			evts.append({"type": "message", "text": "⚠️ Low morale weakened %s's focus (-15%% damage)..." % attacker.nickname})
 		
 		if calc_result["message_suffix"] != "":
 			evts.append({"type": "message", "text": calc_result["message_suffix"]})

@@ -41,7 +41,11 @@ const ItemData = preload("res://scripts/data/ItemData.gd")
 
 var bag_menu: ScrollContainer = null
 var pokemon_menu: ScrollContainer = null
+var talk_menu: ScrollContainer = null
+var talk_btn: Button = null
 var continue_btn: Button = null
+var active_battle_morale: int = 0
+var morale_badge: Label = null
 
 var battle_engine: Node = null
 var player_pokemon: PokemonInstance = null
@@ -59,6 +63,27 @@ func _ready() -> void:
 	GameState.is_in_battle = true
 	battle_engine = load("res://scripts/systems/BattleEngine.gd").new()
 	add_child(battle_engine)
+	
+	action_menu.columns = 3
+	talk_btn = Button.new()
+	talk_btn.name = "TalkBtn"
+	talk_btn.layout_mode = 2
+	talk_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	talk_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	talk_btn.text = "💬 TALK"
+	talk_btn.pressed.connect(_on_talk_pressed)
+	action_menu.add_child(talk_btn)
+	action_menu.move_child(talk_btn, 3)
+	
+	for btn in [fight_btn, bag_btn, pokemon_btn, run_btn, talk_btn]:
+		btn.add_theme_font_size_override("font_size", 16)
+		
+	morale_badge = Label.new()
+	morale_badge.name = "MoraleBadge"
+	morale_badge.text = "[STEADY]"
+	morale_badge.add_theme_font_size_override("font_size", 12)
+	morale_badge.self_modulate = Color(0.4, 0.85, 0.5)
+	player_panel_hbox.add_child(morale_badge)
 	
 	fight_btn.pressed.connect(_on_fight_pressed)
 	bag_btn.pressed.connect(_on_bag_pressed)
@@ -84,8 +109,10 @@ func _process(_delta: float) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _style_action_buttons() -> void:
-	var btns = [fight_btn, bag_btn, pokemon_btn, run_btn]
+	var btns = [fight_btn, bag_btn, pokemon_btn, run_btn, talk_btn]
 	for b in btns:
+		if b == null:
+			continue
 		b.pivot_offset = b.size / 2.0
 		b.mouse_entered.connect(func():
 			var tw = create_tween()
@@ -104,26 +131,32 @@ func _style_action_buttons() -> void:
 			tw.tween_property(b, "scale", Vector2(1.0, 1.0), 0.08)
 		)
 	
-	# Grid focus wrapping: 2 columns [Fight, Bag] / [Pokemon, Run]
+	# Grid focus wrapping: 3 columns [Fight, Bag, Pokemon] / [Talk, Run]
 	fight_btn.focus_neighbor_right = bag_btn.get_path()
-	fight_btn.focus_neighbor_bottom = pokemon_btn.get_path()
-	fight_btn.focus_neighbor_left = bag_btn.get_path()
-	fight_btn.focus_neighbor_top = pokemon_btn.get_path()
+	fight_btn.focus_neighbor_bottom = talk_btn.get_path()
+	fight_btn.focus_neighbor_left = pokemon_btn.get_path()
+	fight_btn.focus_neighbor_top = talk_btn.get_path()
 
 	bag_btn.focus_neighbor_left = fight_btn.get_path()
+	bag_btn.focus_neighbor_right = pokemon_btn.get_path()
 	bag_btn.focus_neighbor_bottom = run_btn.get_path()
-	bag_btn.focus_neighbor_right = fight_btn.get_path()
 	bag_btn.focus_neighbor_top = run_btn.get_path()
 
-	pokemon_btn.focus_neighbor_top = fight_btn.get_path()
-	pokemon_btn.focus_neighbor_right = run_btn.get_path()
-	pokemon_btn.focus_neighbor_bottom = fight_btn.get_path()
-	pokemon_btn.focus_neighbor_left = run_btn.get_path()
+	pokemon_btn.focus_neighbor_left = bag_btn.get_path()
+	pokemon_btn.focus_neighbor_right = fight_btn.get_path()
+	pokemon_btn.focus_neighbor_bottom = run_btn.get_path()
+	pokemon_btn.focus_neighbor_top = run_btn.get_path()
 
+	if talk_btn:
+		talk_btn.focus_neighbor_right = run_btn.get_path()
+		talk_btn.focus_neighbor_left = run_btn.get_path()
+		talk_btn.focus_neighbor_top = fight_btn.get_path()
+		talk_btn.focus_neighbor_bottom = fight_btn.get_path()
+
+	run_btn.focus_neighbor_left = talk_btn.get_path() if talk_btn else pokemon_btn.get_path()
+	run_btn.focus_neighbor_right = talk_btn.get_path() if talk_btn else pokemon_btn.get_path()
 	run_btn.focus_neighbor_top = bag_btn.get_path()
-	run_btn.focus_neighbor_left = pokemon_btn.get_path()
 	run_btn.focus_neighbor_bottom = bag_btn.get_path()
-	run_btn.focus_neighbor_right = pokemon_btn.get_path()
 
 func _setup_battle() -> void:
 	player_pokemon = GameState.get_active_pokemon()
@@ -160,6 +193,9 @@ func _setup_battle() -> void:
 			bg_tr.texture = load(bg_path) as Texture2D
 	
 	battle_engine.start_battle(player_pokemon, opponent_pokemon, is_wild)
+	active_battle_morale = 0
+	battle_engine.set_player_morale(0)
+	_update_morale_badge("STEADY")
 	
 	_init_ui_stats()
 	_update_move_buttons()
@@ -362,6 +398,7 @@ func _show_action_menu() -> void:
 	moves_menu.visible = false
 	if bag_menu: bag_menu.visible = false
 	if pokemon_menu: pokemon_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	fight_btn.grab_focus()
 
 func _on_fight_pressed() -> void:
@@ -369,6 +406,7 @@ func _on_fight_pressed() -> void:
 	moves_menu.visible = true
 	if bag_menu: bag_menu.visible = false
 	if pokemon_menu: pokemon_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	if move_btns[0].visible:
 		move_btns[0].grab_focus()
 
@@ -377,6 +415,7 @@ func _on_move_selected(index: int) -> void:
 		return
 	var chosen_attack = player_pokemon.attacks[index]
 	moves_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	
 	# Query local fine-tuned LLM for opponent tactical action and combat dialogue
 	if opponent_pokemon != null and LLMClient != null:
@@ -407,6 +446,7 @@ func _on_bag_pressed() -> void:
 	action_menu.visible = false
 	moves_menu.visible = false
 	if pokemon_menu: pokemon_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	
 	if bag_menu == null:
 		bag_menu = ScrollContainer.new()
@@ -470,7 +510,6 @@ func _on_bag_item_selected(item_id: String) -> void:
 			_show_action_menu()
 			return
 		if GameState.player and GameState.player.get_item_count("poke_ball") > 0:
-			GameState.player.remove_item("poke_ball", 1)
 			battle_engine.select_player_action(battle_engine.ActionType.CAPTURE, "poke_ball")
 			var result = battle_engine.resolve_turn()
 			_process_turn_result(result)
@@ -490,6 +529,7 @@ func _on_pokemon_pressed() -> void:
 	action_menu.visible = false
 	moves_menu.visible = false
 	if bag_menu: bag_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	
 	if pokemon_menu == null:
 		pokemon_menu = ScrollContainer.new()
@@ -550,6 +590,7 @@ func _on_run_pressed() -> void:
 		_queue_message("You can't run from a trainer battle!")
 		return
 	action_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	battle_engine.select_player_action(battle_engine.ActionType.FLEE)
 	var result = battle_engine.resolve_turn()
 	_process_turn_result(result)
@@ -830,6 +871,7 @@ func _show_continue_prompt() -> void:
 	moves_menu.visible = false
 	if bag_menu: bag_menu.visible = false
 	if pokemon_menu: pokemon_menu.visible = false
+	if talk_menu: talk_menu.visible = false
 	
 	if continue_btn == null:
 		continue_btn = Button.new()
@@ -849,3 +891,143 @@ func _end_battle() -> void:
 	SaveLoad.save_game()
 	GameState.exit_battle()
 	get_tree().change_scene_to_file("res://scenes/World.tscn")
+
+func _on_talk_pressed() -> void:
+	action_menu.visible = false
+	moves_menu.visible = false
+	if bag_menu: bag_menu.visible = false
+	if pokemon_menu: pokemon_menu.visible = false
+	_create_talk_menu()
+	if talk_menu:
+		talk_menu.visible = true
+
+func _create_talk_menu() -> void:
+	if talk_menu == null:
+		talk_menu = ScrollContainer.new()
+		talk_menu.name = "TalkMenu"
+		talk_menu.custom_minimum_size = Vector2(400, 140)
+		menu_panel.add_child(talk_menu)
+	
+	for c in talk_menu.get_children():
+		c.queue_free()
+	
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	talk_menu.add_child(vbox)
+	
+	var p_name = player_pokemon.get_display_name() if player_pokemon else "Partner"
+	var header = Label.new()
+	header.text = "Battle Communication with %s:" % p_name
+	header.add_theme_font_size_override("font_size", 14)
+	vbox.add_child(header)
+	
+	var presets = [
+		{"label": "💡 Ask Move Advice", "text": "What move should we use here?"},
+		{"label": "🔥 Cheer & Encourage", "text": "You can do this! Give it everything you've got!"},
+		{"label": "⭐ Praise Performance", "text": "Amazing job! That was fantastic!"},
+		{"label": "🛡️ Watch Out & Guard", "text": "Careful now! Watch out and stay on your guard!"}
+	]
+	
+	for p in presets:
+		var btn = Button.new()
+		btn.text = p["label"]
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.pressed.connect(_send_battle_talk.bind(p["text"]))
+		vbox.add_child(btn)
+	
+	var hbox = HBoxContainer.new()
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var line_edit = LineEdit.new()
+	line_edit.placeholder_text = "Or type a custom command or shout..."
+	line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(line_edit)
+	
+	var send_btn = Button.new()
+	send_btn.text = "Send"
+	send_btn.pressed.connect(func():
+		var t = line_edit.text.strip_edges()
+		if t != "":
+			_send_battle_talk(t)
+	)
+	hbox.add_child(send_btn)
+	line_edit.text_submitted.connect(func(new_text: String):
+		var t = new_text.strip_edges()
+		if t != "":
+			_send_battle_talk(t)
+	)
+	vbox.add_child(hbox)
+	
+	var back = Button.new()
+	back.text = "← Back"
+	back.pressed.connect(_show_action_menu)
+	vbox.add_child(back)
+	
+	for ch in vbox.get_children():
+		if ch is Button and not ch.disabled:
+			ch.grab_focus()
+			break
+
+func _send_battle_talk(msg: String) -> void:
+	if talk_menu:
+		talk_menu.visible = false
+	if player_pokemon == null:
+		_show_action_menu()
+		return
+	
+	_queue_message("You: \"%s\"" % msg)
+	
+	var p_dict = {
+		"species": player_pokemon.species_name,
+		"species_name": player_pokemon.species_name,
+		"nickname": player_pokemon.get_display_name(),
+		"bond": float(player_pokemon.level * 10),
+		"temperament": "brave"
+	}
+	var ctx = {
+		"current_turn": battle_engine.current_turn if battle_engine else 1,
+		"player_hp": player_pokemon.current_hp,
+		"player_max_hp": player_pokemon.max_hp,
+		"opponent_species": opponent_pokemon.species_name if opponent_pokemon else "Unknown",
+		"opponent_apparent_health": ("wounded" if opponent_pokemon and opponent_pokemon.current_hp < opponent_pokemon.max_hp * 0.5 else "healthy"),
+		"known_moves": player_pokemon.attacks
+	}
+	
+	var reply = await LLMClient.talk_in_battle(p_dict, msg, ctx, false)
+	if not reply.is_empty():
+		var dial = reply.get("dialogue", "")
+		if dial != "":
+			_queue_message(dial)
+		
+		var delta = int(reply.get("morale_delta", 0))
+		active_battle_morale = clampi(active_battle_morale + delta, -10, 10)
+		if battle_engine:
+			battle_engine.set_player_morale(active_battle_morale)
+		
+		var tier = reply.get("momentum_tier", "STEADY")
+		_update_morale_badge(tier)
+		
+		var sug = reply.get("tactical_suggestion", "")
+		if sug != null and sug != "" and sug != "null":
+			_queue_message("%s recommends using %s!" % [player_pokemon.get_display_name(), sug])
+
+func _update_morale_badge(tier: String) -> void:
+	if not is_instance_valid(morale_badge):
+		return
+	
+	morale_badge.text = "[%s]" % tier
+	match tier:
+		"SURGING":
+			morale_badge.self_modulate = Color(0.2, 0.9, 1.0)
+			morale_badge.tooltip_text = "Morale: Surging (+15% Damage)"
+		"STEADY":
+			morale_badge.self_modulate = Color(0.4, 0.85, 0.5)
+			morale_badge.tooltip_text = "Morale: Steady (Normal)"
+		"PRESSURED":
+			morale_badge.self_modulate = Color(1.0, 0.7, 0.2)
+			morale_badge.tooltip_text = "Morale: Pressured"
+		"CRITICAL":
+			morale_badge.self_modulate = Color(1.0, 0.3, 0.3)
+			morale_badge.tooltip_text = "Morale: Critical (-15% Damage)"
+		_:
+			morale_badge.self_modulate = Color(0.8, 0.8, 0.8)
+			morale_badge.tooltip_text = "Morale: Normal"

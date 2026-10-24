@@ -1,112 +1,60 @@
 {
-<<<<<<< HEAD
   "active_pokemon_id": "1161_1834561894",
-=======
-  "active_pokemon_id": "218_3585704853",
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
   "collected_treasures": [],
   "collection": [
     {
       "attacks": [
         "Tackle",
-<<<<<<< HEAD
-        "Vine Whip"
-      ],
-      "awarded_level_moves": [],
-      "bond": 20,
-      "current_hp": 18,
-      "experience": 320,
-=======
         "Vine Whip",
-        "Poison Powder",
-        "Razor Leaf"
+        "Poison Powder"
       ],
       "awarded_level_moves": [],
       "bond": 20,
-      "current_hp": 24,
-      "experience": 0,
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
-      "level": 5,
-      "max_hp": 24,
+      "current_hp": 26,
+      "experience": 100,
+      "level": 6,
       "nickname": "Bulbasaur",
       "obedience": 100,
       "personality": {
-<<<<<<< HEAD
         "aggression": 62,
         "confidence": 93,
         "curiosity": 11,
         "fear": 23,
         "loyalty": 36,
         "sociability": 55
-=======
-        "aggression": 70,
-        "confidence": 65,
-        "curiosity": 71,
-        "fear": 32,
-        "loyalty": 24,
-        "sociability": 23
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
       },
       "species": "Bulbasaur",
-      "species_name": "Bulbasaur",
-      "status_effects": [],
-      "trained_atk": 0,
-      "trained_def": 0,
-      "trained_spd": 0,
       "trained_stats": {
         "attack": 0,
         "defense": 0,
         "speed": 0
       },
-<<<<<<< HEAD
       "unique_id": "1161_1834561894"
-=======
-      "unique_id": "218_3585704853"
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
     }
   ],
-  "current_region_id": "starting_meadow",
   "discovered_landmarks": [],
   "discovered_regions": [
     "forest_trail",
     "starting_meadow"
   ],
-  "game_time": 8.72668430508581,
   "inventory": {
     "capacity": 20,
     "items": {
-      "poke_ball": 5,
-      "potion": 3
+      "potion": 1
     }
   },
   "player": {
     "max_team_size": 6,
     "name": "Trainer",
-    "player_name": "Trainer",
-    "trainer_avatar": "calem",
-<<<<<<< HEAD
     "unique_id": "player_1161_3828188202"
-=======
-    "unique_id": "player_218_70328185"
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
-  },
-  "player_position": {
-    "x": 56.4916801452637,
-    "y": 0.000468746642582119,
-    "z": 29.0362224578857
   },
   "quests": {},
-<<<<<<< HEAD
-  "saved_at": "2026-10-24 23:23:14",
+  "saved_at": "2026-10-24T21:09:09.233031+00:00",
   "schema_version": 4,
   "team": [
     "1161_1834561894"
-=======
-  "saved_at": "2026-10-24 19:24:53",
-  "schema_version": 4,
-  "team": [
-    "218_3585704853"
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
   ],
-  "wild_action_history": []
+  "wild_action_history": [],
+  "current_region_id": "starting_meadow",
+  "game_time": 8.2972795416636
 }
