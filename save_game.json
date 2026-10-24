@@ -1,5 +1,5 @@
 {
-  "active_pokemon_id": "272_775116574",
+  "active_pokemon_id": "1504_2663908850",
   "collected_treasures": [],
   "collection": [
     {
@@ -16,12 +16,12 @@
       "nickname": "Bulbasaur",
       "obedience": 100,
       "personality": {
-        "aggression": 99,
+        "aggression": 62,
         "confidence": 91,
-        "curiosity": 12,
-        "fear": 67,
-        "loyalty": 11,
-        "sociability": 87
+        "curiosity": 2,
+        "fear": 73,
+        "loyalty": 55,
+        "sociability": 11
       },
       "species": "Bulbasaur",
       "species_name": "Bulbasaur",
@@ -34,7 +34,7 @@
         "defense": 0,
         "speed": 0
       },
-      "unique_id": "272_775116574"
+      "unique_id": "1504_2663908850"
     }
   ],
   "current_region_id": "starting_meadow",
@@ -53,7 +53,7 @@
     "name": "Trainer",
     "player_name": "Trainer",
     "trainer_avatar": "ash",
-    "unique_id": "player_272_4157857561"
+    "unique_id": "player_1504_1402717560"
   },
   "player_position": {
     "x": 50.0,
@@ -61,10 +61,10 @@
     "z": 50.0
   },
   "quests": {},
-  "saved_at": "2026-10-25 02:19:21",
+  "saved_at": "2026-10-25 02:43:15",
   "schema_version": 4,
   "team": [
-    "272_775116574"
+    "1504_2663908850"
   ],
   "wild_action_history": []
 }
