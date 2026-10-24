@@ -106,6 +106,7 @@ func _post_json(url: String, data: Dictionary) -> Dictionary:
 	http.queue_free()
 	
 	if resp_code == 200:
+		is_server_online = true
 		var body_str = body_bytes.get_string_from_utf8()
 		var parsed = JSON.parse_string(body_str)
 		if parsed is Dictionary:
