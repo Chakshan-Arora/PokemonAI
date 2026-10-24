@@ -158,6 +158,16 @@ func _on_talk_pressed() -> void:
 	if GameState.player and _selected_index < GameState.player.team.size():
 		var p: PokemonInstance = GameState.player.team[_selected_index]
 		p.obedience = clamp(p.obedience + 2.0, 0.0, 100.0)
+		
+		if LLMClient and LLMClient.is_server_online:
+			EventBus.show_message.emit("%s is thinking..." % p.get_display_name())
+			var p_name = GameState.player.player_name if GameState.player else "Trainer"
+			var res = await LLMClient.talk_to_companion(p.species_name, "Hello my partner! How are you feeling today?", p_name, p.bond, p.obedience)
+			if not res.is_empty() and res.has("dialogue"):
+				EventBus.show_message.emit("%s: \"%s\"" % [p.get_display_name(), res["dialogue"]])
+				_select_pokemon(_selected_index)
+				return
+		
 		EventBus.show_message.emit("%s looks at you affectionately and chirps! (Obedience +2)" % p.get_display_name())
 		_select_pokemon(_selected_index)
 
