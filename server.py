@@ -28,16 +28,27 @@ from src.models.personality import Personality
 class LLMBridgeHandler(BaseHTTPRequestHandler):
     provider: LocalModelDecisionProvider = None
 
-    def _set_headers(self, status: int = 200, content_type: str = "application/json") -> None:
+    def _send_json_response(self, status: int, data: dict[str, Any]) -> None:
+        body = json.dumps(data).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+        self.wfile.write(body)
+        self.wfile.flush()
 
     def do_OPTIONS(self) -> None:
-        self._set_headers(200)
+        self.send_response(200)
+        self.send_header("Content-Length", "0")
+        self.send_header("Connection", "close")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def do_GET(self) -> None:
         if self.path == "/health" or self.path == "/":
@@ -48,11 +59,9 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 "adapters": ["bonding_adapter", "battle_adapter"],
                 "timestamp": time.time(),
             }
-            self._set_headers(200)
-            self.wfile.write(json.dumps(payload).encode("utf-8"))
+            self._send_json_response(200, payload)
         else:
-            self._set_headers(404)
-            self.wfile.write(json.dumps({"error": "Not found"}).encode("utf-8"))
+            self._send_json_response(404, {"error": "Not found"})
 
     def do_POST(self) -> None:
         content_length = int(self.headers.get("Content-Length", 0))
@@ -61,8 +70,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         try:
             req_data = json.loads(raw_body) if raw_body else {}
         except Exception as exc:
-            self._set_headers(400)
-            self.wfile.write(json.dumps({"error": f"Invalid JSON body: {exc}"}).encode("utf-8"))
+            self._send_json_response(400, {"error": f"Invalid JSON body: {exc}"})
             return
 
         try:
@@ -73,16 +81,13 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             elif self.path == "/decide":
                 resp_data = self._handle_generalized_decide(req_data)
             else:
-                self._set_headers(404)
-                self.wfile.write(json.dumps({"error": f"Unknown endpoint: {self.path}"}).encode("utf-8"))
+                self._send_json_response(404, {"error": f"Unknown endpoint: {self.path}"})
                 return
 
-            self._set_headers(200)
-            self.wfile.write(json.dumps(resp_data).encode("utf-8"))
+            self._send_json_response(200, resp_data)
 
         except Exception as exc:
-            self._set_headers(500)
-            self.wfile.write(json.dumps({"error": f"Inference failure: {exc}"}).encode("utf-8"))
+            self._send_json_response(500, {"error": f"Inference failure: {exc}"})
 
     def _handle_companion_talk(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handles companion conversation dialogue using bonding adapter."""

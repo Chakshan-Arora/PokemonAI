@@ -12,13 +12,16 @@ signal companion_replied(data: Dictionary)
 signal battle_decision_ready(data: Dictionary)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_health_request = HTTPRequest.new()
+	_health_request.process_mode = Node.PROCESS_MODE_ALWAYS
 	_health_request.timeout = 3.0
 	add_child(_health_request)
 	_check_health()
 	
 	# Periodically re-check server health so frontend connects smoothly if server was started after Godot
 	var health_timer = Timer.new()
+	health_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 	health_timer.wait_time = 4.0
 	health_timer.autostart = true
 	health_timer.timeout.connect(_check_health)
@@ -101,6 +104,7 @@ func decide_battle_action(active_pokemon_dict: Dictionary, opponent_pokemon_dict
 ## Internal helper for asynchronous HTTP POST requests
 func _post_json(url: String, data: Dictionary) -> Dictionary:
 	var http = HTTPRequest.new()
+	http.process_mode = Node.PROCESS_MODE_ALWAYS
 	http.timeout = TIMEOUT_SECONDS
 	add_child(http)
 	
