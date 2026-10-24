@@ -230,17 +230,25 @@ class ReusableHTTPServer(HTTPServer):
 def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
     print("=" * 60)
     print(" Syntax Error 26 — Local Pokémon LLM Bridge Server")
-    print(f" Listening on: http://{host}:{port}")
-    print(" Target: Godot 3D Frontend Integration")
+    print(f" Target: http://{host}:{port}")
     print("=" * 60)
+
+    try:
+        server = ReusableHTTPServer((host, port), LLMBridgeHandler)
+    except OSError as err:
+        if err.errno == 48:
+            print(f"\n[!] Port {port} is already in use by another instance.")
+            print(f"    To see what is using it: lsof -i :{port}")
+            print(f"    Or specify another port: python3 server.py --port {port+1}\n")
+            sys.exit(1)
+        raise
 
     print("Initializing LocalModelDecisionProvider (4-bit MLX weights)...")
     provider = LocalModelDecisionProvider(allow_mock_fallback=True)
     provider.load_model(adapter_path=provider.bonding_adapter_path)
     LLMBridgeHandler.provider = provider
-    print("[OK] Local LLM Model Loaded and Ready!")
+    print(f"[OK] Local LLM Model Loaded and Ready on http://{host}:{port}!")
 
-    server = ReusableHTTPServer((host, port), LLMBridgeHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
