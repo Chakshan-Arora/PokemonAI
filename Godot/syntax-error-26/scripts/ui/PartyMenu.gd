@@ -96,12 +96,17 @@ func _select_pokemon(index: int) -> void:
 	level_lbl.text = "Level %d  (XP: %d / %d)" % [p.level, p.experience, p.get_xp_for_next_level()]
 	type_lbl.text = "Type: " + " / ".join(p.types)
 	hp_lbl.text = "HP: %d / %d" % [p.current_hp, p.max_hp]
-	stats_lbl.text = "Attack: %d | Defense: %d | Speed: %d\nBond: %d | Obedience: %d" % [
+	var pers_summary = p.get_dominant_traits()
+	stats_lbl.text = "Attack: %d | Defense: %d | Speed: %d\nBond: %d | Obedience: %d\nPersonality: %s (Agg:%d Cur:%d Loy:%d)" % [
 		p.effective_attack(),
 		p.effective_defense(),
 		p.effective_speed(),
 		int(p.bond),
-		int(p.obedience)
+		int(p.obedience),
+		pers_summary,
+		int(p.personality.get("aggression", 50)),
+		int(p.personality.get("curiosity", 50)),
+		int(p.personality.get("loyalty", 50))
 	]
 	
 	var moves_str = "Known Moves:\n"
@@ -178,10 +183,12 @@ func _on_talk_pressed() -> void:
 				p.obedience = clamp(p.obedience + t_delta, 0.0, 100.0)
 				p.bond = clamp(p.bond + a_delta, 0.0, 100.0)
 				EventBus.show_message.emit("%s: \"%s\"" % [p.get_display_name(), res["dialogue"]])
+				SaveLoad.save_game()
 				_select_pokemon(_selected_index)
 				return
 		
 		EventBus.show_message.emit("%s looks at you affectionately and swishes its tail! (Obedience +2)" % p.get_display_name())
+		SaveLoad.save_game()
 		_select_pokemon(_selected_index)
 
 func _on_play_pressed() -> void:

@@ -126,7 +126,11 @@ class LocalModelDecisionProvider(DecisionProvider):
             if not self._is_loaded:
                 self.load_model()
 
-            if not self._is_loaded and not self.allow_mock_fallback:
+            if not self._is_loaded:
+                if self.allow_mock_fallback:
+                    return FallbackDecisionHandler.create_fallback(
+                        agent, perception, LocalModelError("Local model weights are not loaded.")
+                    )
                 raise LocalModelError("Local model weights are not loaded.")
 
             system_instruction, user_prompt = self._format_prompt(agent, perception, in_battle)
@@ -291,5 +295,5 @@ class LocalModelDecisionProvider(DecisionProvider):
             "dialogue": "Pika!",
             "emotional_state": "content",
             "confidence": 0.9,
-            "rationale": "Local model mock inference response.",
+            "rationale": "Local model mock inference fallback response.",
         })

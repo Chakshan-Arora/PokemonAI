@@ -4,7 +4,7 @@ extends Node
 ## Python (x,y) → Godot (x*10, 0, z*10) scaled 10x
 ## Python y → Godot z axis
 
-const REGIONS: Dictionary = {
+static var REGIONS: Dictionary = {
 	"starting_meadow": {
 		"region_id": "starting_meadow",
 		"name": "Starting Meadow",

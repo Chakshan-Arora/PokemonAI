@@ -748,5 +748,6 @@ func _show_continue_prompt() -> void:
 
 func _end_battle() -> void:
 	_waiting_for_continue = false
+	SaveLoad.save_game()
 	GameState.exit_battle()
 	get_tree().change_scene_to_file("res://scenes/World.tscn")

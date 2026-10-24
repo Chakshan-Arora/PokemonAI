@@ -167,6 +167,86 @@ class TestObedienceManager(unittest.TestCase):
         self.assertEqual(self.pika.current_hp, initial_hp)
         self.assertEqual(self.pika.level, initial_lvl)
 
+    def test_09_loyalty_increases_obedience(self) -> None:
+        """High loyalty Pokemon has higher obedience probability than low loyalty."""
+        p_high_loy = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, 50, 50, loyalty=100, confidence=50),
+            obedience=50,
+            bond=50,
+        )
+        p_mid_loy = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, 50, 50, loyalty=50, confidence=50),
+            obedience=50,
+            bond=50,
+        )
+        p_low_loy = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, 50, 50, loyalty=0, confidence=50),
+            obedience=50,
+            bond=50,
+        )
+
+        prob_high = self.manager.calculate_probability(p_high_loy)
+        prob_mid = self.manager.calculate_probability(p_mid_loy)
+        prob_low = self.manager.calculate_probability(p_low_loy)
+
+        # Baseline for mid stats: 0.70 + 0.125 + 0.025 = 0.85
+        self.assertAlmostEqual(prob_mid, 0.85, places=5)
+        # High loyalty (+50 / 100 * 0.05 = +0.025) -> 0.875
+        self.assertAlmostEqual(prob_high, 0.875, places=5)
+        # Low loyalty (-50 / 100 * 0.05 = -0.025) -> 0.825
+        self.assertAlmostEqual(prob_low, 0.825, places=5)
+
+        self.assertGreater(prob_high, prob_mid)
+        self.assertGreater(prob_mid, prob_low)
+
+    def test_10_fear_reduces_obedience_due_to_combat_panic(self) -> None:
+        """High fear slightly reduces obedience; fearless Pokemon has slight composure bonus."""
+        p_fearful = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, fear=100, sociability=50, loyalty=50, confidence=50),
+            obedience=50,
+            bond=50,
+        )
+        p_fearless = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, fear=0, sociability=50, loyalty=50, confidence=50),
+            obedience=50,
+            bond=50,
+        )
+
+        prob_fearful = self.manager.calculate_probability(p_fearful)
+        prob_fearless = self.manager.calculate_probability(p_fearless)
+
+        # Fearful (-50 / 100 * 0.03 = -0.015) -> 0.835
+        self.assertAlmostEqual(prob_fearful, 0.835, places=5)
+        # Fearless (+50 / 100 * 0.03 = +0.015) -> 0.865
+        self.assertAlmostEqual(prob_fearless, 0.865, places=5)
+        self.assertGreater(prob_fearless, prob_fearful)
+
+    def test_11_bounds_clamping_with_extreme_personality(self) -> None:
+        """Probability remains clamped in [0.05, 1.00] even with extreme personality combinations."""
+        # Max stats + max loyalty + zero fear: 1.00 + 0.025 + 0.015 = 1.04 -> clamped to 1.00
+        p_super = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, fear=0, sociability=50, loyalty=100, confidence=50),
+            obedience=100,
+            bond=100,
+        )
+        self.assertEqual(self.manager.calculate_probability(p_super), 1.00)
+
+        # Zero stats + zero loyalty + max fear + high difficulty: clamps to 0.05
+        p_abyssal = Pokemon(
+            species=PIKACHU,
+            personality=Personality(50, 50, fear=100, sociability=50, loyalty=0, confidence=50),
+            obedience=0,
+            bond=0,
+        )
+        hard_ctx = CommandContext(command="hard", difficulty_modifier=0.90)
+        self.assertEqual(self.manager.calculate_probability(p_abyssal, context=hard_ctx), 0.05)
+
 
 if __name__ == "__main__":
     unittest.main()

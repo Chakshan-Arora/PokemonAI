@@ -43,7 +43,17 @@ func _try_trigger_encounter(region_id: String) -> void:
 		return
 	
 	var time_of_day = GameState.get_time_of_day()
-	var wild_pokemon = SpawnSystem.create_wild_pokemon(region_id, time_of_day)
+	var wild_pokemon: PokemonInstance = null
+	
+	# If live Python backend is online, query HabitatManager directly
+	var llm = get_node_or_null("/root/LLMClient")
+	if llm and llm.is_server_online:
+		var b_mon = await llm.generate_wild_pokemon(region_id, time_of_day)
+		if not b_mon.is_empty():
+			wild_pokemon = PokemonInstance.from_dict(b_mon)
+	
+	if wild_pokemon == null:
+		wild_pokemon = SpawnSystem.create_wild_pokemon(region_id, time_of_day)
 	if wild_pokemon == null:
 		return
 	

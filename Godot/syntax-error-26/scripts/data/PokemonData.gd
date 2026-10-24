@@ -20,7 +20,7 @@ const TYPE_COLORS: Dictionary = {
 }
 
 # All species data
-const SPECIES: Dictionary = {
+static var SPECIES: Dictionary = {
 	"Bulbasaur": {
 		"name": "Bulbasaur",
 		"types": ["Grass", "Poison"],

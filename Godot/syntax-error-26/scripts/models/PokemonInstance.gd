@@ -18,6 +18,15 @@ var trained_def: int = 0
 var trained_spd: int = 0
 var status_effects: Array = []  # Array of Dicts: {type, turns_remaining}
 var unique_id: String = ""
+var personality: Dictionary = {
+	"aggression": 50,
+	"curiosity": 50,
+	"fear": 50,
+	"sociability": 50,
+	"loyalty": 50,
+	"confidence": 50
+}
+var awarded_level_moves: Array = []
 
 # Cached base stats (populated from PokemonData at creation)
 var _base_hp: int = 0
@@ -41,14 +50,43 @@ func heal_full() -> int:
 	clear_all_statuses()
 	return max_hp - old
 
+static func generate_random_personality() -> Dictionary:
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+	return {
+		"aggression": rng.randi_range(1, 100),
+		"curiosity": rng.randi_range(1, 100),
+		"fear": rng.randi_range(1, 100),
+		"sociability": rng.randi_range(1, 100),
+		"loyalty": rng.randi_range(1, 100),
+		"confidence": rng.randi_range(1, 100)
+	}
+
+func get_dominant_traits() -> String:
+	if personality.is_empty():
+		return "Neutral"
+	var traits_sorted = []
+	for k in personality.keys():
+		traits_sorted.append({"name": str(k).capitalize(), "value": int(personality[k])})
+	traits_sorted.sort_custom(func(a, b): return a["value"] > b["value"])
+	if traits_sorted.size() >= 2:
+		return "%s & %s" % [traits_sorted[0]["name"], traits_sorted[1]["name"]]
+	elif traits_sorted.size() == 1:
+		return traits_sorted[0]["name"]
+	return "Neutral"
+
 # ─── Constructor ──────────────────────────────────────────────────────────────
 
-static func create(p_species_name: String, p_level: int, p_nickname: String = ""):
+static func create(p_species_name: String, p_level: int, p_nickname: String = "", p_personality: Dictionary = {}):
 	var inst = new()
 	inst.species_name = p_species_name
 	inst.nickname = p_nickname if p_nickname != "" else p_species_name
 	inst.level = p_level
 	inst.unique_id = _generate_uid()
+	if not p_personality.is_empty():
+		inst.personality = p_personality.duplicate()
+	else:
+		inst.personality = generate_random_personality()
 
 	var species_data = PokemonData.get_species(p_species_name)
 	if species_data.is_empty():
@@ -208,34 +246,55 @@ func paralysis_blocks() -> bool:
 
 func to_dict() -> Dictionary:
 	return {
+		"species": species_name,
 		"species_name": species_name,
 		"nickname": nickname,
 		"level": level,
 		"experience": experience,
-		"current_hp": current_hp,
+		"current_hp": min(current_hp, max_hp),
 		"max_hp": max_hp,
-		"bond": bond,
-		"obedience": obedience,
+		"bond": int(round(bond)),
+		"obedience": int(round(obedience)),
+		"personality": personality.duplicate(),
 		"attacks": attacks.duplicate(),
 		"trained_atk": trained_atk,
 		"trained_def": trained_def,
 		"trained_spd": trained_spd,
+		"trained_stats": {
+			"attack": trained_atk,
+			"defense": trained_def,
+			"speed": trained_spd
+		},
+		"awarded_level_moves": awarded_level_moves.duplicate(),
 		"status_effects": status_effects.duplicate(true),
 		"unique_id": unique_id
 	}
 
 static func from_dict(d: Dictionary):
-	var inst = create(d.get("species_name", ""), d.get("level", 1))
-	inst.nickname = d.get("nickname", inst.nickname)
-	inst.experience = d.get("experience", 0)
-	inst.current_hp = d.get("current_hp", inst.max_hp)
-	inst.max_hp = d.get("max_hp", inst.max_hp)
-	inst.bond = d.get("bond", 0.0)
-	inst.obedience = d.get("obedience", 100.0)
-	inst.attacks = d.get("attacks", inst.attacks).duplicate()
-	inst.trained_atk = d.get("trained_atk", 0)
-	inst.trained_def = d.get("trained_def", 0)
-	inst.trained_spd = d.get("trained_spd", 0)
+	var s_name = d.get("species", d.get("species_name", ""))
+	var lvl = int(d.get("level", 1))
+	var p_pers = d.get("personality", {})
+	var inst = create(s_name, lvl, "", p_pers)
+	var nick = d.get("nickname")
+	if nick != null and str(nick) != "":
+		inst.nickname = str(nick)
+	inst.experience = int(d.get("experience", 0))
+	inst.max_hp = int(d.get("max_hp", inst.max_hp))
+	inst.current_hp = min(int(d.get("current_hp", inst.max_hp)), inst.max_hp)
+	inst.bond = float(d.get("bond", 0.0))
+	inst.obedience = float(d.get("obedience", 100.0))
+	if d.has("attacks") and d["attacks"] is Array:
+		inst.attacks = d["attacks"].duplicate()
+	var t_stats = d.get("trained_stats", {})
+	if not t_stats.is_empty():
+		inst.trained_atk = int(t_stats.get("attack", 0))
+		inst.trained_def = int(t_stats.get("defense", 0))
+		inst.trained_spd = int(t_stats.get("speed", 0))
+	else:
+		inst.trained_atk = int(d.get("trained_atk", 0))
+		inst.trained_def = int(d.get("trained_def", 0))
+		inst.trained_spd = int(d.get("trained_spd", 0))
+	inst.awarded_level_moves = d.get("awarded_level_moves", []).duplicate()
 	inst.status_effects = d.get("status_effects", []).duplicate(true)
-	inst.unique_id = d.get("unique_id", inst.unique_id)
+	inst.unique_id = str(d.get("unique_id", inst.unique_id))
 	return inst

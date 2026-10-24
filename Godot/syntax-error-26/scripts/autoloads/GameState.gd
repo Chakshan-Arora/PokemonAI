@@ -55,6 +55,7 @@ func new_game(p_player_name: String, starter_species: String, avatar: String = "
 	
 	game_started.emit()
 	EventBus.starter_chosen.emit(starter)
+	SaveLoad.save_game()
 
 func load_game(player_model: PlayerModel) -> void:
 	player = player_model

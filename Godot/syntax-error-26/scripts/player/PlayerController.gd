@@ -1,5 +1,5 @@
 extends CharacterBody3D
-## PlayerController - 3D player movement, billboard sprite animation, and interaction
+## PlayerController - 3D player movement, billboard sprite animation, smooth mouse look around & interaction
 
 const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const RegionData = preload("res://scripts/data/RegionData.gd")
@@ -15,11 +15,12 @@ const GRAVITY: float = 9.8
 @onready var interaction_area: Area3D = $InteractionArea
 @onready var trainer_sprite: Sprite3D = $TrainerSprite
 
-var camera_rotation_x: float = -25.0
+var camera_rotation_x: float = -20.0
 var camera_rotation_y: float = 0.0
-const CAMERA_SENSITIVITY: float = 0.3
-const CAMERA_MIN_X: float = -60.0
-const CAMERA_MAX_X: float = 10.0
+const CAMERA_SENSITIVITY: float = 0.25
+const CAMERA_MIN_X: float = -75.0
+const CAMERA_MAX_X: float = 45.0
+var is_mouse_captured: bool = false
 
 var _step_accumulator: float = 0.0
 const STEP_DISTANCE: float = 1.5
@@ -53,6 +54,10 @@ func _ready() -> void:
 		var avatar = "boy"
 		if GameState.has_meta("player_avatar"):
 			avatar = str(GameState.get_meta("player_avatar"))
+		elif GameState.player and GameState.player.trainer_avatar != "":
+			var a = GameState.player.trainer_avatar.to_lower()
+			avatar = "girl" if (a == "girl" or a == "serena") else "boy"
+			
 		if avatar == "girl":
 			var tex = load("res://assets/sprites/trainers/may_walk.png")
 			if tex:
@@ -86,21 +91,45 @@ func _input(event: InputEvent) -> void:
 	# If player is typing into any text input (e.g. Companion LLM chat, name input),
 	# ignore all hotkeys (I, P, J, E, Space, Enter, menus, etc.) so typing stays 100% focused
 	if _is_typing():
+		_release_mouse()
 		return
 	
 	if GameState.is_in_battle or GameState.is_paused:
+		_release_mouse()
 		return
-	
-	# Camera orbit with mouse drag
-	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		camera_rotation_y -= event.relative.x * CAMERA_SENSITIVITY
-		camera_rotation_x -= event.relative.y * CAMERA_SENSITIVITY
-		camera_rotation_x = clamp(camera_rotation_x, CAMERA_MIN_X, CAMERA_MAX_X)
-		if is_instance_valid(camera_pivot):
-			camera_pivot.rotation_degrees.y = camera_rotation_y
-		if is_instance_valid(camera_arm):
-			camera_arm.rotation_degrees.x = camera_rotation_x
-	
+
+	# Toggle/acquire mouse capture on click in game window
+	if event is InputEventMouseButton and event.pressed:
+		if not GameState.is_in_battle and not GameState.is_paused:
+			if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+				if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+					is_mouse_captured = true
+
+	# Mouse wheel zoom
+	if event is InputEventMouseButton and is_instance_valid(camera_arm):
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			camera_arm.spring_length = max(2.0, camera_arm.spring_length - 0.5)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			camera_arm.spring_length = min(12.0, camera_arm.spring_length + 0.5)
+
+	# Camera look with mouse motion: works when captured OR when drag-clicking with Left or Right button
+	if event is InputEventMouseMotion:
+		var should_rotate = (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		if should_rotate and not GameState.is_in_battle and not GameState.is_paused:
+			camera_rotation_y -= event.relative.x * CAMERA_SENSITIVITY
+			camera_rotation_x -= event.relative.y * CAMERA_SENSITIVITY
+			camera_rotation_x = clamp(camera_rotation_x, CAMERA_MIN_X, CAMERA_MAX_X)
+			if is_instance_valid(camera_pivot):
+				camera_pivot.rotation_degrees.y = camera_rotation_y
+			if is_instance_valid(camera_arm):
+				camera_arm.rotation_degrees.x = camera_rotation_x
+
+	# Release mouse capture on Escape, Tab, or C (companion chat)
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE or event.keycode == KEY_TAB or event.keycode == KEY_C:
+			_release_mouse()
+
 	var is_interact_key = false
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode in [KEY_E, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] or event.physical_keycode in [KEY_E, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
@@ -109,16 +138,33 @@ func _input(event: InputEvent) -> void:
 	if is_interact_key or event.is_action_pressed("interact") or event.is_action_pressed("ui_accept"):
 		_try_interact()
 	if event.is_action_pressed("open_party"):
+		_release_mouse()
 		EventBus.open_party_menu.emit()
 	if event.is_action_pressed("open_inventory"):
+		_release_mouse()
 		EventBus.open_inventory_ui.emit()
 	if event.is_action_pressed("open_quests"):
+		_release_mouse()
 		EventBus.open_quest_journal.emit()
 	if event.is_action_pressed("pause"):
+		_release_mouse()
 		EventBus.open_pause_menu.emit()
+
+func _release_mouse() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	is_mouse_captured = false
 
 func _physics_process(delta: float) -> void:
 	if GameState.is_in_battle or GameState.is_paused:
+		_release_mouse()
+		return
+	
+	# If player is actively typing, stop movement and do not process camera arrows or WASD
+	if _is_typing():
+		_release_mouse()
+		velocity.x = move_toward(velocity.x, 0, WALK_SPEED * delta * 10.0)
+		velocity.z = move_toward(velocity.z, 0, WALK_SPEED * delta * 10.0)
+		move_and_slide()
 		return
 	
 	# Keep camera following player position smoothly
@@ -129,25 +175,42 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	
-	# If player is actively typing, stop movement and do not process camera arrows or WASD
-	if _is_typing():
-		velocity.x = move_toward(velocity.x, 0, WALK_SPEED * delta * 10.0)
-		velocity.z = move_toward(velocity.z, 0, WALK_SPEED * delta * 10.0)
-		move_and_slide()
-		return
+	# Keyboard camera look around (Arrow keys)
+	var cam_changed = false
+	if Input.is_key_pressed(KEY_LEFT):
+		camera_rotation_y += 100.0 * delta
+		cam_changed = true
+	if Input.is_key_pressed(KEY_RIGHT):
+		camera_rotation_y -= 100.0 * delta
+		cam_changed = true
+	if Input.is_key_pressed(KEY_UP):
+		camera_rotation_x += 70.0 * delta
+		cam_changed = true
+	if Input.is_key_pressed(KEY_DOWN):
+		camera_rotation_x -= 70.0 * delta
+		cam_changed = true
 	
-	# Camera rotate with arrow keys (no mouse drag)
-	if Input.is_action_pressed("ui_left"):
-		camera_rotation_y += 90.0 * delta
+	if cam_changed:
+		camera_rotation_x = clamp(camera_rotation_x, CAMERA_MIN_X, CAMERA_MAX_X)
 		if is_instance_valid(camera_pivot):
 			camera_pivot.rotation_degrees.y = camera_rotation_y
-	if Input.is_action_pressed("ui_right"):
-		camera_rotation_y -= 90.0 * delta
-		if is_instance_valid(camera_pivot):
-			camera_pivot.rotation_degrees.y = camera_rotation_y
+		if is_instance_valid(camera_arm):
+			camera_arm.rotation_degrees.x = camera_rotation_x
 	
 	# Movement direction relative to camera
-	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	var input_x = 0.0
+	var input_z = 0.0
+	if Input.is_key_pressed(KEY_W): input_z -= 1.0
+	if Input.is_key_pressed(KEY_S): input_z += 1.0
+	if Input.is_key_pressed(KEY_A): input_x -= 1.0
+	if Input.is_key_pressed(KEY_D): input_x += 1.0
+	
+	# Fallback to action events if WASD not held directly
+	if input_x == 0.0 and input_z == 0.0:
+		var move_v = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+		input_x = move_v.x
+		input_z = move_v.y
+
 	var cam_forward = Vector3.FORWARD
 	var cam_right = Vector3.RIGHT
 	if is_instance_valid(camera_pivot):
@@ -158,7 +221,7 @@ func _physics_process(delta: float) -> void:
 	cam_forward = cam_forward.normalized()
 	cam_right = cam_right.normalized()
 	
-	var direction = (cam_forward * -input_dir.y + cam_right * input_dir.x).normalized()
+	var direction = (cam_forward * -input_z + cam_right * input_x).normalized()
 	var speed = RUN_SPEED if Input.is_action_pressed("sprint") else WALK_SPEED
 	
 	if direction != Vector3.ZERO:
@@ -169,7 +232,7 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0, speed * delta * 10.0)
 	
 	var is_moving = direction.length_squared() > 0.01
-	_update_sprite_animation(delta, input_dir, is_moving, speed > WALK_SPEED)
+	_update_sprite_animation(delta, Vector2(input_x, input_z), is_moving, speed > WALK_SPEED)
 	
 	var prev_pos = global_position
 	move_and_slide()
@@ -299,6 +362,7 @@ func _try_interact() -> void:
 func _on_encounter_triggered(wild_pokemon: PokemonInstance) -> void:
 	if GameState.is_in_battle:
 		return
+	_release_mouse()
 	GameState.set_meta("wild_pokemon_for_battle", wild_pokemon.to_dict())
 	GameState.enter_battle()
 	EventBus.battle_started.emit(

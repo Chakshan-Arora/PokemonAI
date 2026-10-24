@@ -17,8 +17,6 @@ from src.models.personality import Personality
 from src.models.personality_generator import generate_wild_personality
 from src.models.trainer import Trainer, DifficultyProfile, TrainerArchetype
 from src.data.move_learning import get_moves_in_level_range
-from src.data.habitats import get_habitat_for_region, HABITAT_CATALOG
-from src.data.species import SAMPLE_SPECIES
 
 
 # Archetype to primary/secondary Pokemon type affinities
@@ -155,6 +153,9 @@ class TrainerTeamGenerator:
             arch = archetype
 
         # 1. Fetch habitat candidates for region
+        from src.data.habitats import get_habitat_for_region, HABITAT_CATALOG
+        from src.data.species import SAMPLE_SPECIES
+
         habitat = get_habitat_for_region(region_id)
         candidates: list[PokemonSpecies] = []
         if habitat is not None:
@@ -293,6 +294,7 @@ class TrainerTeamGenerator:
         effective_region = region_id or trainer.region_id
         eligible = cls.get_eligible_species(trainer.archetype, effective_region)
         if not eligible:
+            from src.data.species import SAMPLE_SPECIES
             eligible = list(SAMPLE_SPECIES.values())
 
         # Select species ensuring diversity where candidate pool allows

@@ -1,14 +1,20 @@
 """
-Syntax Error 26 — Local Pokémon LLM HTTP Bridge Server.
+Syntax Error 26 — Local Pokémon LLM & Backend API Bridge Server.
 Provides high-performance, low-latency REST endpoints for the Godot 3D Frontend:
 - GET  /health           : Health check and model metadata
-- POST /companion/talk   : Interactive partner Pokemon bonding dialogue
+- GET  /api/data         : Exports all backend Pokémon, attacks, items, quests, and habitats
+- GET  /api/load         : Loads verified player save state from disk
+- POST /api/save         : Persists player state through authoritative SaveManager
+- POST /api/wild_encounter: Spawns wild encounter from HabitatManager with true species & personality
+- POST /api/pokemon/create: Generates custom Pokémon instance using backend rules
+- POST /companion/talk   : Interactive partner Pokémon bonding dialogue with sentiment dynamics
 - POST /battle/decide    : Battle turn tactical move selection and combat dialogue
 - POST /decide           : Generalized agent decision endpoint
 """
 import argparse
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -20,10 +26,16 @@ from typing import Any
 repo_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(repo_root))
 
+from export_backend_data import build_backend_data
+from src.models.save_manager import load_game, save_game, serialize_player, deserialize_player
+from src.models.habitat_manager import HabitatManager
+from src.models.habitat import TimeOfDay
+from src.data.species import SAMPLE_SPECIES
+from src.models.personality import Personality
+from src.models.pokemon import Pokemon
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
-from src.models.personality import Personality
 
 VERY_NEGATIVE_PHRASES = [
     "hate you", "despise you", "loathe you", "shut up", "get lost", "get out",
@@ -148,6 +160,39 @@ def classify_companion_sentiment(text: str) -> str:
     return "neutral"
 
 
+_habitat_mgr: HabitatManager = None
+
+
+def get_habitat_manager() -> HabitatManager:
+    global _habitat_mgr
+    if _habitat_mgr is None:
+        _habitat_mgr = HabitatManager()
+    return _habitat_mgr
+
+
+def _serialize_pokemon_dict(mon: Pokemon) -> dict[str, Any]:
+    return {
+        "unique_id": getattr(mon, "unique_id", str(id(mon))),
+        "species": mon.species.name,
+        "species_name": mon.species.name,
+        "nickname": getattr(mon, "nickname", mon.species.name) or mon.species.name,
+        "level": mon.level,
+        "experience": mon.experience,
+        "current_hp": mon.current_hp,
+        "max_hp": mon.max_hp,
+        "bond": int(round(mon.bond)),
+        "obedience": int(round(mon.obedience)),
+        "personality": mon.personality.to_dict(),
+        "attacks": [a.name for a in mon.attacks],
+        "trained_stats": {
+            "attack": mon.trained_attack,
+            "defense": mon.trained_defense,
+            "speed": mon.trained_speed,
+        },
+        "awarded_level_moves": list(getattr(mon, "_awarded_level_moves", [])),
+    }
+
+
 class LLMBridgeHandler(BaseHTTPRequestHandler):
     provider: LocalModelDecisionProvider = None
 
@@ -162,29 +207,58 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(body)
-        self.wfile.flush()
 
     def do_OPTIONS(self) -> None:
         self.send_response(200)
-        self.send_header("Content-Length", "0")
-        self.send_header("Connection", "close")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
     def do_GET(self) -> None:
-        if self.path == "/health" or self.path == "/":
+        clean_path = self.path.split("?")[0]
+        if clean_path in ("/health", "/"):
             payload = {
                 "status": "online",
                 "backend": "mlx_4bit",
                 "model": "Qwen3-4B-4bit",
                 "adapters": ["bonding_adapter", "battle_adapter"],
+                "endpoints": [
+                    "/health",
+                    "/api/data",
+                    "/api/load",
+                    "/api/save",
+                    "/api/wild_encounter",
+                    "/api/pokemon/create",
+                    "/companion/talk",
+                    "/battle/decide",
+                    "/decide",
+                ],
                 "timestamp": time.time(),
             }
             self._send_json_response(200, payload)
+
+        elif clean_path == "/api/data":
+            try:
+                data = build_backend_data()
+                self._send_json_response(200, data)
+            except Exception as exc:
+                self._send_json_response(500, {"error": f"Failed to build backend data: {exc}"})
+
+        elif clean_path in ("/api/load", "/api/save"):
+            try:
+                save_path = repo_root / "save_game.json"
+                if not save_path.exists():
+                    self._send_json_response(404, {"error": "No save file found"})
+                    return
+                player = load_game(save_path)
+                serialized = serialize_player(player)
+                self._send_json_response(200, serialized)
+            except Exception as exc:
+                self._send_json_response(500, {"error": f"Failed to load save file: {exc}"})
+
         else:
-            self._send_json_response(404, {"error": "Not found"})
+            self._send_json_response(404, {"error": f"Not found: {clean_path}"})
 
     def do_POST(self) -> None:
         content_length = int(self.headers.get("Content-Length", 0))
@@ -196,15 +270,22 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             self._send_json_response(400, {"error": f"Invalid JSON body: {exc}"})
             return
 
+        clean_path = self.path.split("?")[0]
         try:
-            if self.path == "/companion/talk":
+            if clean_path == "/api/save":
+                resp_data = self._handle_api_save(req_data)
+            elif clean_path == "/api/wild_encounter":
+                resp_data = self._handle_wild_encounter(req_data)
+            elif clean_path == "/api/pokemon/create":
+                resp_data = self._handle_pokemon_create(req_data)
+            elif clean_path == "/companion/talk":
                 resp_data = self._handle_companion_talk(req_data)
-            elif self.path == "/battle/decide":
+            elif clean_path == "/battle/decide":
                 resp_data = self._handle_battle_decide(req_data)
-            elif self.path == "/decide":
+            elif clean_path == "/decide":
                 resp_data = self._handle_generalized_decide(req_data)
             else:
-                self._send_json_response(404, {"error": f"Unknown endpoint: {self.path}"})
+                self._send_json_response(404, {"error": f"Unknown endpoint: {clean_path}"})
                 return
 
             self._send_json_response(200, resp_data)
@@ -212,8 +293,103 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._send_json_response(500, {"error": f"Inference failure: {exc}"})
 
+    def _handle_api_save(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Saves player state through authoritative SaveManager."""
+        save_path = repo_root / "save_game.json"
+        
+        player_dict = data.get("player", data)
+        col = player_dict.get("collection", [])
+        for mon_d in col:
+            if isinstance(mon_d, dict):
+                if "bond" in mon_d and isinstance(mon_d["bond"], (int, float)):
+                    mon_d["bond"] = int(round(mon_d["bond"]))
+                if "obedience" in mon_d and isinstance(mon_d["obedience"], (int, float)):
+                    mon_d["obedience"] = int(round(mon_d["obedience"]))
+        
+        player = deserialize_player(player_dict)
+        save_game(player, save_path)
+        
+        try:
+            with open(save_path, "r", encoding="utf-8") as f:
+                saved_json = json.load(f)
+            if "current_region_id" in data:
+                saved_json["current_region_id"] = data["current_region_id"]
+            if "game_time" in data:
+                saved_json["game_time"] = data["game_time"]
+            if "discovered_regions" in data:
+                saved_json["discovered_regions"] = data["discovered_regions"]
+            if "discovered_landmarks" in data:
+                saved_json["discovered_landmarks"] = data["discovered_landmarks"]
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(saved_json, f, indent=2)
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "player_name": player.name,
+            "collection_count": len(player.collection),
+            "timestamp": time.time(),
+        }
+
+    def _handle_wild_encounter(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Selects a wild spawn candidate from HabitatManager and instantiates Pokemon."""
+        region_id = data.get("region_id", "starting_meadow")
+        tod_str = str(data.get("time_of_day", "day")).lower()
+        tod = TimeOfDay.NIGHT if tod_str in ("night", "dusk") else TimeOfDay.DAY
+        
+        hm = get_habitat_manager()
+        spawn = hm.select_spawn(region_id=region_id, time_of_day=tod)
+        if not spawn or not spawn.success or not spawn.species:
+            sp_name = random.choice(["Rattata", "Pidgey", "Pikachu"])
+            sp = SAMPLE_SPECIES.get(sp_name, SAMPLE_SPECIES["Pikachu"])
+            level = random.randint(2, 5)
+        else:
+            sp = spawn.species
+            level = spawn.level or random.randint(2, 5)
+
+        pers = Personality(
+            aggression=random.randint(1, 100),
+            curiosity=random.randint(1, 100),
+            fear=random.randint(1, 100),
+            sociability=random.randint(1, 100),
+            loyalty=random.randint(1, 100),
+            confidence=random.randint(1, 100),
+        )
+        moves = list(sp.available_attacks)[:4]
+        mon = Pokemon(species=sp, level=level, personality=pers, attacks=moves)
+        return {
+            "success": True,
+            "pokemon": _serialize_pokemon_dict(mon),
+        }
+
+    def _handle_pokemon_create(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Creates a customized Pokemon using backend rules."""
+        sp_name = data.get("species", "Charmander")
+        sp = SAMPLE_SPECIES.get(sp_name, SAMPLE_SPECIES.get("Pikachu"))
+        level = int(data.get("level", 5))
+        nickname = data.get("nickname", sp.name)
+        
+        p_data = data.get("personality", {})
+        pers = Personality(
+            aggression=int(p_data.get("aggression", random.randint(1, 100))),
+            curiosity=int(p_data.get("curiosity", random.randint(1, 100))),
+            fear=int(p_data.get("fear", random.randint(1, 100))),
+            sociability=int(p_data.get("sociability", random.randint(1, 100))),
+            loyalty=int(p_data.get("loyalty", random.randint(1, 100))),
+            confidence=int(p_data.get("confidence", random.randint(1, 100))),
+        )
+        moves = list(sp.available_attacks)[:4]
+        mon = Pokemon(species=sp, level=level, personality=pers, attacks=moves)
+        if nickname:
+            mon.nickname = nickname
+        return {
+            "success": True,
+            "pokemon": _serialize_pokemon_dict(mon),
+        }
+
     def _handle_companion_talk(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Handles companion conversation dialogue using bonding adapter."""
+        """Handles companion conversation dialogue using bonding adapter with authoritative sentiment guardrails."""
         species = data.get("species", "Charmander")
         player_name = data.get("player_name", "Trainer")
         user_message = data.get("message", "Hello partner!")

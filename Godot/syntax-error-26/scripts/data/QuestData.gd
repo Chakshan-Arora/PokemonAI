@@ -5,7 +5,7 @@ extends Node
 # objective types: "catch_pokemon", "defeat_trainer", "visit_region",
 #                  "interact_object", "collect_item", "catch_count"
 
-const QUESTS: Dictionary = {
+static var QUESTS: Dictionary = {
 	"q001_first_steps": {
 		"quest_id": "q001_first_steps",
 		"title": "First Steps",

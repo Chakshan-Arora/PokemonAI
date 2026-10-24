@@ -6,7 +6,7 @@ extends Node
 ## effect_target: "defender" | "self"
 ## category: "physical" | "special" | "status"
 
-const ATTACKS: Dictionary = {
+static var ATTACKS: Dictionary = {
 	"Tackle": {
 		"name": "Tackle", "type": "Normal", "power": 40, "accuracy": 100,
 		"category": "physical", "effect": "", "effect_target": "", "effect_chance": 0

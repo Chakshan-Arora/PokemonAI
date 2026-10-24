@@ -51,6 +51,7 @@ Desktop.ini
 *.log
 *.tmp
 *.bak
+*.wav
 temp/
 tmp/
 
@@ -76,14 +77,8 @@ ai_state.local.json
 .godot/
 
 # ==============================
-# Model weights & Adapters
+# Build artifacts
 # ==============================
-*.safetensors
-*.bin
-*.gguf
-models/
-training/adapters/
-training/.venv/
 build/
 dist/
 *.egg-info/

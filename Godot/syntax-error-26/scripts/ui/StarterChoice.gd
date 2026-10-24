@@ -36,11 +36,14 @@ func _update_starter_panel(species_name: String) -> void:
 	if name_lbl:
 		name_lbl.text = species_name
 	if stats_lbl:
-		stats_lbl.text = "HP: %d  ATK: %d\nDEF: %d  SPD: %d" % [
+		var moves = sd.get("available_attacks", [])
+		var moves_preview = ", ".join(moves.slice(0, 2)) if moves.size() > 0 else ""
+		stats_lbl.text = "HP: %d  ATK: %d\nDEF: %d  SPD: %d\nMoves: %s" % [
 			sd["base_hp"] + 10,  # level 5 hp approx
 			sd["base_attack"],
 			sd["base_defense"],
-			sd["base_speed"]
+			sd["base_speed"],
+			moves_preview
 		]
 	if type_lbl:
 		type_lbl.text = " / ".join(sd["types"])

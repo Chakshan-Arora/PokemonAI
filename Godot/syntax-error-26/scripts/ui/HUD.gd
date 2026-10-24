@@ -48,6 +48,29 @@ func _ready() -> void:
 	
 	update_hud()
 	_build_companion_dialogue_ui()
+	_setup_backend_status_indicator()
+
+var backend_status_lbl: Label = null
+
+func _setup_backend_status_indicator() -> void:
+	var top_right_vbox = get_node_or_null("TopRight/TimePanel/VBox")
+	if top_right_vbox:
+		backend_status_lbl = Label.new()
+		backend_status_lbl.name = "BackendStatusLabel"
+		backend_status_lbl.add_theme_font_size_override("font_size", 12)
+		top_right_vbox.add_child(backend_status_lbl)
+		_update_backend_status_label(LLMClient.is_server_online if LLMClient else false)
+		if LLMClient:
+			LLMClient.server_status_changed.connect(_update_backend_status_label)
+
+func _update_backend_status_label(is_online: bool) -> void:
+	if backend_status_lbl:
+		if is_online:
+			backend_status_lbl.text = "🟢 Backend: Online"
+			backend_status_lbl.modulate = Color(0.4, 1.0, 0.4)
+		else:
+			backend_status_lbl.text = "🔴 Backend: Offline"
+			backend_status_lbl.modulate = Color(1.0, 0.4, 0.4)
 
 var companion_panel: PanelContainer = null
 var companion_input: LineEdit = null
@@ -133,6 +156,7 @@ func _toggle_companion_chat() -> void:
 		companion_panel.visible = not companion_panel.visible
 		if companion_panel.visible:
 			GameState.set_meta("typing_active", true)
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			if companion_input:
 				companion_input.grab_focus()
 		else:
@@ -186,6 +210,7 @@ func _on_companion_message_submitted(text: String) -> void:
 			a_sign, a_delta
 		]
 		show_notification("Spoke with %s!" % active_p.get_display_name(), 3.0)
+		SaveLoad.save_game()
 	else:
 		companion_output_lbl.text = "%s looked attentively, but couldn't answer." % active_p.get_display_name()
 

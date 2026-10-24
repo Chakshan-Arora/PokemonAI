@@ -2,7 +2,7 @@ class_name ItemData
 extends Node
 ## ItemData - All item definitions for PokémonAI
 
-const ITEMS: Dictionary = {
+static var ITEMS: Dictionary = {
 	"potion": {
 		"id": "potion",
 		"name": "Potion",

@@ -89,7 +89,7 @@ func _on_new_game_pressed() -> void:
 	player_name_input.grab_focus()
 
 func _on_continue_pressed() -> void:
-	var success = SaveLoad.load_game()
+	var success = await SaveLoad.load_game()
 	if success:
 		get_tree().change_scene_to_file("res://scenes/World.tscn")
 	else:

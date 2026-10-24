@@ -27,11 +27,6 @@ from src.models.habitat import (
     HabitatEncounterResult,
     get_time_of_day,
 )
-from src.data.habitats import (
-    HABITAT_CATALOG,
-    get_habitat_for_region as catalog_get_habitat_for_region,
-    create_default_habitats,
-)
 
 
 class HabitatManager:
@@ -81,7 +76,11 @@ class HabitatManager:
         # Mapping from lowercase region_id -> lowercase habitat_id
         self._region_habitat_map: dict[str, str] = {}
 
-        initial_habitats = habitats if habitats is not None else create_default_habitats()
+        if habitats is not None:
+            initial_habitats = habitats
+        else:
+            from src.data.habitats import create_default_habitats
+            initial_habitats = create_default_habitats()
         for h in initial_habitats:
             self.register_habitat(h)
 

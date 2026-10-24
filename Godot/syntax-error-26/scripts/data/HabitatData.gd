@@ -6,7 +6,7 @@ extends Node
 # Each spawn candidate: {species, weight, min_level, max_level, allowed_times}
 # allowed_times: Array of strings from ["morning","day","evening","night"] or [] for all times
 
-const HABITATS: Dictionary = {
+static var HABITATS: Dictionary = {
 	"starting_meadow": [
 		{"species": "Pidgey",    "weight": 30, "min_level": 2, "max_level": 5,  "allowed_times": ["morning", "day", "evening"]},
 		{"species": "Rattata",   "weight": 30, "min_level": 2, "max_level": 5,  "allowed_times": ["evening", "night"]},
