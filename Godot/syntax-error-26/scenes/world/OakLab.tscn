@@ -1,0 +1,168 @@
+[gd_scene load_steps=18 format=3 uid="uid://c8y3xqjOakLab"]
+
+[sub_resource type="GDScript" id="GDScript_oak_lab"]
+script/source = "extends StaticBody3D
+
+@export var lab_name: String = \"Oak Pokémon Research Lab\"
+@onready var label_3d: Label3D = $Label3D
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+	if is_instance_valid(label_3d):
+		label_3d.text = lab_name
+
+func get_interaction_text() -> String:
+	return \"Examine Lab Main Entrance\"
+
+func on_interact(_player_node: Node3D) -> void:
+	var team_count = 0
+	if GameState.player != null:
+		team_count = GameState.player.team.size()
+	EventBus.show_message.emit(\"Oak Lab Terminal: [ONLINE] Welcome to Professor Oak's Pokémon Research Facility! Active companions registered: %d. Oak's advice: 'Wild Pokémon inhabit tall grass! Treat them with care.'\" % team_count)
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lab_main"]
+size = Vector3(12.5, 4.4, 8.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_foundation"]
+albedo_color = Color(0.65, 0.65, 0.68, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_foundation"]
+material = SubResource("Mat_foundation")
+size = Vector3(13.2, 0.4, 9.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lab_walls"]
+albedo_color = Color(0.94, 0.94, 0.96, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_lab_walls"]
+material = SubResource("Mat_lab_walls")
+size = Vector3(12.5, 3.8, 8.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slate_roof"]
+albedo_color = Color(0.32, 0.36, 0.44, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_roof"]
+material = SubResource("Mat_slate_roof")
+size = Vector3(13.0, 0.5, 9.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_skylight"]
+transparency = 1
+albedo_color = Color(0.35, 0.75, 0.95, 0.65)
+metallic = 0.6
+roughness = 0.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_skylight"]
+material = SubResource("Mat_skylight")
+size = Vector3(5.5, 0.7, 3.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_vent"]
+albedo_color = Color(0.5, 0.55, 0.6, 1)
+metallic = 0.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_vent"]
+material = SubResource("Mat_vent")
+top_radius = 0.6
+bottom_radius = 0.6
+height = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_canopy"]
+albedo_color = Color(0.25, 0.45, 0.75, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_canopy"]
+material = SubResource("Mat_canopy")
+size = Vector3(3.6, 0.3, 1.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lab_door"]
+albedo_color = Color(0.2, 0.25, 0.32, 1)
+metallic = 0.3
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_lab_door"]
+material = SubResource("Mat_lab_door")
+size = Vector3(2.4, 2.6, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="Mat_window"]
+albedo_color = Color(0.55, 0.85, 0.98, 1)
+metallic = 0.5
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_window"]
+material = SubResource("Mat_window")
+size = Vector3(1.4, 1.4, 0.1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_entrance"]
+radius = 3.0
+
+[node name="OakLab" type="StaticBody3D" groups=["interactable"]]
+script = SubResource("GDScript_oak_lab")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+shape = SubResource("BoxShape3D_lab_main")
+
+[node name="Foundation" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_foundation")
+
+[node name="WallsMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+mesh = SubResource("BoxMesh_lab_walls")
+
+[node name="RoofMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.15, 0)
+mesh = SubResource("BoxMesh_roof")
+
+[node name="Skylight" type="MeshInstance3D" parent="RoofMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_skylight")
+
+[node name="VentLeft" type="MeshInstance3D" parent="RoofMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.5, -1.5)
+mesh = SubResource("CylinderMesh_vent")
+
+[node name="VentRight" type="MeshInstance3D" parent="RoofMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.5, -1.5)
+mesh = SubResource("CylinderMesh_vent")
+
+[node name="EntranceCanopy" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.0, 4.9)
+mesh = SubResource("BoxMesh_canopy")
+
+[node name="DoorMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 4.3)
+mesh = SubResource("BoxMesh_lab_door")
+
+[node name="Window1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 2.0, 4.3)
+mesh = SubResource("BoxMesh_window")
+
+[node name="Window2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2, 2.0, 4.3)
+mesh = SubResource("BoxMesh_window")
+
+[node name="Window3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 2.0, 4.3)
+mesh = SubResource("BoxMesh_window")
+
+[node name="Window4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 2.0, 4.3)
+mesh = SubResource("BoxMesh_window")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, 0)
+billboard = 1
+text = "Oak Pokémon Research Lab"
+font_size = 26
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.8)
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 5.0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_entrance")
+

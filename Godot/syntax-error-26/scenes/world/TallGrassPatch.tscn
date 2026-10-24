@@ -1,0 +1,198 @@
+[gd_scene load_steps=10 format=3 uid="uid://c8y3xqjTallGrassPatch"]
+
+[ext_resource type="Texture2D" path="res://assets/textures/grass_tile.png" id="1_grass_tex"]
+
+[sub_resource type="GDScript" id="GDScript_tall_grass"]
+script/source = "extends Area3D
+
+@export var patch_name: String = \"Wild Tall Grass\"
+@export var patch_size: Vector3 = Vector3(8.0, 1.4, 8.0)
+
+func _ready() -> void:
+	add_to_group(\"tall_grass\")
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+
+func _on_body_entered(body: Node3D) -> void:
+	if body.is_in_group(\"player\"):
+		if body.has_method(\"set_in_tall_grass\"):
+			body.set_in_tall_grass(true)
+
+func _on_body_exited(body: Node3D) -> void:
+	if body.is_in_group(\"player\"):
+		if body.has_method(\"set_in_tall_grass\"):
+			body.set_in_tall_grass(false)
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_grass_area"]
+size = Vector3(8.0, 1.4, 8.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_grass_bed"]
+albedo_color = Color(0.22, 0.58, 0.20, 1)
+albedo_texture = ExtResource("1_grass_tex")
+texture_filter = 0
+uv1_scale = Vector3(4, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_grass_bed"]
+material = SubResource("Mat_grass_bed")
+size = Vector3(8.0, 0.08, 8.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_grass_blades"]
+albedo_color = Color(0.26, 0.68, 0.22, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_grass_light"]
+albedo_color = Color(0.38, 0.78, 0.28, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_tuft_a"]
+material = SubResource("Mat_grass_blades")
+size = Vector3(0.25, 0.65, 0.75)
+
+[sub_resource type="BoxMesh" id="BoxMesh_tuft_b"]
+material = SubResource("Mat_grass_light")
+size = Vector3(0.75, 0.65, 0.25)
+
+[node name="TallGrassPatch" type="Area3D" groups=["tall_grass"]]
+collision_layer = 1
+collision_mask = 2
+script = SubResource("GDScript_tall_grass")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("BoxShape3D_grass_area")
+
+[node name="BedMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("BoxMesh_grass_bed")
+
+[node name="Tufts" type="Node3D" parent="."]
+
+[node name="Tuft_01" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.35, -2.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_01b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.35, -2.8)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_02" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0.35, -2.9)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_02b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0.35, -2.9)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_03" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.35, -2.7)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_03b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.35, -2.7)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_04" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.35, -2.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_04b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.35, -2.8)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_05" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7, 0.35, -0.9)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_05b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7, 0.35, -0.9)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_06" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.35, -0.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_06b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.35, -0.8)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_07" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 0.35, -1.0)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_07b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 0.35, -1.0)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_08" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.35, -0.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_08b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.35, -0.8)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_09" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 0.35, 1.0)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_09b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 0.35, 1.0)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_10" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, 0.35, 1.1)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_10b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0, 0.35, 1.1)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_11" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.35, 0.9)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_11b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.35, 0.9)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_12" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 0.35, 1.0)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_12b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 0.35, 1.0)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_13" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.35, 2.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_13b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.35, 2.8)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_14" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0.35, 2.7)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_14b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 0.35, 2.7)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_15" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.35, 2.9)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_15b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0, 0.35, 2.9)
+mesh = SubResource("BoxMesh_tuft_b")
+
+[node name="Tuft_16" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.35, 2.8)
+mesh = SubResource("BoxMesh_tuft_a")
+
+[node name="Tuft_16b" type="MeshInstance3D" parent="Tufts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 0.35, 2.8)
+mesh = SubResource("BoxMesh_tuft_b")
+

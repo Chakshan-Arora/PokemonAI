@@ -1,0 +1,82 @@
+[gd_scene load_steps=10 format=3 uid="uid://c8y3xqjDialogueNPC"]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/trainers/red.png" id="2_red"]
+
+[sub_resource type="GDScript" id="GDScript_dialogue_npc"]
+script/source = "extends StaticBody3D
+
+@export var npc_id: String = \"guide\"
+@export var npc_name: String = \"Guide\"
+@export_enum(\"red\", \"calem\", \"serena\", \"koji\") var sprite_variant: String = \"red\"
+@export_multiline var dialogue_text: String = \"Welcome to the Pokémon world! Talk with your Pokémon often to deepen your bond.\"
+
+@onready var label_3d: Label3D = $Label3D
+@onready var sprite_3d: Sprite3D = $Sprite3D
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+	if is_instance_valid(label_3d):
+		label_3d.text = npc_name
+	
+	if is_instance_valid(sprite_3d):
+		var path = \"res://assets/sprites/trainers/%s.png\" % sprite_variant.to_lower()
+		if ResourceLoader.exists(path):
+			sprite_3d.texture = load(path)
+
+func get_interaction_text() -> String:
+	return \"Talk to \" + npc_name
+
+func on_interact(_player_node: Node3D) -> void:
+	EventBus.show_message.emit(dialogue_text)
+"
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_shadow")
+
+[sub_resource type="QuadMesh" id="QuadMesh_shadow"]
+material = SubResource("StandardMaterial3D_shadow")
+size = Vector2(1.0, 1.0)
+orientation = 1
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_area"]
+radius = 2.5
+
+[node name="DialogueNPC" type="StaticBody3D" groups=["interactable"]]
+script = SubResource("GDScript_dialogue_npc")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_npc")
+
+[node name="Shadow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("QuadMesh_shadow")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+billboard = 2
+texture_filter = 0
+pixel_size = 0.045
+texture = ExtResource("2_red")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+billboard = 1
+text = "Guide"
+font_size = 22
+outline_size = 6
+outline_color = Color(0, 0, 0, 0.8)
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" parent="Area3D" type="CollisionShape3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("SphereShape3D_area")
+

@@ -27,6 +27,14 @@ const STEP_DISTANCE: float = 1.5
 
 var _nearest_interactable: Node3D = null
 var _in_tall_grass: bool = false
+var _tall_grass_count: int = 0
+
+func set_in_tall_grass(in_grass: bool) -> void:
+	if in_grass:
+		_tall_grass_count += 1
+	else:
+		_tall_grass_count = maxi(0, _tall_grass_count - 1)
+	_in_tall_grass = (_tall_grass_count > 0)
 
 # Animation state
 var _facing: String = "up" # "up" = back facing camera/user
@@ -297,9 +305,16 @@ func _check_region() -> void:
 		var region_data = RegionData.get_region(region_id)
 		EventBus.player_entered_region.emit(region_id, region_data.get("name", region_id))
 	
-	# Tall grass detection
+	# Tall grass detection: physical grass area or region setting
+	var in_grass_area = (_tall_grass_count > 0)
+	if not in_grass_area and is_instance_valid(interaction_area):
+		for area in interaction_area.get_overlapping_areas():
+			if area.is_in_group("tall_grass"):
+				in_grass_area = true
+				break
+	
 	var region_data = RegionData.get_region(GameState.current_region_id)
-	_in_tall_grass = region_data.get("has_tall_grass", false)
+	_in_tall_grass = in_grass_area or region_data.get("has_tall_grass", false)
 
 func _check_nearby_interactables() -> void:
 	_nearest_interactable = null
