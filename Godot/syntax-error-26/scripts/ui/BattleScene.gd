@@ -1000,6 +1000,17 @@ func _send_battle_talk(msg: String) -> void:
 		var precision_dmg = int(reply.get("precision_damage", 0))
 		
 		if is_restrained and chosen_move != "" and precision_dmg > 0:
+			battle_engine.set_override_player_damage(precision_dmg)
+			battle_engine.select_player_action(battle_engine.ActionType.ATTACK, chosen_move)
+			var result = battle_engine.resolve_turn()
+			_process_turn_result(result)
+			return
+		
+		var is_restrained = bool(reply.get("is_restrained_strike", false))
+		var chosen_move = str(reply.get("chosen_move", ""))
+		var precision_dmg = int(reply.get("precision_damage", 0))
+		
+		if is_restrained and chosen_move != "" and precision_dmg > 0:
 			# Auto-execute the restrained strike turn
 			battle_engine.set_override_player_damage(precision_dmg)
 			battle_engine.select_player_action(battle_engine.ActionType.ATTACK, chosen_move)
