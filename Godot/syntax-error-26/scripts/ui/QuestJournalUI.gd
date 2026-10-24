@@ -1,6 +1,9 @@
 extends Control
 ## QuestJournalUI - Shows active and completed quests, progress, and objectives
 
+const QuestData = preload("res://scripts/data/QuestData.gd")
+const ItemData = preload("res://scripts/data/ItemData.gd")
+
 @onready var active_tab_btn: Button = $Panel/VBox/TabBar/ActiveBtn
 @onready var completed_tab_btn: Button = $Panel/VBox/TabBar/CompletedBtn
 @onready var quest_list: VBoxContainer = $Panel/VBox/HBox/Scroll/VBox
@@ -72,9 +75,9 @@ func _select_quest(quest_id: String) -> void:
 	var obj_text = "Objectives:\n"
 	var p_prog = GameState.player.quest_progress.get(quest_id, {})
 	for obj in q_data.get("objectives", []):
-		var o_id = obj.get("id", "")
+		var o_id = obj.get("objective_id", obj.get("id", ""))
 		var o_desc = obj.get("description", "")
-		var target = obj.get("target_count", 1)
+		var target = obj.get("target", obj.get("target_count", 1))
 		var current = p_prog.get(o_id, 0)
 		var check = "[X] " if current >= target else "[ ] "
 		obj_text += " %s%s (%d/%d)\n" % [check, o_desc, current, target]
@@ -84,7 +87,10 @@ func _select_quest(quest_id: String) -> void:
 	var rew = q_data.get("rewards", {})
 	if rew.has("xp"):
 		r_text += " • %d XP\n" % rew["xp"]
-	if rew.has("items"):
+	if rew.has("item_id"):
+		var idata = ItemData.get_item(rew["item_id"])
+		r_text += " • %dx %s\n" % [rew.get("quantity", 1), idata.get("name", rew["item_id"])]
+	elif rew.has("items"):
 		for item_id in rew["items"]:
 			var idata = ItemData.get_item(item_id)
 			r_text += " • %dx %s\n" % [rew["items"][item_id], idata.get("name", item_id)]

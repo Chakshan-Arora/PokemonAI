@@ -5,8 +5,8 @@ const RegionData = preload("res://scripts/data/RegionData.gd")
 const ItemData = preload("res://scripts/data/ItemData.gd")
 
 @onready var pokemon_panel: PanelContainer = $TopLeft/PokemonPanel
-@onready var pokemon_name_lbl: Label = $TopLeft/PokemonPanel/VBox/NameLabel
-@onready var pokemon_level_lbl: Label = $TopLeft/PokemonPanel/VBox/LevelLabel
+@onready var pokemon_name_lbl: Label = $TopLeft/PokemonPanel/VBox/HBox/NameLabel
+@onready var pokemon_level_lbl: Label = $TopLeft/PokemonPanel/VBox/HBox/LevelLabel
 @onready var hp_bar: ProgressBar = $TopLeft/PokemonPanel/VBox/HPBar
 @onready var hp_text_lbl: Label = $TopLeft/PokemonPanel/VBox/HPTextLabel
 

@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 EventBus="*res://scripts/autoloads/EventBus.gd"
 GameData="*res://scripts/autoloads/GameData.gd"
 GameState="*res://scripts/autoloads/GameState.gd"
+QuestSystem="*res://scripts/systems/QuestSystem.gd"
 SaveLoad="*res://scripts/autoloads/SaveLoad.gd"
 
 [display]

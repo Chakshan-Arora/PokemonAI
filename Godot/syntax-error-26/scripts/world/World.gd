@@ -1,6 +1,8 @@
 extends Node3D
 ## World - Root scene for the 3D explorable Pokemon world
 
+const RegionData = preload("res://scripts/data/RegionData.gd")
+
 @onready var player_node: CharacterBody3D = $Player
 @onready var hud: Control = $UILayer/HUD
 

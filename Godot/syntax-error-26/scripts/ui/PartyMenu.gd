@@ -2,6 +2,7 @@ extends Control
 ## PartyMenu - Player team management screen
 
 const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
+const AttackData = preload("res://scripts/data/AttackData.gd")
 
 @onready var slot_container: VBoxContainer = $Panel/HBox/SlotList/Scroll/VBox
 @onready var detail_panel: VBoxContainer = $Panel/HBox/DetailPanel
@@ -81,12 +82,13 @@ func _select_pokemon(index: int) -> void:
 	]
 	
 	var moves_str = "Known Moves:\n"
-	for m in p.attacks:
+	for atk_name in p.attacks:
+		var atk_data = AttackData.get_attack(atk_name)
 		moves_str += " • %s (%s, Pwr: %d, Acc: %d%%)\n" % [
-			m.get("name", "Unknown"),
-			m.get("type", "Normal"),
-			m.get("power", 0),
-			m.get("accuracy", 100)
+			atk_data.get("name", atk_name),
+			atk_data.get("type", "Normal"),
+			atk_data.get("power", 0),
+			atk_data.get("accuracy", 100)
 		]
 	moves_lbl.text = moves_str
 	
