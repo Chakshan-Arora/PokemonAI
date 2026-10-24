@@ -262,8 +262,7 @@ func _process(delta: float) -> void:
 			dialogue_box.visible = false
 	
 	# Update time display smoothly
-	time_label.text = GameState.get_formatted_time()
-	tod_label.text = GameState.get_time_of_day().capitalize()
+	_update_time_display(GameState.game_time, GameState.get_time_of_day())
 
 func update_hud() -> void:
 	var active_p = GameState.get_active_pokemon()
@@ -655,5 +654,24 @@ func _on_item_obtained(item_id: String, quantity: int) -> void:
 	show_notification("Obtained %dx %s!" % [quantity, iname], 3.0)
 
 func _on_game_time_changed(_new_time: float, _new_tod: String) -> void:
-	time_label.text = GameState.get_formatted_time()
-	tod_label.text = _new_tod.capitalize()
+	_update_time_display(_new_time, _new_tod)
+
+func _update_time_display(_new_time: float, new_tod: String) -> void:
+	if time_label:
+		time_label.text = GameState.get_formatted_time()
+	if tod_label:
+		match new_tod.to_lower():
+			"morning":
+				tod_label.text = "🌅 Morning"
+				tod_label.add_theme_color_override("font_color", Color(0.92, 0.65, 0.25, 1.0))
+			"day":
+				tod_label.text = "☀️ Day"
+				tod_label.add_theme_color_override("font_color", Color(0.25, 0.60, 0.90, 1.0))
+			"evening":
+				tod_label.text = "🌆 Evening"
+				tod_label.add_theme_color_override("font_color", Color(0.95, 0.48, 0.25, 1.0))
+			"night":
+				tod_label.text = "🌙 Night"
+				tod_label.add_theme_color_override("font_color", Color(0.55, 0.65, 0.95, 1.0))
+			_:
+				tod_label.text = new_tod.capitalize()
