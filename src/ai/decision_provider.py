@@ -321,32 +321,55 @@ class FallbackDecisionHandler:
             if is_companion_chat:
                 return cls._create_companion_fallback(agent, perception, error)
 
-            # Safe tactical strike fallback for owned Pokemon in battle
-            opp_species = (perception.opponent_context or {}).get("species", "Opponent")
-            from src.ai.battle_talk_parser import BattleTalkAdvisor
-            best_move, rationale = BattleTalkAdvisor.evaluate_tactical_advice(known_moves, opp_species)
-            chosen_atk = best_move or primary_move or "Tackle"
-            return AgentDecision(
-                action_type=AgentActionType.ATTACK,
-                intent=f"Tactical strike with {chosen_atk}",
-                chosen_move=chosen_atk,
-                dialogue=f"{agent.display_name} attacked with {chosen_atk}!",
-                emotional_state="focused",
-                rationale=rationale or f"Fallback triggered: {error}",
-                confidence=0.85,
-            )
+            if in_battle:
+                # Safe tactical strike fallback for owned Pokemon in battle
+                opp_species = (perception.opponent_context or {}).get("species", "Opponent")
+                from src.ai.battle_talk_parser import BattleTalkAdvisor
+                best_move, rationale = BattleTalkAdvisor.evaluate_tactical_advice(known_moves, opp_species)
+                chosen_atk = best_move or primary_move or "Tackle"
+                return AgentDecision(
+                    action_type=AgentActionType.ATTACK,
+                    intent=f"Tactical strike with {chosen_atk}",
+                    chosen_move=chosen_atk,
+                    dialogue=f"{agent.display_name} attacked with {chosen_atk}!",
+                    emotional_state="focused",
+                    rationale=rationale or f"Fallback triggered: {error}",
+                    confidence=0.85,
+                )
+            else:
+                # Safe defensive posture fallback when outside active battle
+                return AgentDecision(
+                    action_type=AgentActionType.DEFEND,
+                    intent="Defensive posture fallback due to communication delay",
+                    chosen_move=primary_move,
+                    dialogue=f"{agent.display_name} held its ground defensively.",
+                    emotional_state="cautious",
+                    rationale=f"Fallback triggered by provider error: {error}",
+                    confidence=0.5,
+                )
         else:
-            # Tactical attack fallback for wild Pokemon
-            opp_species = (perception.opponent_context or {}).get("species", "Opponent")
-            from src.ai.battle_talk_parser import BattleTalkAdvisor
-            best_move, rationale = BattleTalkAdvisor.evaluate_tactical_advice(known_moves, opp_species)
-            chosen_atk = best_move or primary_move or "Tackle"
-            return AgentDecision(
-                action_type=AgentActionType.ATTACK,
-                intent=f"Wild attack with {chosen_atk}",
-                chosen_move=chosen_atk,
-                dialogue=f"Wild {agent.display_name} leaped forward aggressively with {chosen_atk}!",
-                emotional_state="combative",
-                rationale=rationale or f"Wild fallback triggered: {error}",
-                confidence=0.8,
-            )
+            if in_battle:
+                # Tactical attack fallback for wild Pokemon in battle
+                opp_species = (perception.opponent_context or {}).get("species", "Opponent")
+                from src.ai.battle_talk_parser import BattleTalkAdvisor
+                best_move, rationale = BattleTalkAdvisor.evaluate_tactical_advice(known_moves, opp_species)
+                chosen_atk = best_move or primary_move or "Tackle"
+                return AgentDecision(
+                    action_type=AgentActionType.ATTACK,
+                    intent=f"Wild attack with {chosen_atk}",
+                    chosen_move=chosen_atk,
+                    dialogue=f"Wild {agent.display_name} leaped forward aggressively with {chosen_atk}!",
+                    emotional_state="combative",
+                    rationale=rationale or f"Wild fallback triggered: {error}",
+                    confidence=0.8,
+                )
+            else:
+                # Safe hesitation fallback for wild Pokemon
+                return AgentDecision(
+                    action_type=AgentActionType.HESITATE,
+                    intent="Hesitate due to sensory disorientation",
+                    dialogue=f"Wild {agent.display_name} paused cautiously.",
+                    emotional_state="confused",
+                    rationale=f"Fallback triggered by provider error: {error}",
+                    confidence=0.5,
+                )
