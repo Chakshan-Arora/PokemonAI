@@ -35,7 +35,7 @@ func _process(delta: float) -> void:
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
-func new_game(p_player_name: String, starter_species: String, avatar: String = "calem") -> void:
+func new_game(p_player_name: String, starter_species: String, avatar: String = "ash") -> void:
 	player = PlayerModel.create(p_player_name)
 	player.trainer_avatar = avatar
 	

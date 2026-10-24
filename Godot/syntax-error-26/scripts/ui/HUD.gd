@@ -448,13 +448,10 @@ func show_notification(text: String, duration: float = 3.0) -> void:
 		if speaker == "Notice":
 			if "Oak" in text:
 				speaker = "Professor Oak"
-				portrait_path = "res://assets/sprites/trainers/red.png"
+				portrait_path = "res://assets/sprites/trainers/professor_oak.png"
 			elif "Koji" in text:
 				speaker = "Trainer Koji"
 				portrait_path = "res://assets/sprites/trainers/koji.png"
-			elif "campfire" in text.to_lower() or "healed" in text.to_lower():
-				speaker = "Campfire Rest Area"
-				portrait_path = "res://assets/sprites/world/campfire.png"
 			elif "sign" in text.to_lower() or "route" in text.to_lower():
 				speaker = "Wooden Signpost"
 				portrait_path = "res://assets/sprites/world/sign.png"

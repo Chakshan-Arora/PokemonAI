@@ -11,7 +11,7 @@ extends Control
 @onready var back_btn: Button = $DialogPanel/VBox/BackBtn
 @onready var save_info_label: Label = $VBoxContainer/SaveInfoLabel
 
-var selected_avatar: String = "calem"
+var selected_avatar: String = "ash"
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -51,24 +51,24 @@ func _setup_avatar_selection() -> void:
 		
 		var calem_btn = Button.new()
 		calem_btn.name = "CalemBtn"
-		calem_btn.text = " Boy"
-		var c_tex = load("res://assets/sprites/trainers/calem.png") as Texture2D
+		calem_btn.text = " Ash (Boy)"
+		var c_tex = load("res://assets/sprites/trainers/red.png") as Texture2D
 		if c_tex:
 			calem_btn.icon = c_tex
 			calem_btn.expand_icon = true
-			calem_btn.custom_minimum_size = Vector2(100, 44)
-		calem_btn.pressed.connect(func(): _select_avatar("calem"))
+			calem_btn.custom_minimum_size = Vector2(110, 44)
+		calem_btn.pressed.connect(func(): _select_avatar("ash"))
 		avatar_box.add_child(calem_btn)
 		
 		var serena_btn = Button.new()
 		serena_btn.name = "SerenaBtn"
-		serena_btn.text = " Girl"
-		var s_tex = load("res://assets/sprites/trainers/serena.png") as Texture2D
+		serena_btn.text = " Misty (Girl)"
+		var s_tex = load("res://assets/sprites/trainers/misty.png") as Texture2D
 		if s_tex:
 			serena_btn.icon = s_tex
 			serena_btn.expand_icon = true
-			serena_btn.custom_minimum_size = Vector2(100, 44)
-		serena_btn.pressed.connect(func(): _select_avatar("serena"))
+			serena_btn.custom_minimum_size = Vector2(110, 44)
+		serena_btn.pressed.connect(func(): _select_avatar("misty"))
 		avatar_box.add_child(serena_btn)
 		
 		# Insert before StartBtn
@@ -80,8 +80,9 @@ func _select_avatar(avatar: String) -> void:
 	var calem_btn = $DialogPanel/VBox/AvatarBox/CalemBtn as Button
 	var serena_btn = $DialogPanel/VBox/AvatarBox/SerenaBtn as Button
 	if calem_btn and serena_btn:
-		calem_btn.modulate = Color(1.3, 1.3, 1.3) if avatar == "calem" else Color(0.7, 0.7, 0.7)
-		serena_btn.modulate = Color(1.3, 1.3, 1.3) if avatar == "serena" else Color(0.7, 0.7, 0.7)
+		var is_boy = (avatar == "ash" or avatar == "calem" or avatar == "boy")
+		calem_btn.modulate = Color(1.3, 1.3, 1.3) if is_boy else Color(0.7, 0.7, 0.7)
+		serena_btn.modulate = Color(1.3, 1.3, 1.3) if not is_boy else Color(0.7, 0.7, 0.7)
 
 func _on_new_game_pressed() -> void:
 	main_buttons_container.visible = false

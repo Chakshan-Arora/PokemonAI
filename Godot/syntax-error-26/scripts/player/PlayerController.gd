@@ -29,7 +29,7 @@ var _nearest_interactable: Node3D = null
 var _in_tall_grass: bool = false
 
 # Animation state
-var _facing: String = "down" # "down", "up", "left", "right"
+var _facing: String = "up" # "up" = back facing camera/user
 var _anim_timer: float = 0.0
 
 # Encounter system reference
@@ -58,14 +58,22 @@ func _ready() -> void:
 			var a = GameState.player.trainer_avatar.to_lower()
 			avatar = "girl" if (a == "girl" or a == "serena") else "boy"
 			
-		if avatar == "girl":
-			var tex = load("res://assets/sprites/trainers/may_walk.png")
+		var is_girl = (avatar in ["girl", "misty", "serena", "may"])
+		if is_girl:
+			var tex = load("res://assets/sprites/trainers/misty_walk.png")
 			if tex:
 				trainer_sprite.texture = tex
+				trainer_sprite.hframes = 9
+				trainer_sprite.pixel_size = 0.04
+				trainer_sprite.position.y = 0.96
 		else:
-			var tex = load("res://assets/sprites/trainers/brendan_walk.png")
+			var tex = load("res://assets/sprites/trainers/ash_walk.png")
 			if tex:
 				trainer_sprite.texture = tex
+				trainer_sprite.hframes = 9
+				trainer_sprite.pixel_size = 0.04
+				trainer_sprite.position.y = 0.96
+		trainer_sprite.frame = 3
 
 	# Create encounter system
 	var enc_class = load("res://scripts/systems/EncounterSystem.gd")
@@ -250,6 +258,7 @@ func _physics_process(delta: float) -> void:
 			if is_instance_valid(encounter_system):
 				encounter_system.on_player_step(GameState.current_region_id, _in_tall_grass)
 		player_moved.emit(global_position)
+		EventBus.player_moved.emit(global_position)
 	
 	# Region detection
 	_check_region()
@@ -257,58 +266,36 @@ func _physics_process(delta: float) -> void:
 	# Update HUD interaction prompt
 	_check_nearby_interactables()
 
-func _update_sprite_animation(delta: float, input_dir: Vector2, is_moving: bool, is_sprinting: bool) -> void:
+func _update_sprite_animation(delta: float, _input_dir: Vector2, is_moving: bool, is_sprinting: bool) -> void:
 	if not is_instance_valid(trainer_sprite):
 		return
 	
 	if is_moving:
-		# Determine dominant direction from input
-		if abs(input_dir.x) > abs(input_dir.y):
-			_facing = "left" if input_dir.x < 0 else "right"
-		else:
-			_facing = "up" if input_dir.y < 0 else "down"
-		
 		_anim_timer += delta * (11.0 if is_sprinting else 7.5)
 		var cycle = int(_anim_timer) % 4
-		var step_frame = 0
+		var step_frame = 3
 		if cycle == 1:
-			step_frame = 1
+			step_frame = 4 # step left
 		elif cycle == 3:
-			step_frame = 2
+			step_frame = 5 # step right
 		
-		match _facing:
-			"down":
-				trainer_sprite.frame = 0 if step_frame == 0 else (1 if step_frame == 1 else 2)
-				trainer_sprite.flip_h = false
-			"up":
-				trainer_sprite.frame = 3 if step_frame == 0 else (4 if step_frame == 1 else 5)
-				trainer_sprite.flip_h = false
-			"left":
-				trainer_sprite.frame = 6 if step_frame == 0 else (7 if step_frame == 1 else 8)
-				trainer_sprite.flip_h = true
-			"right":
-				trainer_sprite.frame = 6 if step_frame == 0 else (7 if step_frame == 1 else 8)
-				trainer_sprite.flip_h = false
+		# Always maintain the player back visible to the user
+		trainer_sprite.frame = step_frame
+		trainer_sprite.flip_h = false
 	else:
 		_anim_timer = 0.0
-		match _facing:
-			"down":
-				trainer_sprite.frame = 0
-				trainer_sprite.flip_h = false
-			"up":
-				trainer_sprite.frame = 3
-				trainer_sprite.flip_h = false
-			"left":
-				trainer_sprite.frame = 6
-				trainer_sprite.flip_h = true
-			"right":
-				trainer_sprite.frame = 6
-				trainer_sprite.flip_h = false
+		# Back idle frame (facing forward into the world)
+		trainer_sprite.frame = 3
+		trainer_sprite.flip_h = false
 
 func _check_region() -> void:
 	var region_id = RegionData.get_region_at_position(global_position.x, global_position.z)
 	if region_id != "" and region_id != GameState.current_region_id:
+		var old_region_id = GameState.current_region_id
 		GameState.change_region(region_id)
+		EventBus.player_exited_region.emit(old_region_id)
+		var region_data = RegionData.get_region(region_id)
+		EventBus.player_entered_region.emit(region_id, region_data.get("name", region_id))
 	
 	# Tall grass detection
 	var region_data = RegionData.get_region(GameState.current_region_id)
@@ -361,6 +348,10 @@ func _try_interact() -> void:
 	if _nearest_interactable.has_method("on_interact"):
 		_nearest_interactable.on_interact(self)
 		interaction_triggered.emit(_nearest_interactable)
+		var obj_id = _nearest_interactable.get("object_id") if "object_id" in _nearest_interactable else _nearest_interactable.name
+		EventBus.interaction_triggered.emit(obj_id)
+		var obj_type = _nearest_interactable.get("object_type") if "object_type" in _nearest_interactable else "world_object"
+		EventBus.world_object_interacted.emit(obj_id, obj_type)
 
 func _on_encounter_triggered(wild_pokemon: PokemonInstance) -> void:
 	if GameState.is_in_battle:

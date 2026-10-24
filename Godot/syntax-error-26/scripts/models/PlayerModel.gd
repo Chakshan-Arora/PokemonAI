@@ -5,7 +5,7 @@ const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
 const QuestData = preload("res://scripts/data/QuestData.gd")
 
 var player_name: String = "Trainer"
-var trainer_avatar: String = "calem"
+var trainer_avatar: String = "ash"
 var unique_id: String = ""
 var team: Array = []           # Array of PokemonInstance (max 6)
 var party: Array:

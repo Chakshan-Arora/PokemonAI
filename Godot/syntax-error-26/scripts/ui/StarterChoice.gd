@@ -67,7 +67,7 @@ func _update_starter_panel(species_name: String) -> void:
 
 func _on_starter_chosen(species_name: String) -> void:
 	var player_name = "Trainer"
-	var avatar = "calem"
+	var avatar = "ash"
 	if GameState.has_meta("pending_player_name"):
 		player_name = GameState.get_meta("pending_player_name")
 		GameState.remove_meta("pending_player_name")

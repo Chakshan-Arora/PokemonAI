@@ -192,14 +192,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.1, 25)
 
 [node name="WorldObjects" type="Node3D" parent="."]
 
-[node name="Campfire" parent="WorldObjects" instance=ExtResource("3_wobj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 22)
-object_id = "campfire_rest"
-object_name = "Campfire & Rest Area"
-object_type = "landmark"
-interaction_text = "You rested by the campfire. Your Pokémon were fully healed!"
-region_id = "starting_meadow"
-
 [node name="Route1Sign" parent="WorldObjects" instance=ExtResource("3_wobj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 10)
 object_id = "route1_sign"

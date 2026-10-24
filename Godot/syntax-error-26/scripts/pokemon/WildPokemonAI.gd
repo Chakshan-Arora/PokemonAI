@@ -133,6 +133,7 @@ func _trigger_battle() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	GameState.enter_battle()
 	
+	EventBus.wild_encounter_triggered.emit(species_name, level)
 	EventBus.battle_started.emit(
 		GameState.get_active_pokemon().to_dict() if GameState.get_active_pokemon() else {},
 		wild_p.to_dict(),

@@ -35,13 +35,7 @@ func _setup_visuals() -> void:
 	if not is_instance_valid(sprite_3d):
 		return
 	
-	if object_id == "campfire_rest":
-		var tex = load("res://assets/sprites/world/campfire.png")
-		if tex:
-			sprite_3d.texture = tex
-			sprite_3d.pixel_size = 0.045
-			sprite_3d.position.y = 0.7
-	elif object_id == "ancient_shrine" or object_type == "landmark":
+	if object_id == "ancient_shrine" or object_type == "landmark":
 		var tex = load("res://assets/sprites/world/rock.png")
 		if tex:
 			sprite_3d.texture = tex
@@ -59,6 +53,12 @@ func _setup_visuals() -> void:
 			sprite_3d.texture = tex
 			sprite_3d.pixel_size = 0.045
 			sprite_3d.position.y = 0.65
+	elif object_id == "npc_prof_oak" or "oak" in object_id.to_lower():
+		var tex = load("res://assets/sprites/trainers/professor_oak.png")
+		if tex:
+			sprite_3d.texture = tex
+			sprite_3d.pixel_size = 0.04
+			sprite_3d.position.y = 1.12
 	elif object_type == "npc":
 		var tex = load("res://assets/sprites/trainers/red.png")
 		if tex:
