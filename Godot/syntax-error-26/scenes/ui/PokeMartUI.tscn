@@ -1,0 +1,183 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8y3xqjPokeMartUI"]
+
+[ext_resource type="Script" path="res://scripts/ui/PokeMartUI.gd" id="1_mart"]
+
+[node name="PokeMartUI" type="Control" groups=["pokemart_ui"]]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mart")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -240.0
+offset_right = 320.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.7, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "🏪 POKÉMART VENDING MACHINE"
+
+[node name="WalletLabel" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 18
+text = "Your Wallet: 500p"
+horizontal_alignment = 2
+
+[node name="HSeparator1" type="HSeparator" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="FeedbackLabel" type="Label" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Select an item to purchase with your PokéDollars (p)."
+horizontal_alignment = 1
+
+[node name="ItemsContainer" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="PokeballCard" type="PanelContainer" parent="Panel/VBox/ItemsContainer"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox/ItemsContainer/PokeballCard"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Icon" type="TextureRect" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Details" type="VBoxContainer" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox/Details"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Poké Ball — 50p"
+
+[node name="DescLabel" type="Label" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox/Details"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.88, 1)
+theme_override_font_sizes/font_size = 13
+text = "A device for capturing wild Pokémon."
+
+[node name="BagLabel" type="Label" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox/Details"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 13
+text = "In Bag: x5"
+
+[node name="Actions" type="HBoxContainer" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Buy1Btn" type="Button" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox/Actions"]
+custom_minimum_size = Vector2(95, 36)
+layout_mode = 2
+text = "Buy 1 (50p)"
+
+[node name="Buy5Btn" type="Button" parent="Panel/VBox/ItemsContainer/PokeballCard/HBox/Actions"]
+custom_minimum_size = Vector2(95, 36)
+layout_mode = 2
+text = "Buy 5 (250p)"
+
+[node name="PotionCard" type="PanelContainer" parent="Panel/VBox/ItemsContainer"]
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBox/ItemsContainer/PotionCard"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Icon" type="TextureRect" parent="Panel/VBox/ItemsContainer/PotionCard/HBox"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Details" type="VBoxContainer" parent="Panel/VBox/ItemsContainer/PotionCard/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="Panel/VBox/ItemsContainer/PotionCard/HBox/Details"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Potion — 150p"
+
+[node name="DescLabel" type="Label" parent="Panel/VBox/ItemsContainer/PotionCard/HBox/Details"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.88, 1)
+theme_override_font_sizes/font_size = 13
+text = "Restores 20 HP to a wounded Pokémon."
+
+[node name="BagLabel" type="Label" parent="Panel/VBox/ItemsContainer/PotionCard/HBox/Details"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 13
+text = "In Bag: x3"
+
+[node name="Actions" type="HBoxContainer" parent="Panel/VBox/ItemsContainer/PotionCard/HBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Buy1Btn" type="Button" parent="Panel/VBox/ItemsContainer/PotionCard/HBox/Actions"]
+custom_minimum_size = Vector2(95, 36)
+layout_mode = 2
+text = "Buy 1 (150p)"
+
+[node name="Buy3Btn" type="Button" parent="Panel/VBox/ItemsContainer/PotionCard/HBox/Actions"]
+custom_minimum_size = Vector2(95, 36)
+layout_mode = 2
+text = "Buy 3 (450p)"
+
+[node name="Footer" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="CloseBtn" type="Button" parent="Panel/VBox/Footer"]
+custom_minimum_size = Vector2(110, 36)
+layout_mode = 2
+text = "Close (ESC)"

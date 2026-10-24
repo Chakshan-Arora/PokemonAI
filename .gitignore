@@ -86,6 +86,7 @@ dist/
 # ==============================
 # Model weights & LoRA adapters
 # ==============================
-models/
+/models/
+!src/models/
 training/adapters/
 

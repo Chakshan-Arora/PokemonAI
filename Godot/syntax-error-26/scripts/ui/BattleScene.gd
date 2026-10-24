@@ -708,6 +708,16 @@ func _process_turn_result(result: Dictionary) -> void:
 						"type": "message",
 						"text": "%s grew to level %d!" % [player_pokemon.get_display_name(), player_pokemon.level]
 					})
+				# Currency prize reward for winning battle
+				var prize_money: int = maxi(50, opponent_pokemon.level * 25) if is_wild else maxi(150, opponent_pokemon.level * 50 + 100)
+				if GameState.player != null:
+					GameState.player.add_currency(prize_money)
+					EventBus.currency_changed.emit(GameState.player.currency, prize_money)
+				var cur_bal = GameState.player.currency if GameState.player else prize_money
+				_battle_step_queue.append({
+					"type": "message",
+					"text": "Earned %dp prize money! (Wallet: %dp)" % [prize_money, cur_bal]
+				})
 				if not is_wild:
 					var tid = "koji"
 					if GameState.has_meta("trainer_id"):

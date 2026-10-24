@@ -60,12 +60,13 @@ pixel_size = 0.045
 texture = ExtResource("2_sign")
 
 [node name="Label3D" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 billboard = 1
 text = "Signpost"
-font_size = 20
-outline_size = 6
-outline_color = Color(0, 0, 0, 0.8)
+font_size = 36
+outline_size = 8
+modulate = Color(0.06, 0.09, 0.16, 1)
+outline_modulate = Color(1, 1, 1, 1)
 
 [node name="Area3D" type="Area3D" parent="."]
 

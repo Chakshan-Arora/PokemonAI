@@ -43,9 +43,10 @@ texture = ExtResource("3_sign")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 billboard = 1
 text = "Object"
-font_size = 22
-outline_size = 6
-outline_color = Color(0, 0, 0, 0.8)
+font_size = 36
+outline_size = 8
+modulate = Color(0.06, 0.09, 0.16, 1)
+outline_modulate = Color(1, 1, 1, 1)
 
 [node name="Area3D" type="Area3D" parent="."]
 

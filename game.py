@@ -224,7 +224,6 @@ class AdventureGame:
         # In-world trainer manager
         self.trainer_manager = create_default_trainer_manager()
 
-
         # Voice Input via AssemblyAI (BT3.1) - commented out
         # from src.ai.voice_input import VoiceInputService
         # self.voice_service: VoiceInputService = (
@@ -575,7 +574,7 @@ class AdventureGame:
             self._print(" [t] Challenge Area Trainers")
             self._print(" [10] Return to Title Menu")
 
-            choice = self._prompt("\nWhat would you like to do? (1-10, p, t): ")
+            choice = self._prompt("\nWhat would you like to do? (1-10, p, t): ") 
 
             if choice == "1":
                 self._action_explore()

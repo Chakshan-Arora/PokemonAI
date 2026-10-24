@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://c8y3xqjWorld"]
+[gd_scene load_steps=60 format=3 uid="uid://c8y3xqjWorld"]
 
 [ext_resource type="Script" path="res://scripts/world/World.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
@@ -25,6 +25,8 @@
 [ext_resource type="PackedScene" path="res://scenes/world/TallGrassPatch.tscn" id="24_tallgrass"]
 [ext_resource type="PackedScene" path="res://scenes/world/TownFence.tscn" id="25_townfence"]
 [ext_resource type="PackedScene" path="res://scenes/world/LedgeProp.tscn" id="26_ledge"]
+[ext_resource type="PackedScene" path="res://scenes/world/PokeMartVendingMachine.tscn" id="27_pokemart_vm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PokeMartUI.tscn" id="28_pokemart_ui"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_top_color = Color(0.38, 0.65, 0.98, 1)
@@ -578,6 +580,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 26)
 sign_title = "Pallet Town"
 sign_text = "Pallet Town - Shades of your journey await! Ash's House (West) | Oak's House (East) | Oak's Lab (South)"
 
+[node name="PokeMartVendingMachine" parent="PalletTown" instance=ExtResource("27_pokemart_vm")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 28, 0, 32)
+
 [node name="FenceAshWest1" parent="PalletTown" instance=ExtResource("25_townfence")]
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 8, 0, 20)
 
@@ -941,3 +946,5 @@ level = 6
 [node name="QuestJournalUI" parent="UILayer" instance=ExtResource("9_quest")]
 
 [node name="PauseMenu" parent="UILayer" instance=ExtResource("10_pause")]
+
+[node name="PokeMartUI" parent="UILayer" instance=ExtResource("28_pokemart_ui")]

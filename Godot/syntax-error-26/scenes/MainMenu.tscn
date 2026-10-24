@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://c8y3xqjMainMenu"]
+[gd_scene format=3 uid="uid://bp3vqncvqvgdc"]
 
-[ext_resource type="Script" path="res://scripts/ui/MainMenu.gd" id="1_menu"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/meadow.jpg" id="2_bg"]
+[ext_resource type="Script" uid="uid://e4mdg4ie0v1g" path="res://scripts/ui/MainMenu.gd" id="1_menu"]
+[ext_resource type="Texture2D" uid="uid://b3bxv3fmfhb46" path="res://assets/backgrounds/meadow.jpg" id="2_bg"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=2073216717]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=1485804044]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,7 +23,7 @@ texture = ExtResource("2_bg")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="DimOverlay" type="ColorRect" parent="Background"]
+[node name="DimOverlay" type="ColorRect" parent="Background" unique_id=389408659]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,7 +32,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.04, 0.08, 0.14, 0.65)
 
-[node name="TitleLabel" type="Label" parent="."]
+[node name="TitleLabel" type="Label" parent="." unique_id=325111721]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -47,7 +47,7 @@ text = "PokémonAI"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="."]
+[node name="SubtitleLabel" type="Label" parent="." unique_id=867004840]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -63,7 +63,7 @@ text = "3D Pokemon Adventure & Tactical Battle System"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1263966261]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -78,32 +78,32 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
 
-[node name="NewGameBtn" type="Button" parent="VBoxContainer"]
+[node name="NewGameBtn" type="Button" parent="VBoxContainer" unique_id=1548906679]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "New Game"
 
-[node name="ContinueBtn" type="Button" parent="VBoxContainer"]
+[node name="ContinueBtn" type="Button" parent="VBoxContainer" unique_id=803018280]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Continue"
 
-[node name="QuitBtn" type="Button" parent="VBoxContainer"]
+[node name="QuitBtn" type="Button" parent="VBoxContainer" unique_id=861374107]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Quit Game"
 
-[node name="SaveInfoLabel" type="Label" parent="VBoxContainer"]
+[node name="SaveInfoLabel" type="Label" parent="VBoxContainer" unique_id=530889205]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_font_sizes/font_size = 14
 text = "Checking saves..."
 horizontal_alignment = 1
 
-[node name="DialogPanel" type="Panel" parent="."]
+[node name="DialogPanel" type="Panel" parent="." unique_id=271192388]
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -118,7 +118,7 @@ offset_bottom = 160.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="DialogPanel"]
+[node name="VBox" type="VBoxContainer" parent="DialogPanel" unique_id=1230032833]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -131,25 +131,24 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 14
 
-[node name="PromptLabel" type="Label" parent="DialogPanel/VBox"]
+[node name="PromptLabel" type="Label" parent="DialogPanel/VBox" unique_id=395428037]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Enter Trainer Name:"
 horizontal_alignment = 1
 
-[node name="NameInput" type="LineEdit" parent="DialogPanel/VBox"]
+[node name="NameInput" type="LineEdit" parent="DialogPanel/VBox" unique_id=1689158227]
 custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 placeholder_text = "Red"
 alignment = 1
 
-[node name="StartBtn" type="Button" parent="DialogPanel/VBox"]
+[node name="StartBtn" type="Button" parent="DialogPanel/VBox" unique_id=953871105]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 text = "Choose Starter Pokemon"
 
-[node name="BackBtn" type="Button" parent="DialogPanel/VBox"]
+[node name="BackBtn" type="Button" parent="DialogPanel/VBox" unique_id=2074786876]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Back"
-
