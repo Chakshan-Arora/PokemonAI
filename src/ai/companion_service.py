@@ -260,7 +260,7 @@ class CompanionService:
             impact = 0.4
 
         elif norm_type in ("scold", "criticize"):
-            # If agent has high aggression or low loyalty, it might resent or disobey
+            # Reprimand/criticism: drops trust and affection
             traits = agent.identity.personality_traits
             agg = traits.get("aggression", 50)
             loy = traits.get("loyalty", 50)

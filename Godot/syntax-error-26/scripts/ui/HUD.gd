@@ -162,15 +162,28 @@ func _on_companion_message_submitted(text: String) -> void:
 	GameState.set_meta("typing_active", true)
 	
 	var p_name = GameState.player.player_name if GameState.player else "Trainer"
-	var res = await LLMClient.talk_to_companion(active_p.species_name, msg, p_name)
+	var current_trust = float(active_p.obedience) if active_p else 30.0
+	var current_affection = float(active_p.bond) if active_p else 30.0
+	var res = await LLMClient.talk_to_companion(active_p.species_name, msg, p_name, current_trust, current_affection)
 	
 	if not res.is_empty():
-		companion_output_lbl.text = "%s: \"%s\"\n[State: %s | Trust: +%.1f | Affection: +%.1f]" % [
+		var t_delta = float(res.get("trust_delta", 0.0))
+		var a_delta = float(res.get("affection_delta", 0.0))
+		
+		# Update active Pokémon's actual bond and obedience in GameState
+		active_p.bond = clamp(active_p.bond + a_delta, 0.0, 100.0)
+		active_p.obedience = clamp(active_p.obedience + t_delta, 0.0, 100.0)
+		
+		var t_sign = "+" if t_delta > 0.0 else ""
+		var a_sign = "+" if a_delta > 0.0 else ""
+		var emo_state = str(res.get("emotional_state", "pleased")).capitalize()
+		
+		companion_output_lbl.text = "%s: \"%s\"\n[State: %s | Trust: %s%.1f | Affection: %s%.1f]" % [
 			active_p.get_display_name(),
 			res.get("dialogue", ""),
-			res.get("emotional_state", "pleased").capitalize(),
-			float(res.get("trust_delta", 0.0)),
-			float(res.get("affection_delta", 0.0))
+			emo_state,
+			t_sign, t_delta,
+			a_sign, a_delta
 		]
 		show_notification("Spoke with %s!" % active_p.get_display_name(), 3.0)
 	else:

@@ -1,0 +1,253 @@
+"""
+Unit tests for Companion Sentiment Guardrails and Relationship Dynamics.
+Verifies that:
+- Very negative comments (insults, hatred, abuse) cause trust and affection to drop (< 0).
+- Negative comments (criticism, scolding, annoyance) result in exactly 0.0 delta.
+- Neutral comments result in small or zero gain (0.0 to 1.0).
+- Positive comments result in positive gain (>= 2.0).
+- DecisionResponseParser correctly extracts negative deltas from JSON and regex fallback.
+"""
+import unittest
+from unittest.mock import MagicMock
+
+from server import classify_companion_sentiment, LLMBridgeHandler
+from src.ai.decision import AgentActionType, AgentDecision
+from src.ai.live_provider import DecisionResponseParser
+
+
+class TestCompanionSentimentClassifier(unittest.TestCase):
+    """Tests the sentiment classification rules and negation handling."""
+
+    def test_very_negative_comments(self) -> None:
+        very_negative_samples = [
+            "Why are you so stupid and useless?",
+            "I hate you, you are worthless trash!",
+            "Shut up and get out of here!",
+            "You are pathetic and weak.",
+            "I regret catching you, you're the worst pokemon.",
+            "You ugly freak, die already.",
+            "I don't want you on my team anymore, useless.",
+            "my charmander is stupid or what",
+        ]
+        for msg in very_negative_samples:
+            with self.subTest(msg=msg):
+                self.assertEqual(classify_companion_sentiment(msg), "very_negative")
+
+    def test_negative_comments(self) -> None:
+        negative_samples = [
+            "You made a mistake, that was bad.",
+            "You were really slow and clumsy today.",
+            "I am disappointed in you.",
+            "Stop it, that is annoying.",
+            "That was not good.",
+            "Why did you mess up the attack?",
+            "You need to listen to me and do better.",
+            "I don't like when you lose.",
+        ]
+        for msg in negative_samples:
+            with self.subTest(msg=msg):
+                self.assertEqual(classify_companion_sentiment(msg), "negative")
+
+    def test_negations_do_not_falsely_trigger_negative(self) -> None:
+        negated_samples = [
+            ("You are not stupid, don't worry.", "neutral"),
+            ("That wasn't bad at all, good job!", "positive"),
+            ("Not bad, you did well!", "positive"),
+            ("I don't hate you, you are my friend.", "positive"),
+        ]
+        for msg, expected in negated_samples:
+            with self.subTest(msg=msg):
+                self.assertEqual(classify_companion_sentiment(msg), expected)
+
+    def test_positive_comments(self) -> None:
+        positive_samples = [
+            "Great job Charmander, you're amazing!",
+            "I am so proud of you, buddy!",
+            "I love you so much, you are the best partner!",
+            "Thank you for helping me in that battle!",
+            "Super work today!",
+        ]
+        for msg in positive_samples:
+            with self.subTest(msg=msg):
+                self.assertEqual(classify_companion_sentiment(msg), "positive")
+
+    def test_neutral_comments(self) -> None:
+        neutral_samples = [
+            "Hello partner!",
+            "What do you think of this town?",
+            "Are you ready to head to the gym?",
+            "The weather is nice today.",
+            "How are you feeling?",
+        ]
+        for msg in neutral_samples:
+            with self.subTest(msg=msg):
+                self.assertEqual(classify_companion_sentiment(msg), "neutral")
+
+
+class TestDecisionResponseParserNegativeDeltas(unittest.TestCase):
+    """Verifies DecisionResponseParser parses signed and negative deltas."""
+
+    def test_parses_negative_deltas_from_json(self) -> None:
+        raw_json = '''{
+            "dialogue": "Char... *droops head sadly* Sorry Trainer.",
+            "emotional_state": "hurt",
+            "action_type": "interact",
+            "intent": "feel remorseful",
+            "confidence": 0.9,
+            "trust_delta": -3.5,
+            "affection_delta": -4.0
+        }'''
+        decision = DecisionResponseParser.parse(raw_json)
+        self.assertEqual(decision.trust_delta, -3.5)
+        self.assertEqual(decision.affection_delta, -4.0)
+        self.assertEqual(decision.emotional_state, "hurt")
+
+    def test_parses_zero_deltas_from_json(self) -> None:
+        raw_json = '''{
+            "dialogue": "Char? *tilts head thoughtfully*",
+            "emotional_state": "cautious",
+            "action_type": "interact",
+            "intent": "reflect",
+            "confidence": 0.9,
+            "trust_delta": 0.0,
+            "affection_delta": 0.0
+        }'''
+        decision = DecisionResponseParser.parse(raw_json)
+        self.assertEqual(decision.trust_delta, 0.0)
+        self.assertEqual(decision.affection_delta, 0.0)
+
+    def test_regex_rescue_handles_negative_deltas(self) -> None:
+        # Malformed JSON with unescaped internal text or trailing characters
+        raw_text = '''
+        Here is the JSON:
+        {"dialogue": "Char! *flinches* "Ouch" that hurt", "emotional_state": "hurt", "action_type": "interact", "intent": "react", "trust_delta": -2.5, "affection_delta": -3.0}
+        Hope you like it!
+        '''
+        decision = DecisionResponseParser.parse(raw_text)
+        self.assertEqual(decision.trust_delta, -2.5)
+        self.assertEqual(decision.affection_delta, -3.0)
+
+
+class TestServerCompanionTalkGuardrails(unittest.TestCase):
+    """Verifies LLMBridgeHandler._handle_companion_talk authoritative guardrails."""
+
+    def setUp(self) -> None:
+        self.handler = LLMBridgeHandler.__new__(LLMBridgeHandler)
+        self.mock_provider = MagicMock()
+        self.handler.provider = self.mock_provider
+
+    def test_very_negative_comment_forces_negative_deltas_even_if_model_hallucinates_positive(self) -> None:
+        # Mock model mistakenly hallucinating positive deltas on an insult
+        self.mock_provider.decide.return_value = AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent="talk",
+            dialogue="Char! *wags tail*",
+            emotional_state="pleased",
+            trust_delta=3.0,
+            affection_delta=4.0,
+        )
+
+        res = self.handler._handle_companion_talk({
+            "species": "Charmander",
+            "message": "Why are you so stupid and useless?",
+            "trust": 50.0,
+            "affection": 50.0,
+        })
+
+        self.assertEqual(res["sentiment"], "very_negative")
+        self.assertLess(res["trust_delta"], 0.0)
+        self.assertLess(res["affection_delta"], 0.0)
+        self.assertLess(res["new_trust"], 50.0)
+        self.assertLess(res["new_affection"], 50.0)
+        self.assertEqual(res["emotional_state"], "hurt")
+
+    def test_negative_comment_forces_zero_delta(self) -> None:
+        # Scolding / criticism: trust and affection must be exactly 0.0
+        # If model hallucinated a cheerful state, server guardrail overrides it to discouraged
+        self.mock_provider.decide.return_value = AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent="talk",
+            dialogue="Char... *looks down*",
+            emotional_state="pleased",
+            trust_delta=2.0,
+            affection_delta=2.0,
+        )
+
+        res = self.handler._handle_companion_talk({
+            "species": "Charmander",
+            "message": "You made a mistake, that was bad.",
+            "trust": 40.0,
+            "affection": 40.0,
+        })
+
+        self.assertEqual(res["sentiment"], "negative")
+        self.assertEqual(res["trust_delta"], 0.0)
+        self.assertEqual(res["affection_delta"], 0.0)
+        self.assertEqual(res["new_trust"], 40.0)
+        self.assertEqual(res["new_affection"], 40.0)
+        self.assertEqual(res["emotional_state"], "discouraged")
+
+    def test_positive_comment_increases_trust_and_affection(self) -> None:
+        self.mock_provider.decide.return_value = AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent="talk",
+            dialogue="Chaaar! *hugs trainer*",
+            emotional_state="happy",
+            trust_delta=2.5,
+            affection_delta=3.5,
+        )
+
+        res = self.handler._handle_companion_talk({
+            "species": "Charmander",
+            "message": "Great job Charmander, you're amazing!",
+            "trust": 30.0,
+            "affection": 30.0,
+        })
+
+        self.assertEqual(res["sentiment"], "positive")
+        self.assertGreater(res["trust_delta"], 0.0)
+        self.assertGreater(res["affection_delta"], 0.0)
+        self.assertGreater(res["new_trust"], 30.0)
+        self.assertGreater(res["new_affection"], 30.0)
+        self.assertEqual(res["emotional_state"], "happy")
+
+    def test_relationship_values_clamped_at_zero_and_hundred(self) -> None:
+        # Near 0
+        self.mock_provider.decide.return_value = AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent="talk",
+            dialogue="Char...",
+            emotional_state="hurt",
+            trust_delta=-5.0,
+            affection_delta=-5.0,
+        )
+        res_min = self.handler._handle_companion_talk({
+            "species": "Charmander",
+            "message": "I hate you, you are useless trash!",
+            "trust": 1.0,
+            "affection": 1.0,
+        })
+        self.assertGreaterEqual(res_min["new_trust"], 0.0)
+        self.assertGreaterEqual(res_min["new_affection"], 0.0)
+
+        # Near 100
+        self.mock_provider.decide.return_value = AgentDecision(
+            action_type=AgentActionType.INTERACT,
+            intent="talk",
+            dialogue="Char!",
+            emotional_state="happy",
+            trust_delta=5.0,
+            affection_delta=5.0,
+        )
+        res_max = self.handler._handle_companion_talk({
+            "species": "Charmander",
+            "message": "I love you so much, best partner!",
+            "trust": 99.0,
+            "affection": 99.0,
+        })
+        self.assertLessEqual(res_max["new_trust"], 100.0)
+        self.assertLessEqual(res_max["new_affection"], 100.0)
+
+
+if __name__ == "__main__":
+    unittest.main()

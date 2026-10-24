@@ -246,40 +246,57 @@ class DecisionResponseParser:
                     pass
 
         if not isinstance(data, dict):
-            # Regex extraction fallback for unescaped internal quotes or truncated JSON
+            dlg_text = None
             try:
                 dlg_match = re.search(r'"dialogue"\s*:\s*"(.*?)"\s*,\s*"\w+"', cleaned, re.DOTALL)
                 if not dlg_match:
                     dlg_match = re.search(r'"dialogue"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)', cleaned)
-                emo_match = re.search(r'"emotional_state"\s*:\s*"([^"]+)"', cleaned)
-                act_match = re.search(r'"action_type"\s*:\s*"([^"]+)"', cleaned)
-                int_match = re.search(r'"intent"\s*:\s*"([^"]+)"', cleaned)
-                trust_match = re.search(r'"trust_delta"\s*:\s*([0-9.]+)', cleaned)
-                aff_match = re.search(r'"affection_delta"\s*:\s*([0-9.]+)', cleaned)
                 if dlg_match:
-                    extracted_dlg = dlg_match.group(1).replace('\\"', '"').strip()
-                    if extracted_dlg:
-                        data = {
-                            "dialogue": extracted_dlg,
-                            "emotional_state": emo_match.group(1) if emo_match else "content",
-                            "action_type": act_match.group(1) if act_match else "interact",
-                            "intent": int_match.group(1) if int_match else "companion interaction",
-                            "confidence": 0.9,
-                            "trust_delta": float(trust_match.group(1)) if trust_match else 2.0,
-                            "affection_delta": float(aff_match.group(1)) if aff_match else 3.0,
-                        }
+                    cand = dlg_match.group(1).replace('\\"', '"').strip()
+                    if len(cand) > 2:
+                        dlg_text = cand
             except Exception:
                 pass
 
-        if not isinstance(data, dict):
-            return AgentDecision(
-                action_type=AgentActionType.HESITATE,
-                intent="Hesitate due to malformed model response",
-                dialogue="...",
-                emotional_state="confused",
-                rationale="Failed to parse JSON response or returned non-dictionary JSON.",
-                confidence=0.5,
-            )
+            # Check for dialogue preceding an unclosed '{'
+            if not dlg_text:
+                fb = cleaned.find("{")
+                if fb > 10:
+                    cand = cleaned[:fb].strip().strip('`"\'').strip()
+                    cand = re.sub(r'["\';}\s]+$', '', cand).strip()
+                    if len(cand) > 3 and ("*" in cand or "!" in cand):
+                        dlg_text = cand
+
+            # Direct conversational dialogue with roleplay cues (*action* or cries)
+            if not dlg_text and ("*" in cleaned or ("!" in cleaned and len(cleaned) > 20)):
+                cand = cleaned.strip('`"\'').strip()
+                cand = re.sub(r'["\';}\s]+$', '', cand).strip()
+                cand = re.sub(r'^["\';{\s]+', '', cand).strip()
+                if cand and len(cand) > 1 and not cand.startswith("{"):
+                    dlg_text = cand
+
+            if dlg_text:
+                emo_match = re.search(r'"emotional_state"\s*:\s*"([^"]+)"', cleaned)
+                trust_match = re.search(r'"trust_delta"\s*:\s*(-?[0-9.]+)', cleaned)
+                aff_match = re.search(r'"affection_delta"\s*:\s*(-?[0-9.]+)', cleaned)
+                data = {
+                    "dialogue": dlg_text,
+                    "emotional_state": emo_match.group(1) if emo_match else "neutral",
+                    "action_type": "interact",
+                    "intent": "companion interaction",
+                    "confidence": 0.9,
+                    "trust_delta": float(trust_match.group(1)) if trust_match else 0.0,
+                    "affection_delta": float(aff_match.group(1)) if aff_match else 0.0,
+                }
+            else:
+                return AgentDecision(
+                    action_type=AgentActionType.HESITATE,
+                    intent="Hesitate due to malformed model response",
+                    dialogue="...",
+                    emotional_state="confused",
+                    rationale="Failed to parse JSON response or returned non-dictionary JSON.",
+                    confidence=0.5,
+                )
 
         # Action type normalization
         action_raw = str(data.get("action_type", "hesitate")).strip().lower()
@@ -295,6 +312,17 @@ class DecisionResponseParser:
         except (ValueError, TypeError):
             conf = 0.8
 
+        # Safe relationship delta extraction
+        try:
+            trust_val = float(data["trust_delta"]) if data.get("trust_delta") is not None else 0.0
+        except (ValueError, TypeError):
+            trust_val = 0.0
+
+        try:
+            aff_val = float(data["affection_delta"]) if data.get("affection_delta") is not None else 0.0
+        except (ValueError, TypeError):
+            aff_val = 0.0
+
         return AgentDecision(
             action_type=action_type,
             intent=str(data.get("intent", "Autonomous action")),
@@ -305,8 +333,8 @@ class DecisionResponseParser:
             rationale=str(data.get("rationale", "")),
             confidence=conf,
             suggested_alternative=data.get("suggested_alternative"),
-            trust_delta=float(data.get("trust_delta", 2.0)),
-            affection_delta=float(data.get("affection_delta", 3.0)),
+            trust_delta=trust_val,
+            affection_delta=aff_val,
         )
 
 

@@ -171,8 +171,12 @@ func _on_talk_pressed() -> void:
 				"Tell me something you like about our team!"
 			]
 			var random_prompt = party_prompts[randi() % party_prompts.size()]
-			var res = await LLMClient.talk_to_companion(p.species_name, random_prompt, p_name, p.bond, p.obedience)
+			var res = await LLMClient.talk_to_companion(p.species_name, random_prompt, p_name, p.obedience, p.bond)
 			if not res.is_empty() and res.has("dialogue"):
+				var t_delta = float(res.get("trust_delta", 0.0))
+				var a_delta = float(res.get("affection_delta", 0.0))
+				p.obedience = clamp(p.obedience + t_delta, 0.0, 100.0)
+				p.bond = clamp(p.bond + a_delta, 0.0, 100.0)
 				EventBus.show_message.emit("%s: \"%s\"" % [p.get_display_name(), res["dialogue"]])
 				_select_pokemon(_selected_index)
 				return

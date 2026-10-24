@@ -66,10 +66,10 @@ func talk_to_companion(species: String, message: String, player_name: String = "
 		"species": species,
 		"dialogue": "*swishes tail attentively* (Local LLM server is busy or offline. Please check terminal.)",
 		"emotional_state": "thoughtful",
-		"trust_delta": 1.0,
-		"affection_delta": 1.0,
-		"new_trust": trust + 1.0,
-		"new_affection": affection + 1.0
+		"trust_delta": 0.0,
+		"affection_delta": 0.0,
+		"new_trust": trust,
+		"new_affection": affection
 	}
 	companion_replied.emit(fallback)
 	return fallback

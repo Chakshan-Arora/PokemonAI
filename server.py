@@ -9,6 +9,7 @@ Provides high-performance, low-latency REST endpoints for the Godot 3D Frontend:
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -23,6 +24,128 @@ from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
 from src.models.personality import Personality
+
+VERY_NEGATIVE_PHRASES = [
+    "hate you", "despise you", "loathe you", "shut up", "get lost", "get out",
+    "go away", "drop dead", "kill yourself", "die already", "waste of space",
+    "piece of trash", "piece of garbage", "regret catching you", "regret picking you",
+    "never liked you", "dont want you", "don't want you", "throw you away",
+    "worthless pokemon", "useless pokemon", "stupid pokemon", "pathetic pokemon",
+    "abandon you", "replace you", "worst pokemon", "ugly pokemon", "go to hell",
+    "f off", "fk off", "fuck off",
+]
+
+VERY_NEGATIVE_WORDS = {
+    "stupid", "idiot", "dumb", "moron", "useless", "worthless", "pathetic",
+    "garbage", "trash", "disgusting", "horrible", "terrible", "worst", "loser",
+    "freak", "scum", "weakling", "failure", "hate", "despise", "loathe", "kill", "die",
+    "ugly",
+}
+
+NEGATIVE_PHRASES = [
+    "not good", "not great", "not happy", "dont like", "don't like",
+    "bad job", "poor job", "stop that", "stop it", "quit it", "cut it out",
+    "listen to me", "be quiet", "do better", "mess up", "messed up",
+    "made a mistake", "not good enough", "why did you", "stop messing",
+    "poor performance", "let down", "wake up",
+]
+
+NEGATIVE_WORDS = {
+    "bad", "disappointed", "disappointing", "annoying", "annoyed", "clumsy",
+    "slow", "lazy", "careless", "mistake", "wrong", "fail", "failed", "failing",
+    "weak", "boring", "irritating", "troublesome", "disobedient", "stubborn",
+}
+
+POSITIVE_PHRASES = [
+    "good job", "great job", "awesome job", "well done", "proud of you",
+    "love you", "love ya", "i love", "not bad", "best partner", "good boy",
+    "good girl", "good pokemon", "great pokemon", "nice work", "super star",
+    "thank you", "thanks a lot", "so proud",
+]
+
+POSITIVE_WORDS = {
+    "good", "great", "awesome", "amazing", "wonderful", "fantastic", "excellent",
+    "brilliant", "super", "proud", "love", "loved", "lovely", "cute", "sweet",
+    "precious", "adorable", "best", "hero", "strong", "brave", "clever", "smart",
+    "genius", "perfect", "friend", "buddy", "pal", "cherish", "treat", "congrats",
+    "congratulations", "thanks", "thank",
+}
+
+NEGATIONS = {
+    "not", "no", "never", "dont", "don't", "isnt", "isn't", "arent", "aren't",
+    "wont", "won't", "cannot", "can't", "cant", "hardly", "barely", "neither",
+}
+
+
+def classify_companion_sentiment(text: str) -> str:
+    """
+    Classifies player comment into 'very_negative', 'negative', 'positive', or 'neutral'.
+    Handles phrase patterns, single token semantics, and negation windows.
+    """
+    cleaned = text.lower().strip()
+
+    # Pre-emptively normalize negated very negative expressions so substrings don't falsely match
+    negated_very_neg = [
+        "don't hate", "dont hate", "do not hate", "not hate", "never hate",
+        "not stupid", "not dumb", "not useless", "not worthless", "not ugly",
+        "not pathetic", "not trash", "not a failure", "not garbage",
+    ]
+    for np in negated_very_neg:
+        if np in cleaned:
+            cleaned = cleaned.replace(np, "appreciate")
+
+    # 1. Direct multi-word phrase matching
+    for phrase in VERY_NEGATIVE_PHRASES:
+        if phrase in cleaned:
+            return "very_negative"
+
+    for phrase in POSITIVE_PHRASES:
+        if phrase in cleaned:
+            return "positive"
+
+    for phrase in NEGATIVE_PHRASES:
+        if phrase in cleaned:
+            return "negative"
+
+    # 2. Token-level analysis with negation detection
+    words = re.findall(r"[a-zA-Z']+", cleaned)
+    has_very_neg = False
+    has_neg = False
+    has_pos = False
+
+    for idx, word in enumerate(words):
+        negated = False
+        start_lookback = max(0, idx - 2)
+        for prev in words[start_lookback:idx]:
+            if prev in NEGATIONS:
+                negated = True
+                break
+
+        if word in VERY_NEGATIVE_WORDS:
+            if negated:
+                has_pos = True  # e.g. 'not stupid'
+            else:
+                has_very_neg = True
+        elif word in NEGATIVE_WORDS:
+            if negated:
+                has_pos = True  # e.g. 'not bad'
+            else:
+                has_neg = True
+        elif word in POSITIVE_WORDS:
+            if negated:
+                has_neg = True  # e.g. 'not good'
+            else:
+                has_pos = True
+
+    if has_very_neg:
+        return "very_negative"
+    if has_neg and not has_pos:
+        return "negative"
+    if has_pos and not has_neg:
+        return "positive"
+    if has_pos and has_neg:
+        return "negative"
+    return "neutral"
 
 
 class LLMBridgeHandler(BaseHTTPRequestHandler):
@@ -118,6 +241,15 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         rel.trust = trust
         rel.affection = affection
 
+        # Authoritative sentiment classification
+        sentiment = classify_companion_sentiment(user_message)
+        command_intent = {
+            "very_negative": "insult",
+            "negative": "criticism",
+            "positive": "praise",
+            "neutral": "talk",
+        }.get(sentiment, "talk")
+
         perception = AgentPerception(
             agent_id=agent.agent_id,
             species=species,
@@ -126,7 +258,8 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 "trainer_id": player_name,
                 "trainer_name": player_name,
                 "command": user_message,
-                "command_intent": "praise" if any(w in user_message.lower() for w in ["good", "great", "proud", "amazing", "best"]) else "talk",
+                "command_intent": command_intent,
+                "sentiment": sentiment,
                 "trust": trust,
                 "affection": affection,
                 "relationship_stage": "companion",
@@ -136,23 +269,92 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         )
 
         decision = self.provider.decide(agent, perception)
-        print(f"[Companion Talk] {species} -> \"{decision.dialogue}\" ({decision.emotional_state})")
+        print(f"[Companion Talk] {species} -> \"{decision.dialogue}\" ({decision.emotional_state}) [Sentiment: {sentiment}]")
 
-        # Dynamic relationship delta parsed from model response
-        trust_delta = float(getattr(decision, "trust_delta", 2.0) or 2.0)
-        affection_delta = float(getattr(decision, "affection_delta", 3.0) or 3.0)
+        # Parse raw decision deltas from model
+        raw_t_delta = getattr(decision, "trust_delta", None)
+        raw_a_delta = getattr(decision, "affection_delta", None)
+        try:
+            model_t_delta = float(raw_t_delta) if raw_t_delta is not None else None
+        except (ValueError, TypeError):
+            model_t_delta = None
+
+        try:
+            model_a_delta = float(raw_a_delta) if raw_a_delta is not None else None
+        except (ValueError, TypeError):
+            model_a_delta = None
+
+        # Authoritative Sentiment & Relationship Guardrails
+        emotional_state = decision.emotional_state or "neutral"
+
+        if sentiment == "very_negative":
+            # Very negative comments: trust and affection MUST decrease (< 0.0)
+            if model_t_delta is not None and model_t_delta < 0.0:
+                trust_delta = max(-5.0, min(-2.0, model_t_delta))
+            else:
+                trust_delta = -3.0
+
+            if model_a_delta is not None and model_a_delta < 0.0:
+                affection_delta = max(-5.0, min(-2.5, model_a_delta))
+            else:
+                affection_delta = -4.0
+
+            if emotional_state.lower() in ("pleased", "happy", "excited", "affectionate", "content", "bold", "confident", "joyful", "thoughtful"):
+                emotional_state = "hurt"
+
+        elif sentiment == "negative":
+            # Negative comments: trust and affection MUST be 0.0
+            trust_delta = 0.0
+            affection_delta = 0.0
+
+            if emotional_state.lower() in ("pleased", "happy", "excited", "affectionate", "content", "bold", "confident", "joyful", "thoughtful"):
+                emotional_state = "discouraged"
+
+        elif sentiment == "positive":
+            # Positive comments: trust and affection increase
+            if model_t_delta is not None and model_t_delta > 0.0:
+                trust_delta = max(1.0, min(5.0, model_t_delta))
+            else:
+                trust_delta = 2.5
+
+            if model_a_delta is not None and model_a_delta > 0.0:
+                affection_delta = max(1.5, min(5.0, model_a_delta))
+            else:
+                affection_delta = 3.5
+
+            if emotional_state.lower() in ("neutral", "discouraged", "hurt", "sad", "confused"):
+                emotional_state = "happy"
+
+        else:  # neutral
+            # Casual conversation: modest or zero change
+            if model_t_delta is not None:
+                trust_delta = max(0.0, min(1.0, model_t_delta))
+            else:
+                trust_delta = 0.5
+
+            if model_a_delta is not None:
+                affection_delta = max(0.0, min(1.0, model_a_delta))
+            else:
+                affection_delta = 0.5
+
+            if not emotional_state or emotional_state.lower() in ("hurt", "angry"):
+                emotional_state = "thoughtful"
+
+        new_trust = round(max(0.0, min(100.0, trust + trust_delta)), 1)
+        new_affection = round(max(0.0, min(100.0, affection + affection_delta)), 1)
 
         return {
             "species": species,
-            "dialogue": decision.dialogue or f"{species} looks at you happily!",
-            "emotional_state": decision.emotional_state or "pleased",
+            "dialogue": decision.dialogue or f"{species} looks at you attentively.",
+            "emotional_state": emotional_state,
             "action_type": decision.action_type.value,
             "intent": decision.intent,
             "confidence": decision.confidence,
-            "trust_delta": trust_delta,
-            "affection_delta": affection_delta,
-            "new_trust": round(trust + trust_delta, 1),
-            "new_affection": round(affection + affection_delta, 1),
+            "sentiment": sentiment,
+            "trust_delta": round(trust_delta, 1),
+            "affection_delta": round(affection_delta, 1),
+            "new_trust": new_trust,
+            "new_affection": new_affection,
         }
 
     def _handle_battle_decide(self, data: dict[str, Any]) -> dict[str, Any]:
