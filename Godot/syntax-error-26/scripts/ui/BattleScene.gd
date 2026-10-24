@@ -945,28 +945,6 @@ func _create_talk_menu() -> void:
 		btn.pressed.connect(_send_battle_talk.bind(p["text"]))
 		vbox.add_child(btn)
 	
-	var hbox = HBoxContainer.new()
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var line_edit = LineEdit.new()
-	line_edit.placeholder_text = "Or type a custom command or shout..."
-	line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.add_child(line_edit)
-	
-	var send_btn = Button.new()
-	send_btn.text = "Send"
-	send_btn.pressed.connect(func():
-		var t = line_edit.text.strip_edges()
-		if t != "":
-			_send_battle_talk(t)
-	)
-	hbox.add_child(send_btn)
-	line_edit.text_submitted.connect(func(new_text: String):
-		var t = new_text.strip_edges()
-		if t != "":
-			_send_battle_talk(t)
-	)
-	vbox.add_child(hbox)
-	
 	var back = Button.new()
 	back.text = "← Back"
 	back.pressed.connect(_show_action_menu)
