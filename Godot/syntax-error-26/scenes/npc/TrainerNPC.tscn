@@ -8,6 +8,7 @@ script/source = "extends \"res://scripts/npc/TrainerNPC.gd\"
 
 func _ready() -> void:
 	add_to_group(\"interactable\")
+	add_to_group(\"npc\")
 	if is_instance_valid(label_3d):
 		label_3d.text = trainer_name
 	

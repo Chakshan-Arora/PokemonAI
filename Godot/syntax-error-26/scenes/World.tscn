@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3 uid="uid://c8y3xqjWorld"]
+[gd_scene load_steps=58 format=3 uid="uid://c8y3xqjWorld"]
 
 [ext_resource type="Script" path="res://scripts/world/World.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/OakLab.tscn" id="23_oaklab"]
 [ext_resource type="PackedScene" path="res://scenes/world/TallGrassPatch.tscn" id="24_tallgrass"]
 [ext_resource type="PackedScene" path="res://scenes/world/TownFence.tscn" id="25_townfence"]
+[ext_resource type="PackedScene" path="res://scenes/world/LedgeProp.tscn" id="26_ledge"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_top_color = Color(0.38, 0.65, 0.98, 1)
@@ -99,13 +100,53 @@ size = Vector3(6, 0.05, 50)
 [sub_resource type="BoxMesh" id="BoxMesh_path_h"]
 size = Vector3(8, 0.05, 3.5)
 
-[sub_resource type="BoxMesh" id="BoxMesh_path_route1"]
-size = Vector3(5, 0.05, 30)
+[sub_resource type="BoxMesh" id="BoxMesh_path_pallet_main"]
+size = Vector3(6, 0.05, 48)
+
+[sub_resource type="BoxMesh" id="BoxMesh_path_route1_long"]
+size = Vector3(5, 0.05, 24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_path_route1_north"]
+size = Vector3(5, 0.05, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_path_trail"]
+size = Vector3(26, 0.05, 3.5)
 
 [sub_resource type="StandardMaterial3D" id="Mat_dirtpath"]
 albedo_texture = ExtResource("14_path")
 texture_filter = 0
 uv1_scale = Vector3(2, 16, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_sand"]
+albedo_color = Color(0.92, 0.86, 0.68, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_sand"]
+material = SubResource("Mat_sand")
+size = Vector3(44, 0.05, 4)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood_dock"]
+albedo_color = Color(0.55, 0.38, 0.24, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_dock"]
+material = SubResource("Mat_wood_dock")
+size = Vector3(3.5, 0.12, 10)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sea"]
+material = SubResource("Mat_lake")
+size = Vector3(44, 0.05, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sea_blocker"]
+size = Vector3(44, 2.0, 20)
+
+[sub_resource type="StandardMaterial3D" id="Mat_gate_pillar"]
+albedo_color = Color(0.85, 0.85, 0.82, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_gate_pillar"]
+material = SubResource("Mat_gate_pillar")
+size = Vector3(0.8, 3.5, 0.8)
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_world")
@@ -164,9 +205,9 @@ surface_material_override/0 = SubResource("Mat_plains")
 
 [node name="Paths" type="Node3D" parent="."]
 
-[node name="PathToOak" type="MeshInstance3D" parent="Paths"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, 30)
-mesh = SubResource("BoxMesh_path")
+[node name="PathPalletMain" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, 32)
+mesh = SubResource("BoxMesh_path_pallet_main")
 surface_material_override/0 = SubResource("Mat_dirtpath")
 
 [node name="PathToAshHouse" type="MeshInstance3D" parent="Paths"]
@@ -184,9 +225,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 0.04, 43.5)
 mesh = SubResource("BoxMesh_path_h")
 surface_material_override/0 = SubResource("Mat_dirtpath")
 
-[node name="PathToRoute1" type="MeshInstance3D" parent="Paths"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, -5)
-mesh = SubResource("BoxMesh_path_route1")
+[node name="PathRoute1_South" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, -4)
+mesh = SubResource("BoxMesh_path_route1_long")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathRoute1_Mid" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, -28)
+mesh = SubResource("BoxMesh_path_route1_long")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathRoute1_North" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.04, -48)
+mesh = SubResource("BoxMesh_path_route1_north")
 surface_material_override/0 = SubResource("Mat_dirtpath")
 
 [node name="PathToForest" type="MeshInstance3D" parent="Paths"]
@@ -194,23 +245,207 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 60, 0.
 mesh = SubResource("BoxMesh_path")
 surface_material_override/0 = SubResource("Mat_dirtpath")
 
+[node name="PathWestTrail" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -6, 0.04, 25)
+mesh = SubResource("BoxMesh_path_trail")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
+[node name="PathEastTrail" type="MeshInstance3D" parent="Paths"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 52, 0.04, -44)
+mesh = SubResource("BoxMesh_path_trail")
+surface_material_override/0 = SubResource("Mat_dirtpath")
+
 [node name="Decorations" type="Node3D" parent="."]
 
-[node name="OakTree1" parent="Decorations" instance=ExtResource("11_tree")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 8)
+[node name="PT_Tree_W1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 14)
 tree_type = "oak"
 
-[node name="OakTree2" parent="Decorations" instance=ExtResource("11_tree")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 8)
+[node name="PT_Tree_W2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 22)
 tree_type = "oak"
 
-[node name="OakTree3" parent="Decorations" instance=ExtResource("11_tree")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 28)
+[node name="PT_Tree_W3" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 30)
 tree_type = "oak"
 
-[node name="OakTree4" parent="Decorations" instance=ExtResource("11_tree")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 32)
+[node name="PT_Tree_W4" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 38)
 tree_type = "oak"
+
+[node name="PT_Tree_W5" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 46)
+tree_type = "oak"
+
+[node name="PT_Tree_W6" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 54)
+tree_type = "oak"
+
+[node name="PT_Tree_W1b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 16)
+tree_type = "oak"
+
+[node name="PT_Tree_W2b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 34)
+tree_type = "oak"
+
+[node name="PT_Tree_W3b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 50)
+tree_type = "oak"
+
+[node name="PT_Tree_E1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 14)
+tree_type = "oak"
+
+[node name="PT_Tree_E2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 22)
+tree_type = "oak"
+
+[node name="PT_Tree_E3" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 30)
+tree_type = "oak"
+
+[node name="PT_Tree_E4" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 38)
+tree_type = "oak"
+
+[node name="PT_Tree_E5" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 46)
+tree_type = "oak"
+
+[node name="PT_Tree_E6" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 0, 54)
+tree_type = "oak"
+
+[node name="PT_Tree_E1b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 16)
+tree_type = "oak"
+
+[node name="PT_Tree_E2b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 34)
+tree_type = "oak"
+
+[node name="PT_Tree_E3b" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0, 50)
+tree_type = "oak"
+
+[node name="PT_Tree_NW1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 12)
+tree_type = "oak"
+
+[node name="PT_Tree_NW2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 12)
+tree_type = "oak"
+
+[node name="PT_Tree_NE1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 12)
+tree_type = "oak"
+
+[node name="PT_Tree_NE2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41, 0, 12)
+tree_type = "oak"
+
+[node name="R1_Tree_W1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 6)
+tree_type = "pine"
+
+[node name="R1_Tree_W2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
+tree_type = "pine"
+
+[node name="R1_Tree_W3" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -6)
+tree_type = "pine"
+
+[node name="R1_Tree_W4" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -12)
+tree_type = "pine"
+
+[node name="R1_Tree_W5" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -18)
+tree_type = "pine"
+
+[node name="R1_Tree_W6" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -24)
+tree_type = "pine"
+
+[node name="R1_Tree_W7" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -30)
+tree_type = "pine"
+
+[node name="R1_Tree_W8" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -36)
+tree_type = "pine"
+
+[node name="R1_Tree_W9" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -42)
+tree_type = "pine"
+
+[node name="R1_Tree_W10" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -48)
+tree_type = "pine"
+
+[node name="R1_Tree_W11" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -54)
+tree_type = "pine"
+
+[node name="R1_Tree_E1" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, 6)
+tree_type = "pine"
+
+[node name="R1_Tree_E2" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, 0)
+tree_type = "pine"
+
+[node name="R1_Tree_E3" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -6)
+tree_type = "pine"
+
+[node name="R1_Tree_E4" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -12)
+tree_type = "pine"
+
+[node name="R1_Tree_E5" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -18)
+tree_type = "pine"
+
+[node name="R1_Tree_E6" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -24)
+tree_type = "pine"
+
+[node name="R1_Tree_E7" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -30)
+tree_type = "pine"
+
+[node name="R1_Tree_E8" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -36)
+tree_type = "pine"
+
+[node name="R1_Tree_E9" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -42)
+tree_type = "pine"
+
+[node name="R1_Tree_E10" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -48)
+tree_type = "pine"
+
+[node name="R1_Tree_E11" parent="Decorations" instance=ExtResource("11_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, -54)
+tree_type = "pine"
+
+[node name="R1_Ledge1" parent="Decorations" instance=ExtResource("26_ledge")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -18)
+
+[node name="R1_Ledge2" parent="Decorations" instance=ExtResource("26_ledge")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -36)
+
+[node name="GatePillarLeft" type="MeshInstance3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 1.75, -58)
+mesh = SubResource("BoxMesh_gate_pillar")
+
+[node name="GatePillarRight" type="MeshInstance3D" parent="Decorations"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 1.75, -58)
+mesh = SubResource("BoxMesh_gate_pillar")
 
 [node name="PineTree1" parent="Decorations" instance=ExtResource("11_tree")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 135, 0, 45)
@@ -228,20 +463,44 @@ tree_type = "pine"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 365, 0, 60)
 tree_type = "pine"
 
-[node name="Flowers1" parent="Decorations" instance=ExtResource("12_bush")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 0, 18)
+[node name="AshFlowers1" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 28)
 prop_type = "flowers"
 
-[node name="Flowers2" parent="Decorations" instance=ExtResource("12_bush")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 0, 24)
+[node name="AshFlowers2" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0, 28)
 prop_type = "flowers"
 
-[node name="Bush1" parent="Decorations" instance=ExtResource("12_bush")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 12)
+[node name="OakFlowers1" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 0, 28)
+prop_type = "flowers"
+
+[node name="OakFlowers2" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0, 28)
+prop_type = "flowers"
+
+[node name="TownSquareFlowers1" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 20)
+prop_type = "flowers"
+
+[node name="TownSquareFlowers2" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 20)
+prop_type = "flowers"
+
+[node name="LabGardenFlowers1" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, 52)
+prop_type = "flowers"
+
+[node name="LabGardenFlowers2" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 0, 52)
+prop_type = "flowers"
+
+[node name="PalletBush1" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 16)
 prop_type = "bush"
 
-[node name="Bush2" parent="Decorations" instance=ExtResource("12_bush")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 12)
+[node name="PalletBush2" parent="Decorations" instance=ExtResource("12_bush")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 16)
 prop_type = "bush"
 
 [node name="MountainBoulder1" parent="Decorations" instance=ExtResource("16_rockprop")]
@@ -343,41 +602,102 @@ transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 42, 0,
 [node name="FenceOakFront" parent="PalletTown" instance=ExtResource("25_townfence")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 30)
 
-[node name="FenceSouth1" parent="PalletTown" instance=ExtResource("25_townfence")]
+[node name="SandShore" type="MeshInstance3D" parent="PalletTown"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.03, 57.5)
+mesh = SubResource("BoxMesh_sand")
+
+[node name="SeaPier" type="MeshInstance3D" parent="PalletTown"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.06, 63)
+mesh = SubResource("BoxMesh_dock")
+
+[node name="PalletSea" type="MeshInstance3D" parent="PalletTown"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.02, 68)
+mesh = SubResource("BoxMesh_sea")
+
+[node name="SeaBlocker" type="StaticBody3D" parent="PalletTown"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1.0, 70)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PalletTown/SeaBlocker"]
+shape = SubResource("BoxShape3D_sea_blocker")
+
+[node name="SeaSign" parent="PalletTown" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 59)
+sign_title = "Route 21 Waterway"
+sign_text = "Route 21: Waterway south to Cinnabar Island. Surfing Pokémon required to cross!"
+
+[node name="FenceShore1" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 56)
+
+[node name="FenceShore2" parent="PalletTown" instance=ExtResource("25_townfence")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 56)
 
-[node name="FenceSouth2" parent="PalletTown" instance=ExtResource("25_townfence")]
+[node name="FenceShore3" parent="PalletTown" instance=ExtResource("25_townfence")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 56)
 
-[node name="FenceSouth3" parent="PalletTown" instance=ExtResource("25_townfence")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 56)
+[node name="FenceShore4" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, 56)
 
-[node name="FenceSouth4" parent="PalletTown" instance=ExtResource("25_townfence")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 56)
+[node name="FenceShore5" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 56)
+
+[node name="FenceShore6" parent="PalletTown" instance=ExtResource("25_townfence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 56)
 
 [node name="WildTallGrass" type="Node3D" parent="."]
 
 [node name="TallGrassPatch1" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 2)
 
 [node name="TallGrassPatch2" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, 2)
 
 [node name="TallGrassPatch3" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -12)
 
 [node name="TallGrassPatch4" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -12)
+
+[node name="TallGrassPatch5" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -28)
+
+[node name="TallGrassPatch6" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -28)
+
+[node name="TallGrassPatch7" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -44)
+
+[node name="TallGrassPatch8" parent="WildTallGrass" instance=ExtResource("24_tallgrass")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -44)
 
 [node name="WorldObjects" type="Node3D" parent="."]
 
 [node name="Route1Sign" parent="WorldObjects" instance=ExtResource("3_wobj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 8)
 object_id = "route1_sign"
 object_name = "Route 1 Sign"
 object_type = "sign"
 interaction_text = "Route 1: Pathway to Viridian City. Watch for wild Pokémon in the tall grass!"
 region_id = "starting_meadow"
+
+[node name="Route1TipsSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0, -24)
+sign_title = "Trainer Tips"
+sign_text = "Trainer Tips: Wild Pokémon appear in tall grass. Carry Potions to keep your team in top shape!"
+
+[node name="ViridianGateSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0, -56)
+sign_title = "Viridian City Outskirts"
+sign_text = "Viridian City Ahead - The Eternally Green Paradise. Gym Leader: Currently away on business."
+
+[node name="TrailLakeSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 27)
+sign_title = "West Trail to Crystal Lake"
+sign_text = "West: Crystal Lakeside (Clear waters, water Pokémon) and Crumbling Ruins."
+
+[node name="TrailPlainsSign" parent="WorldObjects" instance=ExtResource("18_signprop")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 0, -42)
+sign_title = "East Trail to Plains"
+sign_text = "East: Tall Grass Plains & Ancient Shrine Grounds."
 
 [node name="ProfOak" parent="WorldObjects" instance=ExtResource("3_wobj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 41)
@@ -388,7 +708,7 @@ interaction_text = "Hello there, young Trainer! Welcome to my Pokémon Research 
 region_id = "starting_meadow"
 
 [node name="BerryBush" parent="WorldObjects" instance=ExtResource("3_wobj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, 50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37, 0, -8)
 object_id = "berry_bush_route1"
 object_name = "Berry Bush"
 object_type = "resource_node"
@@ -482,10 +802,10 @@ team_species = Array[String](["Geodude", "Machop"])
 team_levels = Array[int]([4, 5])
 
 [node name="TrainerJoey" parent="Trainers" instance=ExtResource("5_npc")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 0, 45)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -4)
 trainer_id = "youngster_joey"
 trainer_name = "Youngster Joey"
-dialogue_intro = "Hi! I like shorts! They're comfy and easy to wear!"
+dialogue_intro = "Hi! I like shorts! They're comfy and easy to wear! My Rattata is in the top percentage!"
 dialogue_defeat = "I lost?! My top percentage team!"
 team_species = Array[String](["Rattata"])
 team_levels = Array[int]([4])
@@ -500,10 +820,10 @@ team_species = Array[String](["Pidgey"])
 team_levels = Array[int]([4])
 
 [node name="BugCatcherSammy" parent="Trainers" instance=ExtResource("5_npc")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 165, 0, 75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -22)
 trainer_id = "bug_catcher_sammy"
 trainer_name = "Bug Catcher Sammy"
-dialogue_intro = "I spent all morning hunting Bug Pokemon in the trees!"
+dialogue_intro = "I caught some awesome Bug Pokémon in the tall grass along Route 1!"
 dialogue_defeat = "My bugs couldn't hold out..."
 team_species = Array[String](["Caterpie", "Butterfree"])
 team_levels = Array[int]([4, 5])
@@ -556,22 +876,22 @@ team_levels = Array[int]([9, 10])
 [node name="WildPokemonSpawns" type="Node3D" parent="."]
 
 [node name="Pidgey" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 4)
 species_name = "Pidgey"
 level = 4
 
 [node name="Rattata" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 30)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 4)
 species_name = "Rattata"
 level = 4
 
 [node name="Pikachu" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 75, 0, 65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -10)
 species_name = "Pikachu"
 level = 5
 
 [node name="Caterpie" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0, 50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0, -10)
 species_name = "Caterpie"
 level = 4
 
@@ -601,7 +921,7 @@ species_name = "Abra"
 level = 6
 
 [node name="Squirtle" parent="WildPokemonSpawns" instance=ExtResource("4_wild")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 0, 160)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 66)
 species_name = "Squirtle"
 level = 5
 
