@@ -35,17 +35,51 @@
         "speed": 0
       },
       "unique_id": "1985_1843674496"
+    },
+    {
+      "attacks": [
+        "Tackle",
+        "Quick Attack"
+      ],
+      "awarded_level_moves": [],
+      "bond": 0,
+      "current_hp": 18,
+      "experience": 0,
+      "level": 4,
+      "max_hp": 18,
+      "nickname": "Rattata",
+      "obedience": 100,
+      "personality": {
+        "aggression": 29,
+        "confidence": 63,
+        "curiosity": 60,
+        "fear": 92,
+        "loyalty": 43,
+        "sociability": 73
+      },
+      "species": "Rattata",
+      "species_name": "Rattata",
+      "status_effects": [],
+      "trained_atk": 0,
+      "trained_def": 0,
+      "trained_spd": 0,
+      "trained_stats": {
+        "attack": 0,
+        "defense": 0,
+        "speed": 0
+      },
+      "unique_id": "13988_1172477422"
     }
   ],
   "currency": 500,
   "current_region_id": "starting_meadow",
   "discovered_landmarks": [],
   "discovered_regions": [],
-  "game_time": 8.0,
+  "game_time": 8.08051792499927,
   "inventory": {
     "capacity": 20,
     "items": {
-      "poke_ball": 5,
+      "poke_ball": 4,
       "potion": 3
     }
   },
@@ -58,15 +92,17 @@
     "unique_id": "player_1984_2523412446"
   },
   "player_position": {
-    "x": 50.0,
-    "y": 0.5,
-    "z": 50.0
+    "x": 22.2623863220215,
+    "y": 0.000557269901037216,
+    "z": 12.7218637466431
   },
   "quests": {},
-  "saved_at": "2026-10-25 04:11:59",
+  "saved_at": "2026-10-25 04:26:28",
   "schema_version": 4,
   "team": [
-    "1985_1843674496"
+    "1985_1843674496",
+    "13988_1172477422",
+    "13988_1172477422"
   ],
   "wild_action_history": []
 }
