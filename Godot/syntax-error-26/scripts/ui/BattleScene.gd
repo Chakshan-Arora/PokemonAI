@@ -195,6 +195,17 @@ func _setup_battle() -> void:
 		# Apply day and night lighting/tint to battle arena
 		_apply_time_of_day_atmosphere()
 	
+	var old_ball = $Arena.get_node_or_null("ActivePokeBall")
+	if is_instance_valid(old_ball):
+		old_ball.queue_free()
+	if is_instance_valid(opponent_sprite):
+		opponent_sprite.visible = true
+		opponent_sprite.scale = Vector2.ONE
+		opponent_sprite.modulate = Color.WHITE
+	var opp_panel = $BattleUI/OpponentPanel
+	if is_instance_valid(opp_panel):
+		opp_panel.modulate.a = 1.0
+	
 	battle_engine.start_battle(player_pokemon, opponent_pokemon, is_wild)
 	active_battle_morale = 0
 	battle_engine.set_player_morale(0)
@@ -397,6 +408,308 @@ func _animate_hit(is_player_hit: bool) -> void:
 	tween.tween_property(sprite, "position:x", orig_x - 6, 0.04)
 	tween.tween_property(sprite, "position:x", orig_x, 0.04)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
+
+## ─── Poké Ball Throw & Capture Animations ───────────────────────────────────
+
+func _animate_capture_throw(success: bool, callback: Callable) -> void:
+	var arena = $Arena
+	if not is_instance_valid(arena) or not is_instance_valid(opponent_sprite) or not is_instance_valid(player_sprite):
+		callback.call()
+		return
+	
+	# Clean up any leftover balls
+	var old_ball = arena.get_node_or_null("ActivePokeBall")
+	if is_instance_valid(old_ball):
+		old_ball.queue_free()
+	
+	# Instantiate Poké Ball
+	var ball = TextureRect.new()
+	ball.name = "ActivePokeBall"
+	ball.texture = load("res://assets/sprites/items/poke_ball.png")
+	var ball_size = Vector2(44, 44)
+	ball.custom_minimum_size = ball_size
+	ball.size = ball_size
+	ball.pivot_offset = ball_size / 2.0
+	ball.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ball.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ball.z_index = 20
+	
+	var start_pos = player_sprite.position + Vector2(player_sprite.size.x * 0.4, player_sprite.size.y * 0.2)
+	var opp_center = opponent_sprite.position + Vector2(opponent_sprite.size.x * 0.5, opponent_sprite.size.y * 0.5)
+	var ground_pos = Vector2(opp_center.x - 22, opponent_sprite.position.y + opponent_sprite.size.y - 20)
+	
+	ball.position = start_pos
+	arena.add_child(ball)
+	
+	# Phase 1: High Arc Throw (0.65s)
+	var throw_tw = create_tween().set_parallel(true)
+	throw_tw.tween_property(ball, "position:x", opp_center.x - 22, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Parabolic Y: peak up by 140px, then down to opp_center.y
+	var peak_y = minf(start_pos.y, opp_center.y) - 140.0
+	var y_tw = create_tween()
+	y_tw.tween_property(ball, "position:y", peak_y, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	y_tw.tween_property(ball, "position:y", opp_center.y - 22, 0.33).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Rapid spinning
+	throw_tw.tween_property(ball, "rotation_degrees", 1080.0, 0.65)
+	
+	throw_tw.chain().tween_callback(func():
+		_absorb_pokemon_into_ball(ball, opp_center, ground_pos, success, callback)
+	)
+
+func _absorb_pokemon_into_ball(ball: TextureRect, opp_center: Vector2, ground_pos: Vector2, success: bool, callback: Callable) -> void:
+	if not is_instance_valid(ball) or not is_instance_valid(opponent_sprite):
+		callback.call()
+		return
+	
+	var orig_opp_pos = opponent_sprite.position
+	var orig_opp_scale = opponent_sprite.scale
+	opponent_sprite.pivot_offset = opponent_sprite.size / 2.0
+	
+	# Flash red energy on opponent and bright flash on ball
+	var absorb_flash_tw = create_tween().set_parallel(true)
+	absorb_flash_tw.tween_property(opponent_sprite, "modulate", Color(3.0, 1.2, 1.2, 1.0), 0.1)
+	absorb_flash_tw.tween_property(ball, "modulate", Color(2.5, 2.5, 2.5, 1.0), 0.1)
+	
+	# Fade opponent HUD during capture attempt
+	var opp_panel = $BattleUI/OpponentPanel
+	if is_instance_valid(opp_panel):
+		var panel_tw = create_tween()
+		panel_tw.tween_property(opp_panel, "modulate:a", 0.0, 0.25)
+	
+	# Opponent shrinks down and gets sucked into ball center
+	var absorb_tw = create_tween().set_parallel(true)
+	absorb_tw.tween_property(opponent_sprite, "scale", Vector2(0.04, 0.04), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	absorb_tw.tween_property(opponent_sprite, "position", opp_center - opponent_sprite.size * 0.04 / 2.0, 0.35)
+	absorb_tw.tween_property(opponent_sprite, "modulate:a", 0.0, 0.35)
+	absorb_tw.tween_property(ball, "modulate", Color.WHITE, 0.25)
+	
+	absorb_tw.chain().tween_callback(func():
+		opponent_sprite.visible = false
+		opponent_sprite.position = orig_opp_pos
+		opponent_sprite.scale = orig_opp_scale
+		opponent_sprite.modulate = Color.WHITE
+		
+		# Drop to ground and bounce
+		_drop_and_bounce_ball(ball, ground_pos, success, callback)
+	)
+
+func _drop_and_bounce_ball(ball: TextureRect, ground_pos: Vector2, success: bool, callback: Callable) -> void:
+	if not is_instance_valid(ball):
+		callback.call()
+		return
+	
+	ball.rotation_degrees = 0.0
+	var drop_tw = create_tween()
+	# Fall to ground
+	drop_tw.tween_property(ball, "position:y", ground_pos.y, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Bounce 1
+	drop_tw.tween_property(ball, "position:y", ground_pos.y - 22, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	drop_tw.tween_property(ball, "position:y", ground_pos.y, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Small bounce 2
+	drop_tw.tween_property(ball, "position:y", ground_pos.y - 7, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	drop_tw.tween_property(ball, "position:y", ground_pos.y, 0.05).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	drop_tw.tween_callback(func():
+		_tick_and_blink_ball(ball, ground_pos, success, callback)
+	)
+
+func _tick_and_blink_ball(ball: TextureRect, ground_pos: Vector2, success: bool, callback: Callable) -> void:
+	if not is_instance_valid(ball):
+		callback.call()
+		return
+	
+	var tw = create_tween()
+	
+	if not success:
+		# Exactly 2.0 seconds of ticking & blinking, then breaks free!
+		# Tick 1 at 0.2s
+		tw.tween_interval(0.2)
+		tw.tween_callback(func(): _wobble_and_blink(ball, -22.0))
+		# Tick 2 at 1.0s
+		tw.tween_interval(0.8)
+		tw.tween_callback(func(): _wobble_and_blink(ball, 22.0))
+		# Tense rapid vibration from 1.6s to 2.0s (0.4s duration)
+		tw.tween_interval(0.6)
+		tw.tween_callback(func(): _vibrate_ball(ball, 0.4))
+		# At 2.0s: Breaks free!
+		tw.tween_interval(0.4)
+		tw.tween_callback(func(): _break_free_animation(ball, ground_pos, callback))
+	else:
+		# Exactly 5.0 seconds of ticking & blinking, then caught!
+		# Tick 1 at 0.4s
+		tw.tween_interval(0.4)
+		tw.tween_callback(func(): _wobble_and_blink(ball, -22.0))
+		# Tick 2 at 1.5s
+		tw.tween_interval(1.1)
+		tw.tween_callback(func(): _wobble_and_blink(ball, 22.0))
+		# Tick 3 at 2.7s
+		tw.tween_interval(1.2)
+		tw.tween_callback(func(): _wobble_and_blink(ball, -22.0))
+		# Tick 4 at 3.9s
+		tw.tween_interval(1.2)
+		tw.tween_callback(func(): _wobble_and_blink(ball, 22.0))
+		# At 5.0s: Celebration & stars!
+		tw.tween_interval(1.1)
+		tw.tween_callback(func(): _caught_celebration_animation(ball, ground_pos, callback))
+
+func _wobble_and_blink(ball: TextureRect, angle: float) -> void:
+	if not is_instance_valid(ball):
+		return
+	
+	# Tilt left or right and snap back
+	var r_tw = create_tween()
+	r_tw.tween_property(ball, "rotation_degrees", angle, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	r_tw.tween_property(ball, "rotation_degrees", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Pulse / blink red light on the ball center
+	var c_tw = create_tween()
+	c_tw.tween_property(ball, "modulate", Color(2.8, 0.4, 0.4, 1.0), 0.1)
+	c_tw.tween_property(ball, "modulate", Color.WHITE, 0.2)
+
+func _vibrate_ball(ball: TextureRect, duration: float) -> void:
+	if not is_instance_valid(ball):
+		return
+	var vib_tw = create_tween()
+	var step_count = 6
+	var step_time = duration / float(step_count * 2)
+	for i in range(step_count):
+		vib_tw.tween_property(ball, "rotation_degrees", -8.0, step_time)
+		vib_tw.tween_property(ball, "rotation_degrees", 8.0, step_time)
+	vib_tw.tween_property(ball, "rotation_degrees", 0.0, 0.05)
+
+func _break_free_animation(ball: TextureRect, ground_pos: Vector2, callback: Callable) -> void:
+	var arena = $Arena
+	if not is_instance_valid(arena):
+		callback.call()
+		return
+	
+	# 1. Burst visual flash ring
+	var burst_flash = ColorRect.new()
+	burst_flash.custom_minimum_size = Vector2(60, 60)
+	burst_flash.size = Vector2(60, 60)
+	burst_flash.pivot_offset = Vector2(30, 30)
+	burst_flash.position = ground_pos - Vector2(8, 8)
+	burst_flash.color = Color(3.0, 2.5, 1.2, 0.95)
+	burst_flash.z_index = 25
+	arena.add_child(burst_flash)
+	
+	var flash_tw = create_tween().set_parallel(true)
+	flash_tw.tween_property(burst_flash, "scale", Vector2(3.0, 3.0), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	flash_tw.tween_property(burst_flash, "modulate:a", 0.0, 0.25)
+	flash_tw.chain().tween_callback(burst_flash.queue_free)
+	
+	# Spawn burst particles / sparks
+	_spawn_spark_burst(ground_pos + Vector2(22, 22), Color(1.0, 0.4, 0.3), 8)
+	
+	# Remove Poké Ball
+	ball.queue_free()
+	
+	# 2. Opponent Pokémon bursts back onto screen with power
+	if is_instance_valid(opponent_sprite):
+		opponent_sprite.visible = true
+		opponent_sprite.scale = Vector2(0.1, 0.1)
+		opponent_sprite.modulate = Color(3.0, 1.4, 1.4, 1.0)
+		
+		var reemerge_tw = create_tween().set_parallel(true)
+		reemerge_tw.tween_property(opponent_sprite, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		reemerge_tw.tween_property(opponent_sprite, "modulate", Color.WHITE, 0.4)
+		
+		# Roar shake on opponent sprite
+		var shake_tw = create_tween()
+		var orig_x = opponent_sprite.position.x
+		shake_tw.tween_property(opponent_sprite, "position:x", orig_x - 12, 0.05)
+		shake_tw.tween_property(opponent_sprite, "position:x", orig_x + 12, 0.05)
+		shake_tw.tween_property(opponent_sprite, "position:x", orig_x - 6, 0.05)
+		shake_tw.tween_property(opponent_sprite, "position:x", orig_x, 0.05)
+	
+	# Restore Opponent HUD
+	var opp_panel = $BattleUI/OpponentPanel
+	if is_instance_valid(opp_panel):
+		var panel_tw = create_tween()
+		panel_tw.tween_property(opp_panel, "modulate:a", 1.0, 0.3)
+	
+	get_tree().create_timer(0.45).timeout.connect(func():
+		callback.call()
+	)
+
+func _caught_celebration_animation(ball: TextureRect, ground_pos: Vector2, callback: Callable) -> void:
+	if not is_instance_valid(ball):
+		callback.call()
+		return
+	
+	# Click effect: ball button locks in with pop
+	var click_tw = create_tween()
+	click_tw.tween_property(ball, "scale", Vector2(0.85, 0.85), 0.08)
+	click_tw.tween_property(ball, "scale", Vector2(1.1, 1.1), 0.1)
+	click_tw.tween_property(ball, "scale", Vector2.ONE, 0.08)
+	click_tw.tween_property(ball, "modulate", Color(1.3, 1.3, 1.1, 1.0), 0.1)
+	
+	# Spawn golden celebration stars
+	_spawn_star_celebration(ground_pos + Vector2(22, 22))
+	
+	# Fade ball out smoothly before next turn screen
+	var fade_tw = create_tween()
+	fade_tw.tween_interval(0.6)
+	fade_tw.tween_property(ball, "modulate:a", 0.0, 0.5)
+	fade_tw.tween_callback(ball.queue_free)
+	
+	get_tree().create_timer(0.8).timeout.connect(func():
+		callback.call()
+	)
+
+func _spawn_star_celebration(center: Vector2) -> void:
+	var arena = $Arena
+	if not is_instance_valid(arena):
+		return
+	
+	var star_count = 8
+	var star_chars = ["✨", "⭐", "🌟", "✨", "⭐", "🌟", "✨", "⭐"]
+	for i in range(star_count):
+		var star = Label.new()
+		star.text = star_chars[i % star_chars.size()]
+		star.add_theme_font_size_override("font_size", 22)
+		star.self_modulate = Color(1.0, 0.9, 0.2, 1.0)
+		star.position = center - Vector2(12, 12)
+		star.z_index = 25
+		arena.add_child(star)
+		
+		var angle = (float(i) / float(star_count)) * TAU
+		var dist = randf_range(50.0, 95.0)
+		var dest = center + Vector2(cos(angle), sin(angle)) * dist - Vector2(0, 30)
+		
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(star, "position", dest, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(star, "scale", Vector2(1.4, 1.4), 0.35)
+		tw.tween_property(star, "scale", Vector2(0.2, 0.2), 0.35).set_delay(0.35)
+		tw.tween_property(star, "modulate:a", 0.0, 0.7)
+		tw.chain().tween_callback(star.queue_free)
+
+func _spawn_spark_burst(center: Vector2, color: Color, count: int) -> void:
+	var arena = $Arena
+	if not is_instance_valid(arena):
+		return
+	
+	for i in range(count):
+		var p = Label.new()
+		p.text = "💥" if (i % 2 == 0) else "⚡"
+		p.add_theme_font_size_override("font_size", 18)
+		p.self_modulate = color
+		p.position = center - Vector2(10, 10)
+		p.z_index = 25
+		arena.add_child(p)
+		
+		var angle = (float(i) / float(count)) * TAU
+		var dist = randf_range(40.0, 80.0)
+		var dest = center + Vector2(cos(angle), sin(angle)) * dist
+		
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(p, "position", dest, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "scale", Vector2(1.4, 1.4), 0.15)
+		tw.tween_property(p, "scale", Vector2(0.1, 0.1), 0.2).set_delay(0.15)
+		tw.tween_property(p, "modulate:a", 0.0, 0.35)
+		tw.chain().tween_callback(p.queue_free)
 
 func _show_action_menu() -> void:
 	if continue_btn: continue_btn.visible = false
@@ -674,7 +987,13 @@ func _process_turn_result(result: Dictionary) -> void:
 			
 			"capture_attempt":
 				var cap_data = e.get("data", {})
-				if cap_data.get("success", false):
+				var success = cap_data.get("success", false)
+				_battle_step_queue.append({
+					"type": "capture_throw",
+					"success": success,
+					"text": "Go! Poké Ball!"
+				})
+				if success:
 					_battle_step_queue.append({
 						"type": "message",
 						"text": "Gotcha! %s was caught!" % opponent_pokemon.get_display_name()
@@ -835,6 +1154,13 @@ func _play_next_step() -> void:
 	var step_delay = tw_duration + 0.65
 	
 	match stype:
+		"capture_throw":
+			var success = step.get("success", false)
+			_animate_capture_throw(success, func():
+				_play_next_step()
+			)
+			return
+		
 		"attack":
 			# Only the attacker performs an animation. NO HP BARS ARE ALTERED!
 			_animate_attack(step.get("is_player", true))
