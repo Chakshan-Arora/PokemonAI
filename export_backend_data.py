@@ -113,7 +113,12 @@ def build_backend_data() -> dict:
             "name": r.name,
             "description": r.description,
             "discovery_text": r.discovery_text,
-            "bounds": list(r.bounds)
+            "bounds": {
+                "x1": float(r.bounds[0]) * 10.0,
+                "z1": float(r.bounds[1]) * 10.0,
+                "x2": float(r.bounds[2]) * 10.0,
+                "z2": float(r.bounds[3]) * 10.0,
+            }
         }
 
     quests_dict = {}
