@@ -142,6 +142,10 @@ func _setup_battle() -> void:
 		var t_name = GameState.get_meta("trainer_name") if GameState.has_meta("trainer_name") else "Trainer"
 		_queue_message("%s wants to battle!" % t_name)
 		_queue_message("%s sent out %s!" % [t_name, opponent_pokemon.get_display_name()])
+	
+	if has_node("/root/BattleTransition"):
+		var bt = get_node("/root/BattleTransition")
+		bt.play_battle_intro_animation()
 
 func _update_hp_bar_color(bar: ProgressBar, current: int, maximum: int) -> void:
 	var ratio = float(current) / float(max(1, maximum))
@@ -477,6 +481,7 @@ func _on_run_pressed() -> void:
 
 ## Process turn results into a strictly synchronized sequence of action steps
 func _process_turn_result(result: Dictionary) -> void:
+	var current_attack_name = "Attack"
 	var evts = result.get("events", [])
 	for e in evts:
 		var etype = e.get("type", "")
@@ -484,9 +489,10 @@ func _process_turn_result(result: Dictionary) -> void:
 			"attack_used":
 				var atkr = e.get("attacker", "")
 				var is_p = (atkr == player_pokemon.get_display_name() or atkr == player_pokemon.species_name or atkr == player_pokemon.nickname)
+				current_attack_name = e.get("attack", "Attack")
 				_battle_step_queue.append({
 					"type": "attack",
-					"text": "%s used %s!" % [atkr, e.get("attack", "")],
+					"text": "%s used %s!" % [atkr, current_attack_name],
 					"is_player": is_p
 				})
 			
@@ -508,7 +514,10 @@ func _process_turn_result(result: Dictionary) -> void:
 					"text": text,
 					"is_player_target": is_p_hit,
 					"defender_hp": e.get("defender_hp", 0),
-					"defender_max_hp": e.get("defender_max_hp", 10)
+					"defender_max_hp": e.get("defender_max_hp", 10),
+					"move_name": current_attack_name,
+					"is_super_effective": (eff > 1.0),
+					"is_critical": e.get("is_critical", false)
 				})
 			
 			"fainted", "pokemon_fainted":
@@ -699,6 +708,14 @@ func _play_next_step() -> void:
 			var max_hp = step.get("defender_max_hp", 10)
 			
 			_animate_hit(is_p_target)
+			
+			if has_node("/root/BattleTransition"):
+				var bt = get_node("/root/BattleTransition")
+				bt.play_attack_impact_animation(
+					step.get("move_name", "Attack"),
+					step.get("is_super_effective", false),
+					step.get("is_critical", false)
+				)
 			
 			if is_p_target:
 				var hp_tw = create_tween()

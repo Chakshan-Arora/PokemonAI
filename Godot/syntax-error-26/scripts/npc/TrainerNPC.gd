@@ -47,12 +47,9 @@ func on_interact(_player_node: Node3D) -> void:
 	var opp_lvl = team_levels[0] if not team_levels.is_empty() else 4
 	var opp_p = PokemonInstance.create(opp_species, opp_lvl)
 	
-	GameState.set_meta("wild_pokemon_for_battle", opp_p.to_dict())
-	GameState.set_meta("is_trainer_battle", true)
 	GameState.set_meta("trainer_name", trainer_name)
 	GameState.set_meta("trainer_id", trainer_id)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	GameState.enter_battle()
 	
 	_is_defeated = true
 	
@@ -61,4 +58,12 @@ func on_interact(_player_node: Node3D) -> void:
 		opp_p.to_dict(),
 		true
 	)
-	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+	
+	if has_node("/root/BattleTransition"):
+		var bt = get_node("/root/BattleTransition")
+		bt.start_trainer_encounter(opp_p.to_dict(), trainer_name)
+	else:
+		GameState.set_meta("wild_pokemon_for_battle", opp_p.to_dict())
+		GameState.set_meta("is_trainer_battle", true)
+		GameState.enter_battle()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")

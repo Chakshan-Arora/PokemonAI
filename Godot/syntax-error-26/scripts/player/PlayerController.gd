@@ -372,14 +372,18 @@ func _on_encounter_triggered(wild_pokemon: PokemonInstance) -> void:
 	if GameState.is_in_battle:
 		return
 	_release_mouse()
-	GameState.set_meta("wild_pokemon_for_battle", wild_pokemon.to_dict())
-	GameState.enter_battle()
 	EventBus.battle_started.emit(
 		GameState.get_active_pokemon().to_dict() if GameState.get_active_pokemon() else {},
 		wild_pokemon.to_dict(),
 		false
 	)
-	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+	if has_node("/root/BattleTransition"):
+		var bt = get_node("/root/BattleTransition")
+		bt.start_wild_encounter(wild_pokemon.to_dict())
+	else:
+		GameState.set_meta("wild_pokemon_for_battle", wild_pokemon.to_dict())
+		GameState.enter_battle()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 func _on_open_party_menu() -> void:
 	var party_menu = get_tree().get_first_node_in_group("party_menu")
