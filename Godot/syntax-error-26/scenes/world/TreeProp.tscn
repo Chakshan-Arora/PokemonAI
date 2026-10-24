@@ -10,6 +10,7 @@ script/source = "extends StaticBody3D
 @onready var sprite: Sprite3D = $Sprite3D
 
 func _ready() -> void:
+	add_to_group(\"trees\")
 	if is_instance_valid(sprite):
 		if tree_type == \"pine\":
 			var tex = load(\"res://assets/sprites/world/tree_pine.png\")

@@ -1,0 +1,47 @@
+[gd_scene load_steps=8 format=3 uid="uid://c8y3xqjTownFence"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fence"]
+size = Vector3(4.0, 0.9, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_white_wood"]
+albedo_color = Color(0.95, 0.95, 0.92, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail"]
+material = SubResource("Mat_white_wood")
+size = Vector3(4.0, 0.1, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post"]
+material = SubResource("Mat_white_wood")
+size = Vector3(0.14, 0.9, 0.14)
+
+[node name="TownFence" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_fence")
+
+[node name="RailTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.65, 0)
+mesh = SubResource("BoxMesh_rail")
+
+[node name="RailBottom" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0)
+mesh = SubResource("BoxMesh_rail")
+
+[node name="Post1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 0.45, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="Post2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 0.45, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="Post3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0.45, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="Post4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 0.45, 0)
+mesh = SubResource("BoxMesh_post")
+

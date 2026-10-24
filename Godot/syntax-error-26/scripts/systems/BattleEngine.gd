@@ -136,8 +136,23 @@ func _finalize_turn(turn_events: Array) -> Dictionary:
 	events.append_array(turn_events)
 	var result = {"state": battle_state, "events": turn_events, "turn": current_turn}
 	turn_resolved.emit(result)
+	EventBus.battle_turn_resolved.emit(result)
 	if battle_state != BattleState.IN_PROGRESS:
 		battle_over.emit(battle_state, events)
+		var result_str = ""
+		match battle_state:
+			BattleState.VICTORY:
+				result_str = "victory"
+			BattleState.DEFEAT:
+				result_str = "defeat"
+			BattleState.ESCAPED:
+				result_str = "escaped"
+			BattleState.CAPTURED:
+				result_str = "captured"
+			BattleState.DRAW:
+				result_str = "defeat"
+		if result_str != "":
+			EventBus.battle_ended.emit(result_str)
 	return result
 
 # ─── Turn Order ───────────────────────────────────────────────────────────────

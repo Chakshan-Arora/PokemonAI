@@ -82,3 +82,10 @@ ai_state.local.json
 build/
 dist/
 *.egg-info/
+
+# ==============================
+# Model weights & LoRA adapters
+# ==============================
+models/
+training/adapters/
+

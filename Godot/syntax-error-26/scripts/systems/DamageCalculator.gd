@@ -16,10 +16,18 @@ static func calculate(
 	use_random: bool = true
 ) -> Dictionary:
 	
-	# Status move: no damage
+	# Non-damaging move (status): no damage
 	if attack_power <= 0:
 		return {"damage": 0, "is_critical": false, "type_effectiveness": type_effectiveness, "message_suffix": ""}
+
+	# Immunity: 0 damage
+	if type_effectiveness <= 0.0:
+		var eff_msg = TypeChart.get_effectiveness_message(type_effectiveness)
+		return {"damage": 0, "is_critical": false, "type_effectiveness": type_effectiveness, "message_suffix": eff_msg.strip_edges()}
 	
+	# Clamp bond safely between 0 and 100
+	var safe_bond: float = clampf(bond, 0.0, 100.0)
+
 	# Level factor
 	var level_factor: float = (2.0 * float(attacker_level) / 5.0) + 2.0
 	
@@ -40,16 +48,16 @@ static func calculate(
 		random_factor = rng.randf_range(0.85, 1.0)
 	
 	# Bond multiplier
-	var bond_mult: float = 1.0 + (bond / 100.0) * 0.15
+	var bond_mult: float = 1.0 + (safe_bond / 100.0) * 0.15
 	
 	# Critical hit
-	var crit_chance: float = 0.0625 + (bond / 100.0) * 0.05
+	var crit_chance: float = 0.0625 + (safe_bond / 100.0) * 0.05
 	var rng2 = RandomNumberGenerator.new()
 	rng2.randomize()
 	var is_critical: bool = rng2.randf() < crit_chance
 	var crit_mult: float = 1.5 if is_critical else 1.0
 	
-	# Final damage
+	# Final damage (guaranteed minimum 1 for positive effectiveness)
 	var damage: int = max(1, int(base_dmg * type_effectiveness * stab * random_factor * bond_mult * crit_mult))
 	
 	# Build message suffix

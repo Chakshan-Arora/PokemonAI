@@ -277,7 +277,7 @@ class CompanionService:
             impact = 0.4
 
         elif norm_type in ("scold", "criticize"):
-            # If agent has high aggression or low loyalty, it might resent or disobey
+            # Reprimand/criticism: drops trust and affection
             traits = agent.identity.personality_traits
             agg = traits.get("aggression", 50)
             loy = traits.get("loyalty", 50)
@@ -324,6 +324,12 @@ class CompanionService:
             event_type = "trainer_conversation"
             impact = 0.15
             rel.adjust_familiarity(2.0)
+
+        # Ensure companion dialogue never uses combat defense fallback text
+        if not dialogue or "held its ground defensively" in dialogue.lower():
+            from src.ai.decision_provider import FallbackDecisionHandler
+            fb = FallbackDecisionHandler.create_fallback(agent, perception, Exception("Companion dialogue rescue"))
+            dialogue = fb.dialogue
 
         # Record episodic memory
         ep = agent.record_experience(

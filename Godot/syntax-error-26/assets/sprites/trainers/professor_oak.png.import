@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bkpl5ou8ftcy6"
-path="res://.godot/imported/serena.png-2033d3f2cac360a44b513bb6f8e5207e.ctex"
+uid="uid://djyvaj2t6d7go"
+path="res://.godot/imported/professor_oak.png-f4dc202d3f4acc0b57f5e0f90ba08f12.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/trainers/serena.png"
-dest_files=["res://.godot/imported/serena.png-2033d3f2cac360a44b513bb6f8e5207e.ctex"]
+source_file="res://assets/sprites/trainers/professor_oak.png"
+dest_files=["res://.godot/imported/professor_oak.png-f4dc202d3f4acc0b57f5e0f90ba08f12.ctex"]
 
 [params]
 

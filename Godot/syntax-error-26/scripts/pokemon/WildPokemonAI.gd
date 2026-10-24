@@ -129,9 +129,9 @@ func _trigger_battle() -> void:
 		GameState.player.player_position = player.global_position
 	
 	var wild_p = PokemonInstance.create(species_name, level)
-	GameState.set_meta("wild_pokemon_for_battle", wild_p.to_dict())
-	GameState.enter_battle()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	
+	EventBus.wild_encounter_triggered.emit(species_name, level)
 	EventBus.battle_started.emit(
 		GameState.get_active_pokemon().to_dict() if GameState.get_active_pokemon() else {},
 		wild_p.to_dict(),
@@ -139,4 +139,10 @@ func _trigger_battle() -> void:
 	)
 	
 	queue_free()
-	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+	if has_node("/root/BattleTransition"):
+		var bt = get_node("/root/BattleTransition")
+		bt.start_wild_encounter(wild_p.to_dict())
+	else:
+		GameState.set_meta("wild_pokemon_for_battle", wild_p.to_dict())
+		GameState.enter_battle()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")

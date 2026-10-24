@@ -89,9 +89,13 @@ static func get_all_region_ids() -> Array:
 static func get_region_at_position(world_x: float, world_z: float) -> String:
 	for region_id in REGIONS:
 		var r = REGIONS[region_id]
+<<<<<<< HEAD
 		if not r.has("bounds"):
 			continue
 		var b = r["bounds"]
+=======
+		var b = r.get("bounds")
+>>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
 		var x1 = 0.0
 		var z1 = 0.0
 		var x2 = 0.0
@@ -102,10 +106,20 @@ static func get_region_at_position(world_x: float, world_z: float) -> String:
 			x2 = float(b.get("x2", 0.0))
 			z2 = float(b.get("z2", 0.0))
 		elif b is Array and b.size() >= 4:
+<<<<<<< HEAD
 			x1 = float(b[0]) * 10.0
 			z1 = float(b[1]) * 10.0
 			x2 = float(b[2]) * 10.0
 			z2 = float(b[3]) * 10.0
+=======
+			var factor = 10.0 if float(b[2]) <= 40.0 else 1.0
+			x1 = float(b[0]) * factor
+			z1 = float(b[1]) * factor
+			x2 = float(b[2]) * factor
+			z2 = float(b[3]) * factor
+		else:
+			continue
+>>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
 		if world_x >= x1 and world_x <= x2 and world_z >= z1 and world_z <= z2:
 			return region_id
 	return ""

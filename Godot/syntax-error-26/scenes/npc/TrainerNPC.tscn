@@ -1,8 +1,33 @@
 [gd_scene load_steps=8 format=3 uid="uid://c8y3xqjTrainerNPC"]
 
-[ext_resource type="Script" path="res://scripts/npc/TrainerNPC.gd" id="1_trainer"]
-[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="2_shadow"]
-[ext_resource type="Texture2D" path="res://assets/sprites/trainers/koji.png" id="3_koji"]
+[ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="1_shadow"]
+[ext_resource type="Texture2D" path="res://assets/sprites/trainers/koji.png" id="2_koji"]
+
+[sub_resource type="GDScript" id="GDScript_trainernpc"]
+script/source = "extends \"res://scripts/npc/TrainerNPC.gd\"
+
+func _ready() -> void:
+	add_to_group(\"interactable\")
+	add_to_group(\"npc\")
+	if is_instance_valid(label_3d):
+		label_3d.text = trainer_name
+	
+	if is_instance_valid(sprite_3d):
+		var path = \"res://assets/sprites/trainers/%s.png\" % trainer_id.to_lower()
+		if ResourceLoader.exists(path):
+			sprite_3d.texture = load(path)
+		else:
+			var fb = \"res://assets/sprites/trainers/koji.png\"
+			var tid = trainer_id.to_lower()
+			if \"haley\" in tid or \"kira\" in tid or \"lass\" in tid:
+				fb = \"res://assets/sprites/trainers/misty.png\"
+			elif \"brock\" in tid or \"david\" in tid or \"hiker\" in tid:
+				fb = \"res://assets/sprites/trainers/ash.png\"
+			elif \"joey\" in tid or \"edward\" in tid or \"psychic\" in tid:
+				fb = \"res://assets/sprites/trainers/ash.png\"
+			if ResourceLoader.exists(fb):
+				sprite_3d.texture = load(fb)
+"
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.4
@@ -11,7 +36,7 @@ height = 1.6
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
 transparency = 1
 shading_mode = 0
-albedo_texture = ExtResource("2_shadow")
+albedo_texture = ExtResource("1_shadow")
 
 [sub_resource type="QuadMesh" id="QuadMesh_shadow"]
 material = SubResource("StandardMaterial3D_shadow")
@@ -22,7 +47,7 @@ orientation = 1
 radius = 2.5
 
 [node name="TrainerNPC" type="StaticBody3D" groups=["interactable"]]
-script = ExtResource("1_trainer")
+script = SubResource("GDScript_trainernpc")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
@@ -37,7 +62,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 billboard = 2
 texture_filter = 0
 pixel_size = 0.045
-texture = ExtResource("3_koji")
+texture = ExtResource("2_koji")
 
 [node name="Label3D" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)

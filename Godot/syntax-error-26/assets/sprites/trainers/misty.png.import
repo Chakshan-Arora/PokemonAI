@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cp8ej0tc54y8u"
-path="res://.godot/imported/calem.png-8273fac1e4813e0e91aaedebfdda28f7.ctex"
+uid="uid://4cmy0ud1kyt4"
+path="res://.godot/imported/misty.png-33dca5e7e6359e3b03b40315438ee0c4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/trainers/calem.png"
-dest_files=["res://.godot/imported/calem.png-8273fac1e4813e0e91aaedebfdda28f7.ctex"]
+source_file="res://assets/sprites/trainers/misty.png"
+dest_files=["res://.godot/imported/misty.png-33dca5e7e6359e3b03b40315438ee0c4.ctex"]
 
 [params]
 

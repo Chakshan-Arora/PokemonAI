@@ -21,13 +21,20 @@ from src.ai.perception import AgentPerception
 
 
 # Default configuration constants and placeholders
-GEMINI_API_KEY_DEFAULT = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY_DEFAULT = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 GEMINI_API_KEY_PLACEHOLDER = "YOUR_GEMINI_API_KEY_HERE"
 OPENAI_API_KEY_PLACEHOLDER = "YOUR_OPENAI_API_KEY_HERE"
 
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
-DEFAULT_GEMINI_FALLBACK_MODELS = ("gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-pro")
-DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+DEFAULT_GEMINI_FALLBACK_MODELS = (
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
+    "gemini-3.5-flash-lite",
+)
+DEFAULT_OPENAI_MODEL = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
 
 DEFAULT_REQUEST_TIMEOUT = 10.0
 DEFAULT_MAX_RETRIES = 2
@@ -192,11 +199,13 @@ Respond ONLY with a single JSON object conforming to this exact structure:
   "intent": "<short summary of your immediate goal or action>",
   "target": "<target entity name or null>",
   "chosen_move": "<move name from Known Moves if attacking or suggesting, or null>",
-  "dialogue": "<your verbal cry, expression, or gesture in quotes, e.g. 'Pikachu!' or 'Pika pi!'>",
-  "emotional_state": "<current feeling, e.g. confident, cautious, anxious, defiant, curious, affectionate, exhausted>",
+  "dialogue": "<your authentic cry and dialogue, e.g. 'Bulba! *perks up alertly* (Hello Trainer! Ready to explore!)'>",
+  "emotional_state": "<current feeling, e.g. confident, cautious, anxious, defiant, curious, affectionate, happy, hurt, discouraged, exhausted>",
   "rationale": "<internal reasoning explaining why you chose this based on your traits and context>",
   "confidence": <float from 0.0 to 1.0>,
-  "suggested_alternative": "<move name from Known Moves if action_type is suggest, else null>"
+  "suggested_alternative": "<move name from Known Moves if action_type is suggest, else null>",
+  "trust_delta": <float delta from -5.0 to +5.0 reflecting relationship impact, or 0.0>,
+  "affection_delta": <float delta from -5.0 to +5.0 reflecting relationship impact, or 0.0>
 }}
 """
 
@@ -246,40 +255,57 @@ class DecisionResponseParser:
                     pass
 
         if not isinstance(data, dict):
-            # Regex extraction fallback for unescaped internal quotes or truncated JSON
+            dlg_text = None
             try:
                 dlg_match = re.search(r'"dialogue"\s*:\s*"(.*?)"\s*,\s*"\w+"', cleaned, re.DOTALL)
                 if not dlg_match:
                     dlg_match = re.search(r'"dialogue"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)', cleaned)
-                emo_match = re.search(r'"emotional_state"\s*:\s*"([^"]+)"', cleaned)
-                act_match = re.search(r'"action_type"\s*:\s*"([^"]+)"', cleaned)
-                int_match = re.search(r'"intent"\s*:\s*"([^"]+)"', cleaned)
-                trust_match = re.search(r'"trust_delta"\s*:\s*([0-9.]+)', cleaned)
-                aff_match = re.search(r'"affection_delta"\s*:\s*([0-9.]+)', cleaned)
                 if dlg_match:
-                    extracted_dlg = dlg_match.group(1).replace('\\"', '"').strip()
-                    if extracted_dlg:
-                        data = {
-                            "dialogue": extracted_dlg,
-                            "emotional_state": emo_match.group(1) if emo_match else "content",
-                            "action_type": act_match.group(1) if act_match else "interact",
-                            "intent": int_match.group(1) if int_match else "companion interaction",
-                            "confidence": 0.9,
-                            "trust_delta": float(trust_match.group(1)) if trust_match else 2.0,
-                            "affection_delta": float(aff_match.group(1)) if aff_match else 3.0,
-                        }
+                    cand = dlg_match.group(1).replace('\\"', '"').strip()
+                    if len(cand) > 2:
+                        dlg_text = cand
             except Exception:
                 pass
 
-        if not isinstance(data, dict):
-            return AgentDecision(
-                action_type=AgentActionType.HESITATE,
-                intent="Hesitate due to malformed model response",
-                dialogue="...",
-                emotional_state="confused",
-                rationale="Failed to parse JSON response or returned non-dictionary JSON.",
-                confidence=0.5,
-            )
+            # Check for dialogue preceding an unclosed '{'
+            if not dlg_text:
+                fb = cleaned.find("{")
+                if fb > 10:
+                    cand = cleaned[:fb].strip().strip('`"\'').strip()
+                    cand = re.sub(r'["\';}\s]+$', '', cand).strip()
+                    if len(cand) > 3 and ("*" in cand or "!" in cand):
+                        dlg_text = cand
+
+            # Direct conversational dialogue with roleplay cues (*action* or cries)
+            if not dlg_text and ("*" in cleaned or ("!" in cleaned and len(cleaned) > 20)):
+                cand = cleaned.strip('`"\'').strip()
+                cand = re.sub(r'["\';}\s]+$', '', cand).strip()
+                cand = re.sub(r'^["\';{\s]+', '', cand).strip()
+                if cand and len(cand) > 1 and not cand.startswith("{"):
+                    dlg_text = cand
+
+            if dlg_text:
+                emo_match = re.search(r'"emotional_state"\s*:\s*"([^"]+)"', cleaned)
+                trust_match = re.search(r'"trust_delta"\s*:\s*(-?[0-9.]+)', cleaned)
+                aff_match = re.search(r'"affection_delta"\s*:\s*(-?[0-9.]+)', cleaned)
+                data = {
+                    "dialogue": dlg_text,
+                    "emotional_state": emo_match.group(1) if emo_match else "neutral",
+                    "action_type": "interact",
+                    "intent": "companion interaction",
+                    "confidence": 0.9,
+                    "trust_delta": float(trust_match.group(1)) if trust_match else 0.0,
+                    "affection_delta": float(aff_match.group(1)) if aff_match else 0.0,
+                }
+            else:
+                return AgentDecision(
+                    action_type=AgentActionType.HESITATE,
+                    intent="Hesitate due to malformed model response",
+                    dialogue="...",
+                    emotional_state="confused",
+                    rationale="Failed to parse JSON response or returned non-dictionary JSON.",
+                    confidence=0.5,
+                )
 
         # Action type normalization
         action_raw = str(data.get("action_type", "hesitate")).strip().lower()
@@ -295,6 +321,17 @@ class DecisionResponseParser:
         except (ValueError, TypeError):
             conf = 0.8
 
+        # Safe relationship delta extraction
+        try:
+            trust_val = float(data["trust_delta"]) if data.get("trust_delta") is not None else 0.0
+        except (ValueError, TypeError):
+            trust_val = 0.0
+
+        try:
+            aff_val = float(data["affection_delta"]) if data.get("affection_delta") is not None else 0.0
+        except (ValueError, TypeError):
+            aff_val = 0.0
+
         return AgentDecision(
             action_type=action_type,
             intent=str(data.get("intent", "Autonomous action")),
@@ -305,8 +342,8 @@ class DecisionResponseParser:
             rationale=str(data.get("rationale", "")),
             confidence=conf,
             suggested_alternative=data.get("suggested_alternative"),
-            trust_delta=float(data.get("trust_delta", 2.0)),
-            affection_delta=float(data.get("affection_delta", 3.0)),
+            trust_delta=trust_val,
+            affection_delta=aff_val,
         )
 
 
@@ -671,6 +708,16 @@ def create_live_decision_provider(
         provider = OpenAIDecisionProvider(
             api_key=api_key,
             model_name=model_name or DEFAULT_OPENAI_MODEL,
+            base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            timeout=timeout,
+            http_client=http_client,
+        )
+    elif ptype == "ollama":
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
+        provider = OpenAIDecisionProvider(
+            api_key=api_key or "ollama",
+            model_name=model_name or os.environ.get("OLLAMA_MODEL", "qwen2.5:3b"),
+            base_url=base_url,
             timeout=timeout,
             http_client=http_client,
         )
@@ -684,36 +731,61 @@ def create_live_decision_provider(
                 allow_mock_fallback=allow_mock_fallback,
             )
 
-        has_gemini = bool(
-            os.environ.get("GEMINI_API_KEY")
-            or os.environ.get("GOOGLE_API_KEY")
-            or (GEMINI_API_KEY_DEFAULT and GEMINI_API_KEY_DEFAULT != GEMINI_API_KEY_PLACEHOLDER)
+        # Check explicit api_key or env vars
+        resolved_gemini_key = (
+            api_key if (api_key and (api_key.startswith("AIza") or "gemini" in (model_name or "").lower()))
+            else (
+                os.environ.get("GEMINI_API_KEY")
+                or os.environ.get("GOOGLE_API_KEY")
+                or (GEMINI_API_KEY_DEFAULT and GEMINI_API_KEY_DEFAULT != GEMINI_API_KEY_PLACEHOLDER)
+            )
         )
-        has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+        resolved_openai_key = (
+            api_key if (api_key and (api_key.startswith("sk-") or "gpt" in (model_name or "").lower()))
+            else os.environ.get("OPENAI_API_KEY")
+        )
 
-        if has_gemini:
+        if resolved_gemini_key:
             provider = GeminiDecisionProvider(
-                api_key=api_key,
+                api_key=resolved_gemini_key,
                 model_name=model_name or DEFAULT_GEMINI_MODEL,
                 timeout=timeout,
                 http_client=http_client,
             )
-        elif has_openai:
+        elif resolved_openai_key:
             provider = OpenAIDecisionProvider(
-                api_key=api_key,
+                api_key=resolved_openai_key,
                 model_name=model_name or DEFAULT_OPENAI_MODEL,
+                base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+                timeout=timeout,
+                http_client=http_client,
+            )
+        elif os.environ.get("OPENAI_BASE_URL") or os.environ.get("OLLAMA_BASE_URL"):
+            base_url = os.environ.get("OPENAI_BASE_URL") or os.environ.get("OLLAMA_BASE_URL")
+            provider = OpenAIDecisionProvider(
+                api_key=api_key or "ollama",
+                model_name=model_name or os.environ.get("OLLAMA_MODEL", "qwen2.5:3b"),
+                base_url=base_url,
                 timeout=timeout,
                 http_client=http_client,
             )
         else:
-            # Default to Gemini with placeholder
-            provider = GeminiDecisionProvider(
-                api_key=api_key or GEMINI_API_KEY_PLACEHOLDER,
-                model_name=model_name or DEFAULT_GEMINI_MODEL,
-                timeout=timeout,
-                http_client=http_client,
-            )
+            # Check if generic api_key was provided without recognized prefix
+            if api_key and api_key != GEMINI_API_KEY_PLACEHOLDER and api_key != OPENAI_API_KEY_PLACEHOLDER:
+                provider = GeminiDecisionProvider(
+                    api_key=api_key,
+                    model_name=model_name or DEFAULT_GEMINI_MODEL,
+                    timeout=timeout,
+                    http_client=http_client,
+                )
+            else:
+                provider = GeminiDecisionProvider(
+                    api_key=GEMINI_API_KEY_PLACEHOLDER,
+                    model_name=model_name or DEFAULT_GEMINI_MODEL,
+                    timeout=timeout,
+                    http_client=http_client,
+                )
     else:
-        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', 'local', or 'auto'.")
+        raise ValueError(f"Unsupported AI provider_type: '{provider_type}'. Must be 'gemini', 'openai', 'ollama', 'local', or 'auto'.")
 
     return LiveAIDecisionProvider(active_provider=provider, allow_mock_fallback=allow_mock_fallback)

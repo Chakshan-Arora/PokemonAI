@@ -35,7 +35,7 @@ func _process(delta: float) -> void:
 
 # ─── Game Management ──────────────────────────────────────────────────────────
 
-func new_game(p_player_name: String, starter_species: String, avatar: String = "calem") -> void:
+func new_game(p_player_name: String, starter_species: String, avatar: String = "ash") -> void:
 	player = PlayerModel.create(p_player_name)
 	player.trainer_avatar = avatar
 	
@@ -120,16 +120,56 @@ func get_formatted_time() -> String:
 
 func enter_battle() -> void:
 	is_in_battle = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func exit_battle() -> void:
 	is_in_battle = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-# ─── Pause ────────────────────────────────────────────────────────────────────
+# ─── Pause & Menus ────────────────────────────────────────────────────────────
 
 func pause_game() -> void:
 	is_paused = true
 	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func resume_game() -> void:
 	is_paused = false
 	get_tree().paused = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func release_mouse() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+## Returns true if player is in a battle, game is paused, or any UI menu is active/visible
+func is_any_menu_open() -> bool:
+	if is_in_battle or is_paused:
+		return true
+	
+	var tree = get_tree()
+	if not is_instance_valid(tree):
+		return false
+	
+	# Check if current scene is Battle or Menu
+	var current = tree.current_scene
+	if is_instance_valid(current):
+		var s_name = current.name.to_lower()
+		if "battle" in s_name or "mainmenu" in s_name or "starter" in s_name:
+			return true
+
+	# Check UI menus in groups
+	for grp in ["party_menu", "inventory_ui", "quest_journal", "pause_menu"]:
+		var node = tree.get_first_node_in_group(grp)
+		if is_instance_valid(node) and node is CanvasItem and node.visible:
+			return true
+
+	# Check companion dialogue panel
+	var companion = tree.get_first_node_in_group("companion_chat")
+	if is_instance_valid(companion) and companion is CanvasItem and companion.visible:
+		return true
+
+	# Check typing metadata
+	if has_meta("typing_active") and get_meta("typing_active"):
+		return true
+
+	return false

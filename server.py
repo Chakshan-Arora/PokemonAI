@@ -1,25 +1,34 @@
 """
-Syntax Error 26 — Local Pokémon LLM HTTP Bridge Server.
+Syntax Error 26 — Local Pokémon LLM & Backend API Bridge Server.
 Provides high-performance, low-latency REST endpoints for the Godot 3D Frontend:
 - GET  /health           : Health check and model metadata
-- POST /companion/talk   : Interactive partner Pokemon bonding dialogue
+- GET  /api/data         : Exports all backend Pokémon, attacks, items, quests, and habitats
+- GET  /api/load         : Loads verified player save state from disk
+- POST /api/save         : Persists player state through authoritative SaveManager
+- POST /api/wild_encounter: Spawns wild encounter from HabitatManager with true species & personality
+- POST /api/pokemon/create: Generates custom Pokémon instance using backend rules
+- POST /companion/talk   : Interactive partner Pokémon bonding dialogue with sentiment dynamics
 - POST /battle/decide    : Battle turn tactical move selection and combat dialogue
 - POST /decide           : Generalized agent decision endpoint
 """
 import argparse
 import json
 import os
+import random
+import re
 import sys
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
+from dotenv import load_dotenv
 
-# Ensure project root is in sys.path
+# Ensure project root is in sys.path and load environment variables
 repo_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(repo_root))
+load_dotenv()
+load_dotenv(repo_root / ".env")
 
-import random
 from export_backend_data import build_backend_data
 from src.models.save_manager import load_game, save_game, serialize_player, deserialize_player
 from src.models.habitat_manager import HabitatManager
@@ -27,11 +36,141 @@ from src.models.habitat import TimeOfDay
 from src.data.species import SAMPLE_SPECIES
 from src.models.personality import Personality
 from src.models.pokemon import Pokemon
+<<<<<<< HEAD
 from src.models.trainer_team_generator import TrainerTeamGenerator
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
 from src.ai.battle_talk_parser import BattleTalkParser
+=======
+from src.ai.decision_provider import DecisionProvider, FallbackDecisionHandler
+from src.ai.live_provider import create_live_decision_provider
+from src.ai.local_model_provider import LocalModelDecisionProvider
+from src.ai.agent import PokemonAgent, AgentIdentity
+from src.ai.perception import AgentPerception
+
+VERY_NEGATIVE_PHRASES = [
+    "hate you", "despise you", "loathe you", "shut up", "get lost", "get out",
+    "go away", "drop dead", "kill yourself", "die already", "waste of space",
+    "piece of trash", "piece of garbage", "regret catching you", "regret picking you",
+    "never liked you", "dont want you", "don't want you", "throw you away",
+    "worthless pokemon", "useless pokemon", "stupid pokemon", "pathetic pokemon",
+    "abandon you", "replace you", "worst pokemon", "ugly pokemon", "go to hell",
+    "f off", "fk off", "fuck off",
+]
+
+VERY_NEGATIVE_WORDS = {
+    "stupid", "idiot", "dumb", "moron", "useless", "worthless", "pathetic",
+    "garbage", "trash", "disgusting", "horrible", "terrible", "worst", "loser",
+    "freak", "scum", "weakling", "failure", "hate", "despise", "loathe", "kill", "die",
+    "ugly",
+}
+
+NEGATIVE_PHRASES = [
+    "not good", "not great", "not happy", "dont like", "don't like",
+    "bad job", "poor job", "stop that", "stop it", "quit it", "cut it out",
+    "listen to me", "be quiet", "do better", "mess up", "messed up",
+    "made a mistake", "not good enough", "why did you", "stop messing",
+    "poor performance", "let down", "wake up",
+]
+
+NEGATIVE_WORDS = {
+    "bad", "disappointed", "disappointing", "annoying", "annoyed", "clumsy",
+    "slow", "lazy", "careless", "mistake", "wrong", "fail", "failed", "failing",
+    "weak", "boring", "irritating", "troublesome", "disobedient", "stubborn",
+}
+
+POSITIVE_PHRASES = [
+    "good job", "great job", "awesome job", "well done", "proud of you",
+    "love you", "love ya", "i love", "not bad", "best partner", "good boy",
+    "good girl", "good pokemon", "great pokemon", "nice work", "super star",
+    "thank you", "thanks a lot", "so proud",
+]
+
+POSITIVE_WORDS = {
+    "good", "great", "awesome", "amazing", "wonderful", "fantastic", "excellent",
+    "brilliant", "super", "proud", "love", "loved", "lovely", "cute", "sweet",
+    "precious", "adorable", "best", "hero", "strong", "brave", "clever", "smart",
+    "genius", "perfect", "friend", "buddy", "pal", "cherish", "treat", "congrats",
+    "congratulations", "thanks", "thank",
+}
+
+NEGATIONS = {
+    "not", "no", "never", "dont", "don't", "isnt", "isn't", "arent", "aren't",
+    "wont", "won't", "cannot", "can't", "cant", "hardly", "barely", "neither",
+}
+
+
+def classify_companion_sentiment(text: str) -> str:
+    """
+    Classifies player comment into 'very_negative', 'negative', 'positive', or 'neutral'.
+    Handles phrase patterns, single token semantics, and negation windows.
+    """
+    cleaned = text.lower().strip()
+
+    # Pre-emptively normalize negated very negative expressions so substrings don't falsely match
+    negated_very_neg = [
+        "don't hate", "dont hate", "do not hate", "not hate", "never hate",
+        "not stupid", "not dumb", "not useless", "not worthless", "not ugly",
+        "not pathetic", "not trash", "not a failure", "not garbage",
+    ]
+    for np in negated_very_neg:
+        if np in cleaned:
+            cleaned = cleaned.replace(np, "appreciate")
+
+    # 1. Direct multi-word phrase matching
+    for phrase in VERY_NEGATIVE_PHRASES:
+        if phrase in cleaned:
+            return "very_negative"
+
+    for phrase in POSITIVE_PHRASES:
+        if phrase in cleaned:
+            return "positive"
+
+    for phrase in NEGATIVE_PHRASES:
+        if phrase in cleaned:
+            return "negative"
+
+    # 2. Token-level analysis with negation detection
+    words = re.findall(r"[a-zA-Z']+", cleaned)
+    has_very_neg = False
+    has_neg = False
+    has_pos = False
+
+    for idx, word in enumerate(words):
+        negated = False
+        start_lookback = max(0, idx - 2)
+        for prev in words[start_lookback:idx]:
+            if prev in NEGATIONS:
+                negated = True
+                break
+
+        if word in VERY_NEGATIVE_WORDS:
+            if negated:
+                has_pos = True  # e.g. 'not stupid'
+            else:
+                has_very_neg = True
+        elif word in NEGATIVE_WORDS:
+            if negated:
+                has_pos = True  # e.g. 'not bad'
+            else:
+                has_neg = True
+        elif word in POSITIVE_WORDS:
+            if negated:
+                has_neg = True  # e.g. 'not good'
+            else:
+                has_pos = True
+
+    if has_very_neg:
+        return "very_negative"
+    if has_neg and not has_pos:
+        return "negative"
+    if has_pos and not has_neg:
+        return "positive"
+    if has_pos and has_neg:
+        return "negative"
+    return "neutral"
+>>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
 
 
 _habitat_mgr: HabitatManager = None
@@ -68,18 +207,26 @@ def _serialize_pokemon_dict(mon: Pokemon) -> dict[str, Any]:
 
 
 class LLMBridgeHandler(BaseHTTPRequestHandler):
-    provider: LocalModelDecisionProvider = None
+    provider: DecisionProvider = None
 
-    def _set_headers(self, status: int = 200, content_type: str = "application/json") -> None:
+    def _send_json_response(self, status: int, data: dict[str, Any]) -> None:
+        body = json.dumps(data).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+        self.wfile.write(body)
 
     def do_OPTIONS(self) -> None:
-        self._set_headers(200)
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def do_GET(self) -> None:
         clean_path = self.path.split("?")[0]
@@ -103,33 +250,29 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 ],
                 "timestamp": time.time(),
             }
-            self._set_headers(200)
-            self.wfile.write(json.dumps(payload).encode("utf-8"))
+            self._send_json_response(200, payload)
+
         elif clean_path == "/api/data":
             try:
                 data = build_backend_data()
-                self._set_headers(200)
-                self.wfile.write(json.dumps(data).encode("utf-8"))
+                self._send_json_response(200, data)
             except Exception as exc:
-                self._set_headers(500)
-                self.wfile.write(json.dumps({"error": f"Failed to build backend data: {exc}"}).encode("utf-8"))
+                self._send_json_response(500, {"error": f"Failed to build backend data: {exc}"})
+
         elif clean_path in ("/api/load", "/api/save"):
             try:
                 save_path = repo_root / "save_game.json"
                 if not save_path.exists():
-                    self._set_headers(404)
-                    self.wfile.write(json.dumps({"error": "No save file found"}).encode("utf-8"))
+                    self._send_json_response(404, {"error": "No save file found"})
                     return
                 player = load_game(save_path)
                 serialized = serialize_player(player)
-                self._set_headers(200)
-                self.wfile.write(json.dumps(serialized).encode("utf-8"))
+                self._send_json_response(200, serialized)
             except Exception as exc:
-                self._set_headers(500)
-                self.wfile.write(json.dumps({"error": f"Failed to load save file: {exc}"}).encode("utf-8"))
+                self._send_json_response(500, {"error": f"Failed to load save file: {exc}"})
+
         else:
-            self._set_headers(404)
-            self.wfile.write(json.dumps({"error": "Not found"}).encode("utf-8"))
+            self._send_json_response(404, {"error": f"Not found: {clean_path}"})
 
     def do_POST(self) -> None:
         content_length = int(self.headers.get("Content-Length", 0))
@@ -138,12 +281,12 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         try:
             req_data = json.loads(raw_body) if raw_body else {}
         except Exception as exc:
-            self._set_headers(400)
-            self.wfile.write(json.dumps({"error": f"Invalid JSON body: {exc}"}).encode("utf-8"))
+            self._send_json_response(400, {"error": f"Invalid JSON body: {exc}"})
             return
 
         clean_path = self.path.split("?")[0]
         try:
+<<<<<<< HEAD
             if clean_path == "/companion/talk":
                 resp_data = self._handle_companion_talk(req_data)
             elif clean_path == "/battle/talk":
@@ -153,35 +296,43 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             elif clean_path == "/decide":
                 resp_data = self._handle_generalized_decide(req_data)
             elif clean_path == "/api/save":
+=======
+            if clean_path == "/api/save":
+>>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
                 resp_data = self._handle_api_save(req_data)
             elif clean_path == "/api/wild_encounter":
                 resp_data = self._handle_wild_encounter(req_data)
             elif clean_path == "/api/pokemon/create":
                 resp_data = self._handle_pokemon_create(req_data)
+            elif clean_path == "/companion/talk":
+                resp_data = self._handle_companion_talk(req_data)
+            elif clean_path == "/battle/decide":
+                resp_data = self._handle_battle_decide(req_data)
+            elif clean_path == "/decide":
+                resp_data = self._handle_generalized_decide(req_data)
             else:
-                self._set_headers(404)
-                self.wfile.write(json.dumps({"error": f"Unknown endpoint: {self.path}"}).encode("utf-8"))
+                self._send_json_response(404, {"error": f"Unknown endpoint: {clean_path}"})
                 return
 
-            self._set_headers(200)
-            self.wfile.write(json.dumps(resp_data).encode("utf-8"))
+            self._send_json_response(200, resp_data)
 
         except Exception as exc:
-            self._set_headers(500)
-            self.wfile.write(json.dumps({"error": f"Inference/backend failure: {exc}"}).encode("utf-8"))
+            self._send_json_response(500, {"error": f"Inference failure: {exc}"})
 
     def _handle_api_save(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Validates and persists game save via Python SaveManager."""
+        """Saves player state through authoritative SaveManager."""
         save_path = repo_root / "save_game.json"
         
-        # In Godot, save data might have top-level wrapper or direct player fields
         player_dict = data.get("player", data)
+<<<<<<< HEAD
         if "inventory" in data and "inventory" not in player_dict:
             player_dict = data
         if "collection" in data and "collection" not in player_dict:
             player_dict = data
 
         # Ensure collection items have integer bond/obedience/personality
+=======
+>>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
         col = player_dict.get("collection", [])
         for mon_d in col:
             if isinstance(mon_d, dict):
@@ -203,11 +354,9 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                     if isinstance(qty, (int, float)) and not isinstance(qty, bool):
                         items[item_id] = int(round(qty))
         
-        # Deserialize to validate
         player = deserialize_player(player_dict)
         save_game(player, save_path)
         
-        # If extra fields were passed (like current_region_id, game_time), ensure they are in file
         try:
             with open(save_path, "r", encoding="utf-8") as f:
                 saved_json = json.load(f)
@@ -247,7 +396,6 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         hm = get_habitat_manager()
         spawn = hm.select_spawn(region_id=region_id, time_of_day=tod)
         if not spawn or not spawn.success or not spawn.species:
-            # Fallback to a base species
             sp_name = random.choice(["Rattata", "Pidgey", "Pikachu"])
             sp = SAMPLE_SPECIES.get(sp_name, SAMPLE_SPECIES["Pikachu"])
             level = random.randint(2, 5)
@@ -296,7 +444,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         }
 
     def _handle_companion_talk(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Handles companion conversation dialogue using bonding adapter."""
+        """Handles companion conversation dialogue using bonding adapter with authoritative sentiment guardrails."""
         species = data.get("species", "Charmander")
         player_name = data.get("player_name", "Trainer")
         user_message = data.get("message", "Hello partner!")
@@ -324,6 +472,15 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         rel.trust = trust
         rel.affection = affection
 
+        # Authoritative sentiment classification
+        sentiment = classify_companion_sentiment(user_message)
+        command_intent = {
+            "very_negative": "insult",
+            "negative": "criticism",
+            "positive": "praise",
+            "neutral": "talk",
+        }.get(sentiment, "talk")
+
         perception = AgentPerception(
             agent_id=agent.agent_id,
             species=species,
@@ -332,7 +489,8 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 "trainer_id": player_name,
                 "trainer_name": player_name,
                 "command": user_message,
-                "command_intent": "praise" if any(w in user_message.lower() for w in ["good", "great", "proud", "amazing", "best"]) else "talk",
+                "command_intent": command_intent,
+                "sentiment": sentiment,
                 "trust": trust,
                 "affection": affection,
                 "relationship_stage": "companion",
@@ -343,21 +501,96 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
 
         decision = self.provider.decide(agent, perception)
 
-        # Dynamic relationship delta parsed from model response
-        trust_delta = float(getattr(decision, "trust_delta", 2.0) or 2.0)
-        affection_delta = float(getattr(decision, "affection_delta", 3.0) or 3.0)
+        # Guard against defensive battle fallback dialogue leaking into companion talk
+        if not decision.dialogue or "held its ground defensively" in decision.dialogue.lower():
+            decision = FallbackDecisionHandler.create_fallback(agent, perception, Exception("Companion dialogue rescue"))
+
+        print(f"[Companion Talk] {species} -> \"{decision.dialogue}\" ({decision.emotional_state}) [Sentiment: {sentiment}]")
+
+        # Parse raw decision deltas from model
+        raw_t_delta = getattr(decision, "trust_delta", None)
+        raw_a_delta = getattr(decision, "affection_delta", None)
+        try:
+            model_t_delta = float(raw_t_delta) if raw_t_delta is not None else None
+        except (ValueError, TypeError):
+            model_t_delta = None
+
+        try:
+            model_a_delta = float(raw_a_delta) if raw_a_delta is not None else None
+        except (ValueError, TypeError):
+            model_a_delta = None
+
+        # Authoritative Sentiment & Relationship Guardrails
+        emotional_state = decision.emotional_state or "neutral"
+
+        if sentiment == "very_negative":
+            # Very negative comments: trust and affection MUST decrease (< 0.0)
+            if model_t_delta is not None and model_t_delta < 0.0:
+                trust_delta = max(-5.0, min(-2.0, model_t_delta))
+            else:
+                trust_delta = -3.0
+
+            if model_a_delta is not None and model_a_delta < 0.0:
+                affection_delta = max(-5.0, min(-2.5, model_a_delta))
+            else:
+                affection_delta = -4.0
+
+            if emotional_state.lower() in ("pleased", "happy", "excited", "affectionate", "content", "bold", "confident", "joyful", "thoughtful"):
+                emotional_state = "hurt"
+
+        elif sentiment == "negative":
+            # Negative comments: trust and affection MUST be 0.0
+            trust_delta = 0.0
+            affection_delta = 0.0
+
+            if emotional_state.lower() in ("pleased", "happy", "excited", "affectionate", "content", "bold", "confident", "joyful", "thoughtful"):
+                emotional_state = "discouraged"
+
+        elif sentiment == "positive":
+            # Positive comments: trust and affection increase
+            if model_t_delta is not None and model_t_delta > 0.0:
+                trust_delta = max(1.0, min(5.0, model_t_delta))
+            else:
+                trust_delta = 2.5
+
+            if model_a_delta is not None and model_a_delta > 0.0:
+                affection_delta = max(1.5, min(5.0, model_a_delta))
+            else:
+                affection_delta = 3.5
+
+            if emotional_state.lower() in ("neutral", "discouraged", "hurt", "sad", "confused"):
+                emotional_state = "happy"
+
+        else:  # neutral
+            # Casual conversation: modest or zero change
+            if model_t_delta is not None:
+                trust_delta = max(0.0, min(1.0, model_t_delta))
+            else:
+                trust_delta = 0.5
+
+            if model_a_delta is not None:
+                affection_delta = max(0.0, min(1.0, model_a_delta))
+            else:
+                affection_delta = 0.5
+
+            if not emotional_state or emotional_state.lower() in ("hurt", "angry"):
+                emotional_state = "thoughtful"
+
+        new_trust = round(max(0.0, min(100.0, trust + trust_delta)), 1)
+        new_affection = round(max(0.0, min(100.0, affection + affection_delta)), 1)
 
         return {
             "species": species,
-            "dialogue": decision.dialogue or f"{species} looks at you happily!",
-            "emotional_state": decision.emotional_state or "pleased",
+            "dialogue": decision.dialogue or f"{species} looks at you attentively.",
+            "emotional_state": emotional_state,
             "action_type": decision.action_type.value,
             "intent": decision.intent,
             "confidence": decision.confidence,
-            "trust_delta": trust_delta,
-            "affection_delta": affection_delta,
-            "new_trust": round(trust + trust_delta, 1),
-            "new_affection": round(affection + affection_delta, 1),
+            "sentiment": sentiment,
+            "trust_delta": round(trust_delta, 1),
+            "affection_delta": round(affection_delta, 1),
+            "new_trust": new_trust,
+            "new_affection": new_affection,
         }
 
     def _handle_battle_talk(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -494,27 +727,55 @@ class ReusableHTTPServer(HTTPServer):
     allow_reuse_address = True
 
 
-def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
+def run_server(
+    host: str = "127.0.0.1",
+    port: int = 8008,
+    provider_type: str = "auto",
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+) -> None:
     print("=" * 60)
-    print(" Syntax Error 26 — Local Pokémon LLM Bridge Server")
+    print(" Syntax Error 26 — Pokémon AI & LLM Bridge Server")
     print(f" Target: http://{host}:{port}")
     print("=" * 60)
 
     try:
         server = ReusableHTTPServer((host, port), LLMBridgeHandler)
     except OSError as err:
-        if err.errno == 48:
+        if err.errno in (48, 10048):
             print(f"\n[!] Port {port} is already in use by another instance.")
-            print(f"    To see what is using it: lsof -i :{port}")
-            print(f"    Or specify another port: python3 server.py --port {port+1}\n")
+            print(f"    Or specify another port: python server.py --port {port+1}\n")
             sys.exit(1)
         raise
 
-    print("Initializing LocalModelDecisionProvider (4-bit MLX weights)...")
-    provider = LocalModelDecisionProvider(allow_mock_fallback=True)
-    provider.load_model(adapter_path=provider.bonding_adapter_path)
+    print(f"Initializing AI Decision Provider (mode: {provider_type})...")
+    provider = create_live_decision_provider(
+        provider_type=provider_type,
+        api_key=api_key,
+        model_name=model,
+        allow_mock_fallback=True,
+    )
+    if hasattr(provider, "load_model"):
+        try:
+            provider.load_model()
+        except Exception:
+            pass
+
     LLMBridgeHandler.provider = provider
-    print(f"[OK] Local LLM Model Loaded and Ready on http://{host}:{port}!")
+
+    # Log active provider status
+    if hasattr(provider, "is_configured") and provider.is_configured():
+        act_p = getattr(provider, "active_provider", provider)
+        p_name = getattr(act_p, "provider_name", type(act_p).__name__)
+        m_name = getattr(act_p, "model_name", "default")
+        print(f"[OK] Live Cloud AI Provider Connected: {p_name} ({m_name})")
+    elif getattr(provider, "is_loaded", False):
+        print(f"[OK] Local LLM Model Loaded: {getattr(provider, 'model_name_or_path', 'Local')}")
+    else:
+        print("[OK] Autonomous Companion Engine Active (Offline Mode).")
+        print("     To connect live Cloud LLM, set GEMINI_API_KEY or OPENAI_API_KEY in .env")
+
+    print(f"[OK] LLM Bridge Server Ready and Listening on http://{host}:{port}!")
 
     try:
         server.serve_forever()
@@ -525,8 +786,23 @@ def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run Local Pokemon LLM HTTP Server")
+    parser = argparse.ArgumentParser(description="Run Pokemon AI LLM HTTP Server")
     parser.add_argument("--host", default="127.0.0.1", help="Host address")
     parser.add_argument("--port", type=int, default=8008, help="Port number")
+    parser.add_argument(
+        "--provider",
+        default=os.environ.get("POKEMON_AI_PROVIDER", "auto"),
+        help="AI Provider: auto, gemini, openai, ollama, local, mock"
+    )
+    parser.add_argument(
+        "--api-key",
+        default=os.environ.get("GEMINI_API_KEY") or os.environ.get("OPENAI_API_KEY"),
+        help="API Key for live cloud AI"
+    )
+    parser.add_argument(
+        "--model",
+        default=os.environ.get("POKEMON_AI_MODEL"),
+        help="Model name override (e.g. gemini-2.5-flash, gpt-4o-mini)"
+    )
     args = parser.parse_args()
-    run_server(args.host, args.port)
+    run_server(args.host, args.port, provider_type=args.provider, api_key=args.api_key, model=args.model)

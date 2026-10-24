@@ -40,8 +40,8 @@ class AgentDecision:
     rationale: str = ""
     confidence: float = 1.0
     suggested_alternative: Optional[str] = None
-    trust_delta: float = 2.0
-    affection_delta: float = 3.0
+    trust_delta: float = 0.0
+    affection_delta: float = 0.0
 
     def __post_init__(self) -> None:
         if isinstance(self.action_type, str):
@@ -79,6 +79,18 @@ class AgentDecision:
         except ValueError:
             action_type = AgentActionType.HESITATE
 
+        raw_trust = data.get("trust_delta")
+        raw_aff = data.get("affection_delta")
+        try:
+            trust_delta = float(raw_trust) if raw_trust is not None else 0.0
+        except (ValueError, TypeError):
+            trust_delta = 0.0
+
+        try:
+            affection_delta = float(raw_aff) if raw_aff is not None else 0.0
+        except (ValueError, TypeError):
+            affection_delta = 0.0
+
         return cls(
             action_type=action_type,
             intent=str(data.get("intent", "unspecified")),
@@ -89,6 +101,6 @@ class AgentDecision:
             rationale=str(data.get("rationale", "")),
             confidence=float(data.get("confidence", 1.0)),
             suggested_alternative=data.get("suggested_alternative"),
-            trust_delta=float(data.get("trust_delta", 2.0)),
-            affection_delta=float(data.get("affection_delta", 3.0)),
+            trust_delta=trust_delta,
+            affection_delta=affection_delta,
         )

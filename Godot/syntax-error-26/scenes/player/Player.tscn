@@ -1,12 +1,12 @@
 [gd_scene load_steps=8 format=3 uid="uid://c8y3xqjPlayer"]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_player"]
-[ext_resource type="Texture2D" path="res://assets/sprites/trainers/brendan_walk.png" id="2_brendan"]
+[ext_resource type="Texture2D" path="res://assets/sprites/trainers/ash_walk.png" id="2_ash"]
 [ext_resource type="Texture2D" path="res://assets/sprites/world/shadow_decal.png" id="3_shadow"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
-radius = 0.4
-height = 1.6
+radius = 0.45
+height = 1.8
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shadow"]
 transparency = 1
@@ -15,7 +15,7 @@ albedo_texture = ExtResource("3_shadow")
 
 [sub_resource type="QuadMesh" id="QuadMesh_shadow"]
 material = SubResource("StandardMaterial3D_shadow")
-size = Vector2(1.0, 1.0)
+size = Vector2(1.3, 1.3)
 orientation = 1
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_1"]
@@ -27,7 +27,7 @@ collision_mask = 3
 script = ExtResource("1_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_1")
 
 [node name="Shadow" type="MeshInstance3D" parent="."]
@@ -35,12 +35,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
 mesh = SubResource("QuadMesh_shadow")
 
 [node name="TrainerSprite" type="Sprite3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.96, 0)
 billboard = 2
 texture_filter = 0
-pixel_size = 0.045
-texture = ExtResource("2_brendan")
+pixel_size = 0.04
+texture = ExtResource("2_ash")
 hframes = 9
+frame = 3
 
 [node name="CameraPivot" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)

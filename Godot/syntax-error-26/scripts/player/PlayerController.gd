@@ -27,9 +27,17 @@ const STEP_DISTANCE: float = 1.5
 
 var _nearest_interactable: Node3D = null
 var _in_tall_grass: bool = false
+var _tall_grass_count: int = 0
+
+func set_in_tall_grass(in_grass: bool) -> void:
+	if in_grass:
+		_tall_grass_count += 1
+	else:
+		_tall_grass_count = maxi(0, _tall_grass_count - 1)
+	_in_tall_grass = (_tall_grass_count > 0)
 
 # Animation state
-var _facing: String = "down" # "down", "up", "left", "right"
+var _facing: String = "up" # "up" = back facing camera/user
 var _anim_timer: float = 0.0
 
 # Encounter system reference
@@ -56,16 +64,24 @@ func _ready() -> void:
 			avatar = str(GameState.get_meta("player_avatar"))
 		elif GameState.player and GameState.player.trainer_avatar != "":
 			var a = GameState.player.trainer_avatar.to_lower()
-			avatar = "girl" if (a == "girl" or a == "serena") else "boy"
+			avatar = "girl" if (a == "girl" or a == "misty" or a == "serena") else "boy"
 			
-		if avatar == "girl":
-			var tex = load("res://assets/sprites/trainers/may_walk.png")
+		var is_girl = (avatar in ["girl", "misty", "serena", "may"])
+		if is_girl:
+			var tex = load("res://assets/sprites/trainers/misty_walk.png")
 			if tex:
 				trainer_sprite.texture = tex
+				trainer_sprite.hframes = 9
+				trainer_sprite.pixel_size = 0.04
+				trainer_sprite.position.y = 0.96
 		else:
-			var tex = load("res://assets/sprites/trainers/brendan_walk.png")
+			var tex = load("res://assets/sprites/trainers/ash_walk.png")
 			if tex:
 				trainer_sprite.texture = tex
+				trainer_sprite.hframes = 9
+				trainer_sprite.pixel_size = 0.04
+				trainer_sprite.position.y = 0.96
+		trainer_sprite.frame = 3
 
 	# Create encounter system
 	var enc_class = load("res://scripts/systems/EncounterSystem.gd")
@@ -87,26 +103,16 @@ func _is_typing() -> bool:
 		return true
 	return false
 
+func _is_in_menu() -> bool:
+	return GameState.is_any_menu_open() or _is_typing()
+
 func _input(event: InputEvent) -> void:
-	# If player is typing into any text input (e.g. Companion LLM chat, name input),
-	# ignore all hotkeys (I, P, J, E, Space, Enter, menus, etc.) so typing stays 100% focused
-	if _is_typing():
-		_release_mouse()
-		return
-	
-	if GameState.is_in_battle or GameState.is_paused:
+	# If player is in any menu, battle, or typing, ALWAYS release mouse and ignore world hotkeys
+	if _is_in_menu():
 		_release_mouse()
 		return
 
-	# Toggle/acquire mouse capture on click in game window
-	if event is InputEventMouseButton and event.pressed:
-		if not GameState.is_in_battle and not GameState.is_paused:
-			if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
-				if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-					is_mouse_captured = true
-
-	# Mouse wheel zoom
+	# Mouse wheel zoom in world
 	if event is InputEventMouseButton and is_instance_valid(camera_arm):
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			camera_arm.spring_length = max(2.0, camera_arm.spring_length - 0.5)
@@ -116,7 +122,7 @@ func _input(event: InputEvent) -> void:
 	# Camera look with mouse motion: works when captured OR when drag-clicking with Left or Right button
 	if event is InputEventMouseMotion:
 		var should_rotate = (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		if should_rotate and not GameState.is_in_battle and not GameState.is_paused:
+		if should_rotate and not _is_in_menu():
 			camera_rotation_y -= event.relative.x * CAMERA_SENSITIVITY
 			camera_rotation_x -= event.relative.y * CAMERA_SENSITIVITY
 			camera_rotation_x = clamp(camera_rotation_x, CAMERA_MIN_X, CAMERA_MAX_X)
@@ -150,12 +156,25 @@ func _input(event: InputEvent) -> void:
 		_release_mouse()
 		EventBus.open_pause_menu.emit()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _is_in_menu():
+		_release_mouse()
+		return
+
+	# Only acquire mouse capture when clicking directly into 3D world (outside of menus/UI/battles)
+	if event is InputEventMouseButton and event.pressed:
+		if not _is_in_menu():
+			if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
+				if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+					Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+					is_mouse_captured = true
+
 func _release_mouse() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	is_mouse_captured = false
 
 func _physics_process(delta: float) -> void:
-	if GameState.is_in_battle or GameState.is_paused:
+	if _is_in_menu():
 		_release_mouse()
 		return
 	
@@ -247,6 +266,7 @@ func _physics_process(delta: float) -> void:
 			if is_instance_valid(encounter_system):
 				encounter_system.on_player_step(GameState.current_region_id, _in_tall_grass)
 		player_moved.emit(global_position)
+		EventBus.player_moved.emit(global_position)
 	
 	# Region detection
 	_check_region()
@@ -254,62 +274,47 @@ func _physics_process(delta: float) -> void:
 	# Update HUD interaction prompt
 	_check_nearby_interactables()
 
-func _update_sprite_animation(delta: float, input_dir: Vector2, is_moving: bool, is_sprinting: bool) -> void:
+func _update_sprite_animation(delta: float, _input_dir: Vector2, is_moving: bool, is_sprinting: bool) -> void:
 	if not is_instance_valid(trainer_sprite):
 		return
 	
 	if is_moving:
-		# Determine dominant direction from input
-		if abs(input_dir.x) > abs(input_dir.y):
-			_facing = "left" if input_dir.x < 0 else "right"
-		else:
-			_facing = "up" if input_dir.y < 0 else "down"
-		
 		_anim_timer += delta * (11.0 if is_sprinting else 7.5)
 		var cycle = int(_anim_timer) % 4
-		var step_frame = 0
+		var step_frame = 3
 		if cycle == 1:
-			step_frame = 1
+			step_frame = 4 # step left
 		elif cycle == 3:
-			step_frame = 2
+			step_frame = 5 # step right
 		
-		match _facing:
-			"down":
-				trainer_sprite.frame = 0 if step_frame == 0 else (1 if step_frame == 1 else 2)
-				trainer_sprite.flip_h = false
-			"up":
-				trainer_sprite.frame = 3 if step_frame == 0 else (4 if step_frame == 1 else 5)
-				trainer_sprite.flip_h = false
-			"left":
-				trainer_sprite.frame = 6 if step_frame == 0 else (7 if step_frame == 1 else 8)
-				trainer_sprite.flip_h = true
-			"right":
-				trainer_sprite.frame = 6 if step_frame == 0 else (7 if step_frame == 1 else 8)
-				trainer_sprite.flip_h = false
+		# Always maintain the player back visible to the user
+		trainer_sprite.frame = step_frame
+		trainer_sprite.flip_h = false
 	else:
 		_anim_timer = 0.0
-		match _facing:
-			"down":
-				trainer_sprite.frame = 0
-				trainer_sprite.flip_h = false
-			"up":
-				trainer_sprite.frame = 3
-				trainer_sprite.flip_h = false
-			"left":
-				trainer_sprite.frame = 6
-				trainer_sprite.flip_h = true
-			"right":
-				trainer_sprite.frame = 6
-				trainer_sprite.flip_h = false
+		# Back idle frame (facing forward into the world)
+		trainer_sprite.frame = 3
+		trainer_sprite.flip_h = false
 
 func _check_region() -> void:
 	var region_id = RegionData.get_region_at_position(global_position.x, global_position.z)
 	if region_id != "" and region_id != GameState.current_region_id:
+		var old_region_id = GameState.current_region_id
 		GameState.change_region(region_id)
+		EventBus.player_exited_region.emit(old_region_id)
+		var region_data = RegionData.get_region(region_id)
+		EventBus.player_entered_region.emit(region_id, region_data.get("name", region_id))
 	
-	# Tall grass detection
+	# Tall grass detection: physical grass area or region setting
+	var in_grass_area = (_tall_grass_count > 0)
+	if not in_grass_area and is_instance_valid(interaction_area):
+		for area in interaction_area.get_overlapping_areas():
+			if area.is_in_group("tall_grass"):
+				in_grass_area = true
+				break
+	
 	var region_data = RegionData.get_region(GameState.current_region_id)
-	_in_tall_grass = region_data.get("has_tall_grass", false)
+	_in_tall_grass = in_grass_area or region_data.get("has_tall_grass", false)
 
 func _check_nearby_interactables() -> void:
 	_nearest_interactable = null
@@ -358,19 +363,27 @@ func _try_interact() -> void:
 	if _nearest_interactable.has_method("on_interact"):
 		_nearest_interactable.on_interact(self)
 		interaction_triggered.emit(_nearest_interactable)
+		var obj_id = _nearest_interactable.get("object_id") if "object_id" in _nearest_interactable else _nearest_interactable.name
+		EventBus.interaction_triggered.emit(obj_id)
+		var obj_type = _nearest_interactable.get("object_type") if "object_type" in _nearest_interactable else "world_object"
+		EventBus.world_object_interacted.emit(obj_id, obj_type)
 
 func _on_encounter_triggered(wild_pokemon: PokemonInstance) -> void:
 	if GameState.is_in_battle:
 		return
 	_release_mouse()
-	GameState.set_meta("wild_pokemon_for_battle", wild_pokemon.to_dict())
-	GameState.enter_battle()
 	EventBus.battle_started.emit(
 		GameState.get_active_pokemon().to_dict() if GameState.get_active_pokemon() else {},
 		wild_pokemon.to_dict(),
 		false
 	)
-	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+	if has_node("/root/BattleTransition"):
+		var bt = get_node("/root/BattleTransition")
+		bt.start_wild_encounter(wild_pokemon.to_dict())
+	else:
+		GameState.set_meta("wild_pokemon_for_battle", wild_pokemon.to_dict())
+		GameState.enter_battle()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 func _on_open_party_menu() -> void:
 	var party_menu = get_tree().get_first_node_in_group("party_menu")

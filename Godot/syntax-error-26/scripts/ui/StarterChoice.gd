@@ -12,6 +12,7 @@ const PokemonData = preload("res://scripts/data/PokemonData.gd")
 const STARTERS = ["Bulbasaur", "Charmander", "Squirtle"]
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	bulbasaur_btn.pressed.connect(_on_starter_chosen.bind("Bulbasaur"))
 	charmander_btn.pressed.connect(_on_starter_chosen.bind("Charmander"))
 	squirtle_btn.pressed.connect(_on_starter_chosen.bind("Squirtle"))
@@ -88,7 +89,7 @@ func _update_starter_panel(species_name: String) -> void:
 
 func _on_starter_chosen(species_name: String) -> void:
 	var player_name = "Trainer"
-	var avatar = "calem"
+	var avatar = "ash"
 	if GameState.has_meta("pending_player_name"):
 		player_name = GameState.get_meta("pending_player_name")
 		GameState.remove_meta("pending_player_name")

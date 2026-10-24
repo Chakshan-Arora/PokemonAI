@@ -26,9 +26,14 @@ func _input(event: InputEvent) -> void:
 		hide_menu()
 		get_viewport().set_input_as_handled()
 
+func _process(_delta: float) -> void:
+	if visible and Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func show_menu() -> void:
 	visible = true
 	GameState.pause_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh_list()
 	if item_list.get_child_count() > 0:
 		var first_item_btn = item_list.get_child(0) as Button
@@ -38,6 +43,7 @@ func show_menu() -> void:
 func hide_menu() -> void:
 	visible = false
 	GameState.resume_game()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	EventBus.hud_update_requested.emit()
 
 func _refresh_list() -> void:

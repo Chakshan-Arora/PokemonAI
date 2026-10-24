@@ -3,7 +3,7 @@ extends Node
 ## Communicates with http://127.0.0.1:8008 for companion dialogue, battle tactics, game data, and save state.
 
 const BASE_URL: String = "http://127.0.0.1:8008"
-const TIMEOUT_SECONDS: float = 5.0
+const TIMEOUT_SECONDS: float = 25.0
 
 var is_server_online: bool = false
 var _health_request: HTTPRequest = null
@@ -15,12 +15,15 @@ signal battle_decision_ready(data: Dictionary)
 signal battle_talk_replied(data: Dictionary)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_health_request = HTTPRequest.new()
-	_health_request.timeout = 2.0
+	_health_request.process_mode = Node.PROCESS_MODE_ALWAYS
+	_health_request.timeout = 3.0
 	add_child(_health_request)
 	
 	_health_timer = Timer.new()
-	_health_timer.wait_time = 5.0
+	_health_timer.process_mode = Node.PROCESS_MODE_ALWAYS
+	_health_timer.wait_time = 4.0
 	_health_timer.autostart = true
 	_health_timer.timeout.connect(_check_health)
 	add_child(_health_timer)
@@ -28,6 +31,10 @@ func _ready() -> void:
 	_check_health()
 
 func _check_health() -> void:
+	if not is_instance_valid(_health_request):
+		return
+	if _health_request.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return
 	var err = _health_request.request(BASE_URL + "/health")
 	if err == OK:
 		var res = await _health_request.request_completed
@@ -100,15 +107,15 @@ func talk_to_companion(species: String, message: String, player_name: String = "
 		companion_replied.emit(response)
 		return response
 	
-	# Fallback response if LLM server is unreachable
+	# Fallback response if LLM server is unreachable or timed out
 	var fallback = {
 		"species": species,
-		"dialogue": "%s: *looks at %s attentively and chirps happily*" % [species, player_name],
-		"emotional_state": "content",
-		"trust_delta": 2.0,
-		"affection_delta": 3.0,
-		"new_trust": trust + 2.0,
-		"new_affection": affection + 3.0
+		"dialogue": "*swishes tail attentively* (Local LLM server is busy or offline. Please check terminal.)",
+		"emotional_state": "thoughtful",
+		"trust_delta": 0.0,
+		"affection_delta": 0.0,
+		"new_trust": trust,
+		"new_affection": affection
 	}
 	companion_replied.emit(fallback)
 	return fallback
@@ -195,6 +202,7 @@ func get_opponent_battle_banter(opponent_dict: Dictionary, context: Dictionary =
 ## Internal helper for asynchronous HTTP GET requests
 func _get_json(url: String) -> Dictionary:
 	var http = HTTPRequest.new()
+	http.process_mode = Node.PROCESS_MODE_ALWAYS
 	http.timeout = TIMEOUT_SECONDS
 	add_child(http)
 	
@@ -224,6 +232,7 @@ func _get_json(url: String) -> Dictionary:
 ## Internal helper for asynchronous HTTP POST requests
 func _post_json(url: String, data: Dictionary) -> Dictionary:
 	var http = HTTPRequest.new()
+	http.process_mode = Node.PROCESS_MODE_ALWAYS
 	http.timeout = TIMEOUT_SECONDS
 	add_child(http)
 	

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhqo4gme2iram"
-path="res://.godot/imported/red.png-9a5d98cca71522ae3b5a163fe2677ff7.ctex"
+uid="uid://cparpk0r2i3ws"
+path="res://.godot/imported/misty_walk.png-f2f860613575ad5172539239cd30d29e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/trainers/red.png"
-dest_files=["res://.godot/imported/red.png-9a5d98cca71522ae3b5a163fe2677ff7.ctex"]
+source_file="res://assets/sprites/trainers/misty_walk.png"
+dest_files=["res://.godot/imported/misty_walk.png-f2f860613575ad5172539239cd30d29e.ctex"]
 
 [params]
 
