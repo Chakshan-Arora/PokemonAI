@@ -36,7 +36,9 @@ def run_training(
     cmd = [
         sys.executable,
         "-m",
-        "mlx_lm.lora",
+        "mlx_lm",
+        "lora",
+        "--train",
         "--model",
         model_name,
         "--data",
@@ -51,8 +53,12 @@ def run_training(
         str(batch_size),
         "--learning-rate",
         str(learning_rate),
-        "--steps-per-save",
+        "--save-every",
         str(save_every),
+        "--steps-per-report",
+        "25",
+        "--steps-per-eval",
+        "100",
     ]
 
     print(f"Executing: {' '.join(cmd)}")
