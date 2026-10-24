@@ -64,6 +64,8 @@ class LocalModelDecisionProvider(DecisionProvider):
 
         self._model: Optional[Any] = None
         self._tokenizer: Optional[Any] = None
+        self._battle_model: Optional[Any] = None
+        self._battle_tokenizer: Optional[Any] = None
         self._active_adapter: Optional[str] = None
         self._is_loaded: bool = False
 
@@ -73,7 +75,7 @@ class LocalModelDecisionProvider(DecisionProvider):
         return self._is_loaded
 
     def load_model(self, adapter_path: Optional[str] = None) -> None:
-        """Loads base model and tokenizer into memory if available."""
+        """Loads base conversational model and battle adapter model into memory."""
         if self.inference_backend == "mock":
             self._is_loaded = True
             return
@@ -81,10 +83,25 @@ class LocalModelDecisionProvider(DecisionProvider):
         try:
             import mlx.core as mx
             from mlx_lm import load
+
+            # Load fluent base model for companion conversation
             self._model, self._tokenizer = load(
                 self.model_name_or_path,
-                adapter_path=adapter_path,
+                adapter_path=adapter_path if adapter_path != self.bonding_adapter_path else None,
             )
+
+            # Pre-load battle adapter if available for instant combat turn selection
+            battle_path = self.battle_adapter_path
+            if battle_path and Path(battle_path).exists():
+                try:
+                    self._battle_model, self._battle_tokenizer = load(
+                        self.model_name_or_path,
+                        adapter_path=battle_path,
+                    )
+                except Exception:
+                    self._battle_model = None
+                    self._battle_tokenizer = None
+
             self._active_adapter = adapter_path
             self._is_loaded = True
         except ImportError:
@@ -104,18 +121,21 @@ class LocalModelDecisionProvider(DecisionProvider):
         Falls back safely to FallbackDecisionHandler if the model is uninitialized or errors.
         """
         in_battle = perception.environment_context.get("in_battle", False)
-        target_adapter = self.battle_adapter_path if in_battle else self.bonding_adapter_path
 
         try:
-            if not self._is_loaded or (target_adapter and self._active_adapter != target_adapter):
-                self.load_model(adapter_path=target_adapter)
+            if not self._is_loaded:
+                self.load_model()
 
             if not self._is_loaded and not self.allow_mock_fallback:
                 raise LocalModelError("Local model weights are not loaded.")
 
             system_instruction, user_prompt = self._format_prompt(agent, perception, in_battle)
 
-            raw_output = self._generate_text(system_instruction, user_prompt)
+            # Use battle adapter model in battle; base model out of battle
+            active_model = self._battle_model if (in_battle and self._battle_model is not None) else self._model
+            active_tok = self._battle_tokenizer if (in_battle and self._battle_tokenizer is not None) else self._tokenizer
+
+            raw_output = self._generate_text(system_instruction, user_prompt, model=active_model, tokenizer=active_tok)
             decision = DecisionResponseParser.parse(raw_output)
             return decision
 
@@ -155,48 +175,65 @@ class LocalModelDecisionProvider(DecisionProvider):
 
             user_prompt = f"Current Battle Turn State:\n{json.dumps({'battle_context': battle_ctx}, indent=2)}"
         else:
-            system_instruction = (
-                f"You are the autonomous decision model for {agent.species}, an expressive Pokemon with temperament '{agent.identity.temperament}'. "
-                "Interpret the player interaction in light of your personality traits, relationship trust, and memories. "
-                "Respond STRICTLY with a single JSON object matching the required schema."
-            )
+            cries = {
+                "Pikachu": "'Pika!', 'Pika-pi!', 'Pikachu!'",
+                "Charmander": "'Char!', 'Chaaar!', 'Charmander!'",
+                "Squirtle": "'Squirtle!', 'Squirt!'",
+                "Bulbasaur": "'Bulba!', 'Bulbasaur!'",
+                "Eevee": "'Vee!', 'Eevee!'",
+                "Machop": "'Chop!', 'Machop!'",
+                "Geodude": "'Geo!', 'Geodude!'",
+                "Gastly": "'Gast!', 'Gastly!'",
+            }.get(agent.species, f"'{agent.species}!'")
+
             trainer_ctx = perception.trainer_context or {}
-            rel = agent.get_relationship(trainer_ctx.get("trainer_id", "")) if trainer_ctx.get("trainer_id") else None
-            bonding_ctx = {
-                "species": agent.species,
-                "temperament": agent.identity.temperament,
-                "personality_traits": agent.identity.personality_traits,
-                "hp_ratio": perception.physical_state.get("hp_ratio", 1.0),
-                "relationship": {
-                    "stage": trainer_ctx.get("relationship_stage", rel.stage.value if rel else "stranger"),
-                    "trust": trainer_ctx.get("trust", rel.trust if rel else 0.0),
-                    "affection": trainer_ctx.get("affection", rel.affection if rel else 0.0),
-                    "familiarity": rel.familiarity if rel else 0.0,
-                },
-                "interaction_type": perception.environment_context.get("interaction_type", trainer_ctx.get("command_intent", "praise")),
-                "player_input": trainer_ctx.get("command") or "Hello!",
-                "permitted_actions": perception.available_actions or ["interact", "obey", "suggest", "protest", "request_release", "hesitate", "rest"],
-            }
-            user_prompt = f"Current Situation and Interaction Context:\n{json.dumps(bonding_ctx, indent=2)}"
+            trainer_name = trainer_ctx.get("trainer_name", "Trainer")
+            user_msg = trainer_ctx.get("command") or "Hello partner!"
+
+            system_instruction = (
+                f"You are {agent.species}, the loyal partner Pokémon of {trainer_name}.\n"
+                f"Personality: {agent.identity.temperament}, expressive, observant, and affectionate.\n"
+                "Communicate authentically with your trainer:\n"
+                f"1. Start your dialogue with one of your signature {agent.species} cries (such as {cries}).\n"
+                "2. Include lively physical actions or gestures inside asterisks (e.g. *perks ears up*, *wags tail*, *sparks cheek pouches*).\n"
+                f"3. Express your thoughts, feelings, and direct answer to what {trainer_name} asked in spoken English (avoid unescaped double quotes inside strings; use single quotes or parentheses if needed).\n"
+                f"4. Always address specifically what {trainer_name} said, with personality and charm.\n"
+                "Respond STRICTLY with a single valid JSON object matching this schema:\n"
+                "{\n"
+                f"  \"dialogue\": \"<{agent.species} cry> *action* <Your direct answer to what was asked>\",\n"
+                "  \"emotional_state\": \"<excited/curious/bold/happy/thoughtful/determined/content/affectionate>\",\n"
+                "  \"action_type\": \"interact\",\n"
+                "  \"intent\": \"<brief description of intent>\",\n"
+                "  \"confidence\": 0.9,\n"
+                "  \"trust_delta\": 2.0,\n"
+                "  \"affection_delta\": 3.0\n"
+                "}"
+            )
+            user_prompt = f"{trainer_name} says: \"{user_msg}\""
 
         return system_instruction, user_prompt
 
-    def _generate_text(self, system_instruction: str, user_prompt: str) -> str:
-        """Executes text generation using loaded backend with early JSON completion stopping."""
-        if self._model is not None and self._tokenizer is not None:
+    def _generate_text(self, system_instruction: str, user_prompt: str, model: Optional[Any] = None, tokenizer: Optional[Any] = None) -> str:
+        """Executes text generation using loaded backend with sampler and early JSON completion stopping."""
+        target_model = model if model is not None else self._model
+        target_tok = tokenizer if tokenizer is not None else self._tokenizer
+
+        if target_model is not None and target_tok is not None:
             try:
                 from mlx_lm import stream_generate
+                from mlx_lm.sample_utils import make_sampler
+                sampler = make_sampler(temp=0.7, top_p=0.9)
                 messages = [
                     {"role": "system", "content": system_instruction},
                     {"role": "user", "content": user_prompt},
                 ]
-                prompt = self._tokenizer.apply_chat_template(messages, add_generation_prompt=True)
+                prompt = target_tok.apply_chat_template(messages, add_generation_prompt=True)
 
                 output_parts: list[str] = []
                 brace_count = 0
                 in_json = False
 
-                for response in stream_generate(self._model, self._tokenizer, prompt=prompt, max_tokens=160):
+                for response in stream_generate(target_model, target_tok, prompt=prompt, max_tokens=180, sampler=sampler):
                     text = response.text
                     output_parts.append(text)
                     for char in text:
@@ -210,16 +247,28 @@ class LocalModelDecisionProvider(DecisionProvider):
                     if in_json and brace_count == 0:
                         break
 
-                return "".join(output_parts)
+                raw = "".join(output_parts)
+                start = raw.find("{")
+                end = raw.rfind("}")
+                if start != -1 and end != -1 and end > start:
+                    return raw[start : end + 1]
+                return raw
             except Exception:
                 try:
                     from mlx_lm import generate
+                    from mlx_lm.sample_utils import make_sampler
+                    sampler = make_sampler(temp=0.7, top_p=0.9)
                     messages = [
                         {"role": "system", "content": system_instruction},
                         {"role": "user", "content": user_prompt},
                     ]
-                    prompt = self._tokenizer.apply_chat_template(messages, add_generation_prompt=True)
-                    return generate(self._model, self._tokenizer, prompt=prompt, max_tokens=160, verbose=False)
+                    prompt = target_tok.apply_chat_template(messages, add_generation_prompt=True)
+                    raw = generate(target_model, target_tok, prompt=prompt, max_tokens=180, sampler=sampler, verbose=False)
+                    start = raw.find("{")
+                    end = raw.rfind("}")
+                    if start != -1 and end != -1 and end > start:
+                        return raw[start : end + 1]
+                    return raw
                 except Exception:
                     pass
 

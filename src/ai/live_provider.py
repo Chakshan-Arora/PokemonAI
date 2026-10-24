@@ -246,6 +246,28 @@ class DecisionResponseParser:
                     pass
 
         if not isinstance(data, dict):
+            # Regex extraction fallback for unescaped internal quotes or malformed JSON
+            try:
+                dlg_match = re.search(r'"dialogue"\s*:\s*"(.*?)"\s*,\s*"\w+"', cleaned, re.DOTALL)
+                emo_match = re.search(r'"emotional_state"\s*:\s*"([^"]+)"', cleaned)
+                act_match = re.search(r'"action_type"\s*:\s*"([^"]+)"', cleaned)
+                int_match = re.search(r'"intent"\s*:\s*"([^"]+)"', cleaned)
+                trust_match = re.search(r'"trust_delta"\s*:\s*([0-9.]+)', cleaned)
+                aff_match = re.search(r'"affection_delta"\s*:\s*([0-9.]+)', cleaned)
+                if dlg_match:
+                    data = {
+                        "dialogue": dlg_match.group(1).replace('\\"', '"'),
+                        "emotional_state": emo_match.group(1) if emo_match else "content",
+                        "action_type": act_match.group(1) if act_match else "interact",
+                        "intent": int_match.group(1) if int_match else "companion interaction",
+                        "confidence": 0.9,
+                        "trust_delta": float(trust_match.group(1)) if trust_match else 2.0,
+                        "affection_delta": float(aff_match.group(1)) if aff_match else 3.0,
+                    }
+            except Exception:
+                pass
+
+        if not isinstance(data, dict):
             return AgentDecision(
                 action_type=AgentActionType.HESITATE,
                 intent="Hesitate due to malformed model response",
@@ -279,6 +301,8 @@ class DecisionResponseParser:
             rationale=str(data.get("rationale", "")),
             confidence=conf,
             suggested_alternative=data.get("suggested_alternative"),
+            trust_delta=float(data.get("trust_delta", 2.0)),
+            affection_delta=float(data.get("affection_delta", 3.0)),
         )
 
 

@@ -132,9 +132,9 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
 
         decision = self.provider.decide(agent, perception)
 
-        # Compute dynamic relationship delta
-        trust_delta = 3.0 if "good" in user_message.lower() or "proud" in user_message.lower() else 1.0
-        affection_delta = 5.0 if "good" in user_message.lower() or "proud" in user_message.lower() else 2.0
+        # Dynamic relationship delta parsed from model response
+        trust_delta = float(getattr(decision, "trust_delta", 2.0) or 2.0)
+        affection_delta = float(getattr(decision, "affection_delta", 3.0) or 3.0)
 
         return {
             "species": species,
@@ -245,7 +245,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8008) -> None:
 
     print("Initializing LocalModelDecisionProvider (4-bit MLX weights)...")
     provider = LocalModelDecisionProvider(allow_mock_fallback=True)
-    provider.load_model(adapter_path=provider.bonding_adapter_path)
+    provider.load_model()
     LLMBridgeHandler.provider = provider
     print(f"[OK] Local LLM Model Loaded and Ready on http://{host}:{port}!")
 
