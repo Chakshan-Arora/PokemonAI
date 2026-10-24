@@ -1,61 +1,53 @@
 """
-Battle Talk intent interpretation and conversational handling for Syntax Error 26 (BT2B).
-
-Provides:
-- parse_battle_talk_intent: deterministic keyword/rule-based intent parser
-- generate_battle_talk_response: personality-aware, cosmetic dialogue generator
+Battle Talk public interface and coordination for Syntax Error 26.
+Integrates parser, companion reaction, tactical matchup advisor, and battle talk generation.
 """
-from typing import Optional, Union, Any
+from typing import Any, Dict, Optional, Union
 
-from src.models.battle import (
+from src.ai.battle_talk_parser import (
     BattleTalkCommand,
     BattleTalkIntent,
+    BattleTalkParser,
     TalkCategory,
+    parse_battle_talk,
 )
-from src.ai.battle_talk_parser import BattleTalkParser
-from src.ai.companion_service import BattleTalkContext
 
 
 def parse_battle_talk_intent(text: str) -> BattleTalkIntent:
-    """
-    Deterministically parses player text into a BattleTalkIntent.
-
-    Rules:
-      - Normalizes text.
-      - Recognizes PRAISE, ENCOURAGE, WARNING, and GENERAL intents.
-      - Empty, unclassified, or ambiguous phrases safely fall back to GENERAL.
-    """
-    if not isinstance(text, str):
-        return BattleTalkIntent.GENERAL
-
+    """Parses player combat utterance into a BattleTalkIntent."""
     cmd = BattleTalkParser.parse(text)
-    raw_intent = cmd.intent
-    if isinstance(raw_intent, BattleTalkIntent):
-        return raw_intent
-    elif isinstance(raw_intent, str):
-        try:
-            return BattleTalkIntent(raw_intent)
-        except ValueError:
-            return BattleTalkIntent.GENERAL
-    return BattleTalkIntent.GENERAL
+    if isinstance(cmd.intent, BattleTalkIntent):
+        return cmd.intent
+    try:
+        return BattleTalkIntent(cmd.intent)
+    except Exception:
+        return BattleTalkIntent.GENERAL
 
 
 def generate_battle_talk_response(
-    pokemon: Any,
-    intent_or_command: Union[BattleTalkIntent, BattleTalkCommand, str],
-    context: Optional[Any] = None,
-) -> str:
-    """
-    Generates a deterministic, personality-aware, cosmetic dialogue response
-    reflecting the Pokemon's reaction to the trainer's words and battle context.
-
-    Strictly cosmetic:
-      - Does not alter combat state, HP, stats, bond, obedience, or personality.
-      - Does not claim physical actions (dodges, blocks, attacks).
-    """
-    from src.ai.companion_service import CompanionService
-
-    if isinstance(intent_or_command, BattleTalkIntent):
-        cmd = BattleTalkCommand(text="", intent=intent_or_command)
-        return CompanionService.generate_battle_talk_response(pokemon, cmd, context=context)
-    return CompanionService.generate_battle_talk_response(pokemon, intent_or_command, context=context)
+    species: str,
+    nickname: str = "",
+    message: str = "",
+    personality: Optional[Dict[str, Any]] = None,
+    temperament: str = "bold",
+    bond: float = 50.0,
+    obedience: float = 70.0,
+    battle_context: Optional[Dict[str, Any]] = None,
+    is_opponent: bool = False,
+    opponent_archetype: str = "wild",
+) -> Dict[str, Any]:
+    """Generates battle talk response using the deterministic engine."""
+    p_dict = personality or {"aggression": 50, "loyalty": 50, "confidence": 50, "fear": 20}
+    ctx = battle_context or {}
+    return BattleTalkParser.generate_fallback_response(
+        species=species,
+        nickname=nickname or species,
+        message=message,
+        personality=p_dict,
+        temperament=temperament,
+        bond=bond,
+        obedience=obedience,
+        battle_context=ctx,
+        is_opponent=is_opponent,
+        opponent_archetype=opponent_archetype,
+    )

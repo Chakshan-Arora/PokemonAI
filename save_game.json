@@ -1,32 +1,30 @@
 {
-  "active_pokemon_id": "12364_2576565174",
+  "active_pokemon_id": "1161_1834561894",
   "collected_treasures": [],
   "collection": [
     {
       "attacks": [
-        "Scratch",
-        "Ember",
-        "Flamethrower",
-        "Fire Fang"
+        "Tackle",
+        "Vine Whip"
       ],
       "awarded_level_moves": [],
       "bond": 20,
-      "current_hp": 22,
-      "experience": 0,
+      "current_hp": 18,
+      "experience": 320,
       "level": 5,
-      "max_hp": 22,
-      "nickname": "Charmander",
+      "max_hp": 24,
+      "nickname": "Bulbasaur",
       "obedience": 100,
       "personality": {
-        "aggression": 51,
-        "confidence": 16,
-        "curiosity": 12,
-        "fear": 46,
-        "loyalty": 7,
-        "sociability": 48
+        "aggression": 62,
+        "confidence": 93,
+        "curiosity": 11,
+        "fear": 23,
+        "loyalty": 36,
+        "sociability": 55
       },
-      "species": "Charmander",
-      "species_name": "Charmander",
+      "species": "Bulbasaur",
+      "species_name": "Bulbasaur",
       "status_effects": [],
       "trained_atk": 0,
       "trained_def": 0,
@@ -36,13 +34,16 @@
         "defense": 0,
         "speed": 0
       },
-      "unique_id": "12364_2576565174"
+      "unique_id": "1161_1834561894"
     }
   ],
   "current_region_id": "starting_meadow",
   "discovered_landmarks": [],
-  "discovered_regions": [],
-  "game_time": 8.0,
+  "discovered_regions": [
+    "forest_trail",
+    "starting_meadow"
+  ],
+  "game_time": 8.72668430508581,
   "inventory": {
     "capacity": 20,
     "items": {
@@ -52,21 +53,21 @@
   },
   "player": {
     "max_team_size": 6,
-    "name": "red",
-    "player_name": "red",
+    "name": "Trainer",
+    "player_name": "Trainer",
     "trainer_avatar": "calem",
-    "unique_id": "player_12364_3320641301"
+    "unique_id": "player_1161_3828188202"
   },
   "player_position": {
-    "x": 50.0,
-    "y": 0.5,
-    "z": 50.0
+    "x": 56.4916801452637,
+    "y": 0.000468746642582119,
+    "z": 29.0362224578857
   },
   "quests": {},
-  "saved_at": "2026-10-24 18:11:27",
+  "saved_at": "2026-10-24 23:23:14",
   "schema_version": 4,
   "team": [
-    "12364_2576565174"
+    "1161_1834561894"
   ],
   "wild_action_history": []
 }

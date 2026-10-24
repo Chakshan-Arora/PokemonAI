@@ -73,7 +73,7 @@ BULBASAUR = PokemonSpecies(
     base_attack=49,
     base_defense=49,
     base_speed=45,
-    available_attacks=(TACKLE, VINE_WHIP, POISON_POWDER, RAZOR_LEAF, SOLAR_BEAM),
+    available_attacks=(TACKLE, VINE_WHIP, POISON_POWDER),
     abilities=(OVERGROW,),
 )
 
@@ -85,7 +85,7 @@ CHARMANDER = PokemonSpecies(
     base_attack=52,
     base_defense=43,
     base_speed=65,
-    available_attacks=(SCRATCH, EMBER, FLAMETHROWER, FIRE_FANG),
+    available_attacks=(SCRATCH, EMBER),
     abilities=(BLAZE,),
 )
 
@@ -97,7 +97,7 @@ SQUIRTLE = PokemonSpecies(
     base_attack=48,
     base_defense=65,
     base_speed=43,
-    available_attacks=(TACKLE, WATER_GUN, HYDRO_PUMP, BITE),
+    available_attacks=(TACKLE, WATER_GUN),
     abilities=(TORRENT,),
 )
 
@@ -109,7 +109,7 @@ PIKACHU = PokemonSpecies(
     base_attack=55,
     base_defense=40,
     base_speed=90,
-    available_attacks=(THUNDER_SHOCK, QUICK_ATTACK, THUNDERBOLT, SPARK),
+    available_attacks=(THUNDER_SHOCK, QUICK_ATTACK),
     abilities=(STATIC, LIGHTNING_ROD),
 )
 
@@ -122,7 +122,7 @@ PIDGEY = PokemonSpecies(
     base_attack=45,
     base_defense=40,
     base_speed=56,
-    available_attacks=(TACKLE, GUST, QUICK_ATTACK, WING_ATTACK),
+    available_attacks=(TACKLE, GUST),
     abilities=(KEEN_EYE,),
 )
 
@@ -134,7 +134,7 @@ RATTATA = PokemonSpecies(
     base_attack=56,
     base_defense=35,
     base_speed=72,
-    available_attacks=(TACKLE, QUICK_ATTACK, BITE, HYPER_FANG),
+    available_attacks=(TACKLE, QUICK_ATTACK),
     abilities=(RUN_AWAY,),
 )
 
@@ -159,7 +159,7 @@ BUTTERFREE = PokemonSpecies(
     base_attack=45,
     base_defense=50,
     base_speed=70,
-    available_attacks=(GUST, CONFUSION, POISON_POWDER, PSYBEAM),
+    available_attacks=(GUST, CONFUSION, POISON_POWDER),
     abilities=(COMPOUND_EYES,),
 )
 

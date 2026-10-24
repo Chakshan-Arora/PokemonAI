@@ -11,9 +11,7 @@
       "base_speed": 90,
       "available_attacks": [
         "Thunder Shock",
-        "Quick Attack",
-        "Thunderbolt",
-        "Spark"
+        "Quick Attack"
       ],
       "abilities": [
         "Static",
@@ -33,9 +31,7 @@
       "base_speed": 65,
       "available_attacks": [
         "Scratch",
-        "Ember",
-        "Flamethrower",
-        "Fire Fang"
+        "Ember"
       ],
       "abilities": [
         "Blaze"
@@ -54,9 +50,7 @@
       "base_speed": 43,
       "available_attacks": [
         "Tackle",
-        "Water Gun",
-        "Hydro Pump",
-        "Bite"
+        "Water Gun"
       ],
       "abilities": [
         "Torrent"
@@ -77,9 +71,7 @@
       "available_attacks": [
         "Tackle",
         "Vine Whip",
-        "Poison Powder",
-        "Razor Leaf",
-        "Solar Beam"
+        "Poison Powder"
       ],
       "abilities": [
         "Overgrow"
@@ -99,9 +91,7 @@
       "base_speed": 56,
       "available_attacks": [
         "Tackle",
-        "Gust",
-        "Quick Attack",
-        "Wing Attack"
+        "Gust"
       ],
       "abilities": [
         "Keen Eye"
@@ -120,9 +110,7 @@
       "base_speed": 72,
       "available_attacks": [
         "Tackle",
-        "Quick Attack",
-        "Bite",
-        "Hyper Fang"
+        "Quick Attack"
       ],
       "abilities": [
         "Run Away"
@@ -162,8 +150,7 @@
       "available_attacks": [
         "Gust",
         "Confusion",
-        "Poison Powder",
-        "Psybeam"
+        "Poison Powder"
       ],
       "abilities": [
         "Compound Eyes"

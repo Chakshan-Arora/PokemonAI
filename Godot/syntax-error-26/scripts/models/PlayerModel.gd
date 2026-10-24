@@ -120,24 +120,26 @@ func has_species_in_collection(species_name: String) -> bool:
 # ─── Inventory ────────────────────────────────────────────────────────────────
 
 func add_item(item_id: String, quantity: int = 1) -> void:
+	var q = int(quantity)
 	if inventory.has(item_id):
-		inventory[item_id] += quantity
+		inventory[item_id] = int(inventory[item_id]) + q
 	else:
-		inventory[item_id] = quantity
+		inventory[item_id] = q
 
 func remove_item(item_id: String, quantity: int = 1) -> bool:
-	if not inventory.has(item_id) or inventory[item_id] < quantity:
+	var q = int(quantity)
+	if not inventory.has(item_id) or int(inventory[item_id]) < q:
 		return false
-	inventory[item_id] -= quantity
+	inventory[item_id] = int(inventory[item_id]) - q
 	if inventory[item_id] <= 0:
 		inventory.erase(item_id)
 	return true
 
 func has_item(item_id: String, quantity: int = 1) -> bool:
-	return inventory.get(item_id, 0) >= quantity
+	return int(inventory.get(item_id, 0)) >= int(quantity)
 
 func get_item_count(item_id: String) -> int:
-	return inventory.get(item_id, 0)
+	return int(inventory.get(item_id, 0))
 
 # ─── Regions / Exploration ────────────────────────────────────────────────────
 
@@ -216,6 +218,10 @@ func to_dict() -> Dictionary:
 	var collection_data = []
 	for p in collection:
 		collection_data.append(p.to_dict())
+	var clean_inv: Dictionary = {}
+	for k in inventory:
+		clean_inv[str(k)] = int(round(float(inventory[k])))
+
 	return {
 		"player_name": player_name,
 		"trainer_avatar": trainer_avatar,
@@ -223,7 +229,7 @@ func to_dict() -> Dictionary:
 		"active_pokemon_index": active_pokemon_index,
 		"team": team_data,
 		"collection": collection_data,
-		"inventory": inventory.duplicate(),
+		"inventory": clean_inv,
 		"discovered_regions": discovered_regions.duplicate(),
 		"discovered_landmarks": discovered_landmarks.duplicate(),
 		"defeated_trainers": defeated_trainers.duplicate(),
@@ -243,7 +249,11 @@ static func from_dict(d: Dictionary):
 	pm.trainer_avatar = d.get("trainer_avatar", "calem")
 	pm.unique_id = d.get("unique_id", "")
 	pm.active_pokemon_index = d.get("active_pokemon_index", 0)
-	pm.inventory = d.get("inventory", {"poke_ball": 5, "potion": 3}).duplicate()
+	var raw_inv = d.get("inventory", {"poke_ball": 5, "potion": 3})
+	pm.inventory = {}
+	if raw_inv is Dictionary:
+		for k in raw_inv:
+			pm.inventory[str(k)] = int(round(float(raw_inv[k])))
 	pm.discovered_regions = d.get("discovered_regions", []).duplicate()
 	pm.discovered_landmarks = d.get("discovered_landmarks", []).duplicate()
 	pm.defeated_trainers = d.get("defeated_trainers", []).duplicate()

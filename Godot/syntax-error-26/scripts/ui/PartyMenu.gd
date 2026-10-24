@@ -24,6 +24,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(hide_menu)
 	set_active_btn.pressed.connect(_on_set_active_pressed)
+	set_active_btn.focus_neighbor_bottom = close_btn.get_path()
+	close_btn.focus_neighbor_top = set_active_btn.get_path()
 
 func _input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("open_party") or event.is_action_pressed("ui_cancel")):
@@ -36,6 +38,10 @@ func show_menu() -> void:
 	_refresh_list()
 	if GameState.player != null and not GameState.player.team.is_empty():
 		_select_pokemon(0)
+		if slot_container.get_child_count() > 0:
+			var first_btn = slot_container.get_child(0) as Button
+			if first_btn:
+				first_btn.grab_focus()
 
 func hide_menu() -> void:
 	visible = false
@@ -67,6 +73,8 @@ func _refresh_list() -> void:
 			btn.expand_icon = true
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(_select_pokemon.bind(i))
+		btn.focus_entered.connect(_select_pokemon.bind(i))
+		btn.focus_neighbor_right = set_active_btn.get_path()
 		slot_container.add_child(btn)
 
 func _select_pokemon(index: int) -> void:

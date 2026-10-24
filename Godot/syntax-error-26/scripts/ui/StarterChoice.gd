@@ -16,9 +16,31 @@ func _ready() -> void:
 	charmander_btn.pressed.connect(_on_starter_chosen.bind("Charmander"))
 	squirtle_btn.pressed.connect(_on_starter_chosen.bind("Squirtle"))
 	
+	# Horizontal wrapping for WASD (A/D) and Arrow Keys (Left/Right)
+	bulbasaur_btn.focus_neighbor_right = charmander_btn.get_path()
+	bulbasaur_btn.focus_neighbor_left = squirtle_btn.get_path()
+	charmander_btn.focus_neighbor_left = bulbasaur_btn.get_path()
+	charmander_btn.focus_neighbor_right = squirtle_btn.get_path()
+	squirtle_btn.focus_neighbor_left = charmander_btn.get_path()
+	squirtle_btn.focus_neighbor_right = bulbasaur_btn.get_path()
+	
+	# Focus animation feedback
+	for btn in [bulbasaur_btn, charmander_btn, squirtle_btn]:
+		btn.pivot_offset = btn.size / 2.0
+		btn.focus_entered.connect(func():
+			var tw = create_tween()
+			tw.tween_property(btn, "scale", Vector2(1.05, 1.05), 0.08)
+		)
+		btn.focus_exited.connect(func():
+			var tw = create_tween()
+			tw.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+	
 	# Update stat labels for each starter
 	for starter in STARTERS:
 		_update_starter_panel(starter)
+	
+	bulbasaur_btn.grab_focus()
 
 func _update_starter_panel(species_name: String) -> void:
 	var sd = PokemonData.get_species(species_name)
@@ -36,8 +58,8 @@ func _update_starter_panel(species_name: String) -> void:
 	if name_lbl:
 		name_lbl.text = species_name
 	if stats_lbl:
-		var moves = sd.get("available_attacks", [])
-		var moves_preview = ", ".join(moves.slice(0, 2)) if moves.size() > 0 else ""
+		var moves = PokemonData.get_moves_for_level(species_name, 5)
+		var moves_preview = ", ".join(moves) if moves.size() > 0 else "None"
 		stats_lbl.text = "HP: %d  ATK: %d\nDEF: %d  SPD: %d\nMoves: %s" % [
 			sd["base_hp"] + 10,  # level 5 hp approx
 			sd["base_attack"],

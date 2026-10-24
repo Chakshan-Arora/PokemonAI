@@ -23,6 +23,20 @@ func _ready() -> void:
 	menu_btn.pressed.connect(_on_menu_pressed)
 	quit_btn.pressed.connect(_on_quit_pressed)
 	
+	resume_btn.focus_neighbor_top = quit_btn.get_path()
+	quit_btn.focus_neighbor_bottom = resume_btn.get_path()
+	
+	for b in [resume_btn, party_btn, bag_btn, quests_btn, save_btn, menu_btn, quit_btn]:
+		b.pivot_offset = b.size / 2.0
+		b.focus_entered.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.04, 1.04), 0.08)
+		)
+		b.focus_exited.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+	
 	EventBus.open_pause_menu.connect(toggle_menu)
 
 func _input(event: InputEvent) -> void:

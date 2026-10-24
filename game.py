@@ -1880,77 +1880,68 @@ class AdventureGame:
             self._print(f"  > {res.reason}")
         return len(battle.events)
 
-    def _handle_battle_talk_menu(self, battle: Battle, active_mon: Pokemon, prev_event_cursor: int) -> int:
+    def _handle_battle_talk_menu(self, battle: Battle, active_mon: Pokemon, opp_mon: Optional[Pokemon], prev_event_cursor: int) -> int:
         """
-        Presents the Battle Talk prompt.
-        (AssemblyAI voice input option commented out; keyboard typing is used).
+        Presents interactive Battle Talk to the player.
+        Supports freeform speech, advice requests, praise, warnings, and morale tracking.
         """
-        # =========================================================================
-        # --- Voice Input via AssemblyAI (BT3.1) - COMMENTED OUT ---
-        # self._print("\n" + "=" * 45)
-        # self._print(f" BATTLE TALK: Speak to {active_mon.display_name}")
-        # self._print("=" * 45)
-        # self._print(" [1] Speak Command (Voice Input via AssemblyAI)")
-        # self._print(" [2] Type Command (Keyboard Input)")
-        # self._print(" [0] Cancel / Back")
-        #
-        # talk_choice = self._prompt("\nSelect option (0-2): ").strip()
-        # if talk_choice in ("0", "cancel", "back", ""):
-        #     self._print("[-] Cancelled battle talk.")
-        #     return prev_event_cursor
-        #
-        # if talk_choice == "1":
-        #     # Voice Input Option
-        #     avail, err_type, err_msg = self.voice_service.check_availability()
-        #     if not avail:
-        #         self._print(f"\n[-] Voice input unavailable: {err_msg}")
-        #         self._print("[Tip: You can use Option [2] to type your battle talk command instead.]")
-        #         return prev_event_cursor
-        #
-        #     self._print(f"\n[Voice Input Activated]")
-        #     self._print(f"Speak a command for {active_mon.display_name} (e.g. 'Dodge that attack!', 'Keep going!').")
-        #     rec_prompt = self._prompt("Press [Enter] to start recording (or type 'cancel'): ").strip().lower()
-        #     if rec_prompt in ("cancel", "back", "0", "exit"):
-        #         self._print("[-] Voice input cancelled.")
-        #         return prev_event_cursor
-        #
-        #     self._print("[*] Recording audio from microphone (speak now)...")
-        #     res_voice = self.voice_service.record_and_transcribe(duration_seconds=5.0)
-        #
-        #     if not res_voice.success:
-        #         self._print(f"\n[-] Voice input error [{res_voice.error_type}]: {res_voice.error_message}")
-        #         self._print("[Tip: You can try again or use Option [2] to type your command.]")
-        #         return prev_event_cursor
-        #
-        #     transcript = (res_voice.text or "").strip()
-        #     if not transcript:
-        #         self._print("\n[-] No speech was detected in the recording.")
-        #         return prev_event_cursor
-        #
-        #     self._print(f"\n[AssemblyAI Transcript]: \"{transcript}\"")
-        #     confirm = self._prompt("Send this command to battle? (Y/n / [Enter] for yes): ").strip().lower()
-        #     if confirm not in ("", "y", "yes"):
-        #         self._print("[-] Voice command cancelled. No battle action was executed.")
-        #         return prev_event_cursor
-        #
-        #     # Player confirmed transcript -> execute through authoritative BattleManager.talk()
-        #     self._print(f"\n[+] Executing command: \"{transcript}\"")
-        #     res = self.battle_manager.talk(self.player, transcript)
-        #     return self._print_battle_events(battle, res, prev_event_cursor)
-        # =========================================================================
+        from src.ai.battle_talk_parser import BattleTalkParser
 
-        # Direct typed battle talk:
-        self._print("\n" + "=" * 45)
-        self._print(f" BATTLE TALK: Talk to {active_mon.display_name}")
-        self._print("=" * 45)
-        typed_text = self._prompt(f"Enter command to {active_mon.display_name} (or 'cancel'): ").strip()
+        opp_name = opp_mon.display_name if opp_mon else "the opponent"
+
+        self._print("\n" + "=" * 50)
+        self._print(f" BATTLE TALK: Speak to {active_mon.display_name}")
+        self._print("=" * 50)
+        self._print(" Examples:")
+        self._print("  - Advice   : 'What move should we use?' / 'What should we do?'")
+        self._print("  - Praise   : 'Great attack!' / 'Awesome job, buddy!'")
+        self._print("  - Encourage: 'Hang in there!' / 'You\'ve got this!'")
+        self._print("  - Warning  : 'Watch out for that attack!'")
+        self._print("  - Tactical : 'Dodge to the left!' / 'Brace yourself!'")
+        self._print("-" * 50)
+
+        typed_text = self._prompt(f"Enter words for {active_mon.display_name} (or 'cancel'): ").strip()
         if typed_text.lower() in ("cancel", "back", "0", "exit", ""):
             self._print("[-] Battle talk cancelled.")
             return prev_event_cursor
 
-        res = self.battle_manager.talk(self.player, typed_text)
-        return self._print_battle_events(battle, res, prev_event_cursor)
+        personality_dict = active_mon.personality.to_dict() if getattr(active_mon, "personality", None) else {}
+        opp_hp = getattr(opp_mon, "current_hp", 30) if opp_mon else 30
+        opp_max_hp = getattr(opp_mon, "max_hp", 30) if opp_mon else 30
 
+        battle_ctx = {
+            "turn": battle.current_turn,
+            "hp_current": active_mon.current_hp,
+            "hp_max": active_mon.max_hp,
+            "hp_ratio": active_mon.current_hp / max(1, active_mon.max_hp),
+            "opponent_hp_ratio": opp_hp / max(1, opp_max_hp),
+            "status_effects": [eff.name.lower() for eff in getattr(active_mon, "status_effects", [])],
+            "opponent_species": getattr(getattr(opp_mon, "species", None), "name", opp_name),
+            "known_moves": [a.name for a in active_mon.attacks],
+        }
+
+        resp = BattleTalkParser.generate_fallback_response(
+            species=active_mon.species.name,
+            nickname=active_mon.display_name,
+            message=typed_text,
+            personality=personality_dict,
+            temperament="bold",
+            bond=float(getattr(active_mon, "bond", 50.0)),
+            obedience=float(getattr(active_mon, "obedience", 70.0)),
+            battle_context=battle_ctx,
+            is_opponent=False,
+        )
+
+        morale_sign = "+" if resp["morale_delta"] > 0 else ""
+        self._print("\n" + "-" * 50)
+        self._print(f" [Battle Talk] Intent: {resp['intent']} | Morale: {morale_sign}{resp['morale_delta']} ({resp['momentum_tier']})")
+        self._print(f" {active_mon.display_name} [{resp['emotional_state'].upper()}]: \"{resp['dialogue']}\"")
+        if resp.get("tactical_suggestion"):
+            self._print(f" [*] Tactical Suggestion: Recommended move -> {resp['tactical_suggestion']}")
+        self._print("-" * 50 + "\n")
+
+        return prev_event_cursor
+# 
     # --- Battle Sub-Loop ---
 
     def _battle_loop(self, battle: Battle) -> None:
@@ -2125,7 +2116,7 @@ class AdventureGame:
                     event_cursor = self._print_battle_events(battle, res, event_cursor)
 
             elif action_choice == "6":
-                event_cursor = self._handle_battle_talk_menu(battle, active_mon, event_cursor)
+                event_cursor = self._handle_battle_talk_menu(battle, active_mon, opp_mon, event_cursor)
 
             elif action_choice == "7":
                 res = self.battle_manager.dodge(self.player)

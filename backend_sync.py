@@ -33,6 +33,30 @@ def status():
     print("=" * 50)
 
 
+def test_llm():
+    """Simulates an interactive Battle Talk query against the local parser and logic."""
+    from src.ai.battle_talk_parser import BattleTalkParser
+    test_message = "Hang in there, Pikachu! Look out for that attack!"
+    print("=" * 50)
+    print("Testing Battle Talk Engine:")
+    print(f"Input Message: '{test_message}'")
+    cmd = BattleTalkParser.parse(test_message)
+    print(f"Parsed Intent: {cmd.intent} (Category: {cmd.category})")
+    resp = BattleTalkParser.generate_fallback_response(
+        species="Pikachu",
+        nickname="Sparky",
+        message=test_message,
+        personality={"aggression": 60, "loyalty": 85, "confidence": 75, "fear": 20},
+        temperament="brave",
+        bond=80.0,
+        obedience=90.0,
+        battle_context={"hp_ratio": 0.35, "status_effects": [], "opponent_species": "Onix"},
+    )
+    print("Engine Response:")
+    print(json.dumps(resp, indent=2))
+    print("=" * 50)
+
+
 def main():
     arg = sys.argv[1] if len(sys.argv) > 1 else "sync"
     if arg in ("sync", "export"):
@@ -43,8 +67,10 @@ def main():
         save_path = Path(__file__).parent / "save_game.json"
         player = load_game(save_path)
         print(f"Save file {save_path} is valid for player '{player.name}'.")
+    elif arg == "test_llm":
+        test_llm()
     else:
-        print("Usage: python backend_sync.py [sync|status|verify]")
+        print("Usage: python backend_sync.py [sync|status|verify|test_llm]")
 
 
 if __name__ == "__main__":

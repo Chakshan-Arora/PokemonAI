@@ -22,6 +22,8 @@ func _ready() -> void:
 	close_btn.pressed.connect(hide_menu)
 	active_tab_btn.pressed.connect(_switch_tab.bind(true))
 	completed_tab_btn.pressed.connect(_switch_tab.bind(false))
+	active_tab_btn.focus_neighbor_right = completed_tab_btn.get_path()
+	completed_tab_btn.focus_neighbor_left = active_tab_btn.get_path()
 
 func _input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("open_quests") or event.is_action_pressed("ui_cancel")):
@@ -32,6 +34,7 @@ func show_menu() -> void:
 	visible = true
 	GameState.pause_game()
 	_refresh_list()
+	active_tab_btn.grab_focus()
 
 func hide_menu() -> void:
 	visible = false
@@ -63,7 +66,12 @@ func _refresh_list() -> void:
 		btn.text = q_data.get("title", q_id)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(_select_quest.bind(q_id))
+		btn.focus_entered.connect(_select_quest.bind(q_id))
 		quest_list.add_child(btn)
+	
+	if quest_list.get_child_count() > 0:
+		active_tab_btn.focus_neighbor_bottom = quest_list.get_child(0).get_path()
+		completed_tab_btn.focus_neighbor_bottom = quest_list.get_child(0).get_path()
 	
 	_select_quest(list_to_show[0])
 

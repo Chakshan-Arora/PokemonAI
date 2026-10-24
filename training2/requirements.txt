@@ -1,0 +1,9 @@
+# Training dependencies for Battle Talk LLM (MLX & Hugging Face)
+mlx>=0.22.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+mlx-lm>=0.20.0; sys_platform == 'darwin' and platform_machine == 'arm64'
+transformers>=4.48.0
+peft>=0.14.0
+pydantic>=2.10.0
+pytest>=8.0.0
+tqdm>=4.66.0
+numpy>=1.26.0

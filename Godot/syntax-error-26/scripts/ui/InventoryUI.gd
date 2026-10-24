@@ -18,6 +18,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(hide_menu)
 	use_btn.pressed.connect(_on_use_pressed)
+	use_btn.focus_neighbor_bottom = close_btn.get_path()
+	close_btn.focus_neighbor_top = use_btn.get_path()
 
 func _input(event: InputEvent) -> void:
 	if visible and (event.is_action_pressed("open_inventory") or event.is_action_pressed("ui_cancel")):
@@ -28,6 +30,10 @@ func show_menu() -> void:
 	visible = true
 	GameState.pause_game()
 	_refresh_list()
+	if item_list.get_child_count() > 0:
+		var first_item_btn = item_list.get_child(0) as Button
+		if first_item_btn:
+			first_item_btn.grab_focus()
 
 func hide_menu() -> void:
 	visible = false
@@ -60,6 +66,8 @@ func _refresh_list() -> void:
 			btn.expand_icon = true
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.pressed.connect(_select_item.bind(item_id))
+		btn.focus_entered.connect(_select_item.bind(item_id))
+		btn.focus_neighbor_right = use_btn.get_path()
 		item_list.add_child(btn)
 	
 	if first_item != "":

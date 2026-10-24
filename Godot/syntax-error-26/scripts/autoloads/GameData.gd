@@ -109,9 +109,30 @@ func _apply_backend_data() -> void:
 			var reg_info = backend_data["regions"][reg_id]
 			if RegionData.REGIONS.has(reg_id):
 				for k in reg_info:
-					RegionData.REGIONS[reg_id][k] = reg_info[k]
+					if k == "bounds":
+						var b = reg_info[k]
+						if b is Array and b.size() >= 4:
+							RegionData.REGIONS[reg_id]["bounds"] = {
+								"x1": float(b[0]) * 10.0,
+								"z1": float(b[1]) * 10.0,
+								"x2": float(b[2]) * 10.0,
+								"z2": float(b[3]) * 10.0
+							}
+						elif b is Dictionary:
+							RegionData.REGIONS[reg_id]["bounds"] = b
+					else:
+						RegionData.REGIONS[reg_id][k] = reg_info[k]
 			else:
-				RegionData.REGIONS[reg_id] = reg_info.duplicate()
+				var new_entry = reg_info.duplicate()
+				if new_entry.has("bounds") and new_entry["bounds"] is Array and new_entry["bounds"].size() >= 4:
+					var b = new_entry["bounds"]
+					new_entry["bounds"] = {
+						"x1": float(b[0]) * 10.0,
+						"z1": float(b[1]) * 10.0,
+						"x2": float(b[2]) * 10.0,
+						"z2": float(b[3]) * 10.0
+					}
+				RegionData.REGIONS[reg_id] = new_entry
 
 	if backend_data.has("quests") and backend_data["quests"] is Dictionary:
 		for q_id in backend_data["quests"]:

@@ -89,6 +89,35 @@ func _style_action_buttons() -> void:
 			var tw = create_tween()
 			tw.tween_property(b, "scale", Vector2(1.0, 1.0), 0.08)
 		)
+		b.focus_entered.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.04, 1.04), 0.08)
+		)
+		b.focus_exited.connect(func():
+			var tw = create_tween()
+			tw.tween_property(b, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+	
+	# Grid focus wrapping: 2 columns [Fight, Bag] / [Pokemon, Run]
+	fight_btn.focus_neighbor_right = bag_btn.get_path()
+	fight_btn.focus_neighbor_bottom = pokemon_btn.get_path()
+	fight_btn.focus_neighbor_left = bag_btn.get_path()
+	fight_btn.focus_neighbor_top = pokemon_btn.get_path()
+
+	bag_btn.focus_neighbor_left = fight_btn.get_path()
+	bag_btn.focus_neighbor_bottom = run_btn.get_path()
+	bag_btn.focus_neighbor_right = fight_btn.get_path()
+	bag_btn.focus_neighbor_top = run_btn.get_path()
+
+	pokemon_btn.focus_neighbor_top = fight_btn.get_path()
+	pokemon_btn.focus_neighbor_right = run_btn.get_path()
+	pokemon_btn.focus_neighbor_bottom = fight_btn.get_path()
+	pokemon_btn.focus_neighbor_left = run_btn.get_path()
+
+	run_btn.focus_neighbor_top = bag_btn.get_path()
+	run_btn.focus_neighbor_left = pokemon_btn.get_path()
+	run_btn.focus_neighbor_bottom = bag_btn.get_path()
+	run_btn.focus_neighbor_right = pokemon_btn.get_path()
 
 func _setup_battle() -> void:
 	player_pokemon = GameState.get_active_pokemon()
@@ -245,6 +274,7 @@ func _init_ui_stats() -> void:
 
 func _update_move_buttons() -> void:
 	if player_pokemon:
+		var visible_btns: Array[Button] = []
 		for i in range(move_btns.size()):
 			if i < player_pokemon.attacks.size():
 				var atk_name = player_pokemon.attacks[i]
@@ -261,8 +291,41 @@ func _update_move_buttons() -> void:
 				]
 				var tcolor = PokemonData.TYPE_COLORS.get(atk_type, Color(0.7, 0.7, 0.7))
 				move_btns[i].self_modulate = tcolor.lightened(0.25)
+				visible_btns.append(move_btns[i])
 			else:
 				move_btns[i].visible = false
+		
+		# Set focus neighbors for move buttons and back button
+		if visible_btns.size() == 1:
+			visible_btns[0].focus_neighbor_bottom = back_btn.get_path()
+			visible_btns[0].focus_neighbor_top = back_btn.get_path()
+			back_btn.focus_neighbor_top = visible_btns[0].get_path()
+			back_btn.focus_neighbor_bottom = visible_btns[0].get_path()
+		elif visible_btns.size() == 2:
+			visible_btns[0].focus_neighbor_right = visible_btns[1].get_path()
+			visible_btns[0].focus_neighbor_left = visible_btns[1].get_path()
+			visible_btns[0].focus_neighbor_bottom = back_btn.get_path()
+			visible_btns[1].focus_neighbor_left = visible_btns[0].get_path()
+			visible_btns[1].focus_neighbor_right = visible_btns[0].get_path()
+			visible_btns[1].focus_neighbor_bottom = back_btn.get_path()
+			back_btn.focus_neighbor_top = visible_btns[0].get_path()
+		elif visible_btns.size() >= 3:
+			visible_btns[0].focus_neighbor_right = visible_btns[1].get_path()
+			visible_btns[0].focus_neighbor_bottom = visible_btns[2].get_path()
+			visible_btns[1].focus_neighbor_left = visible_btns[0].get_path()
+			if visible_btns.size() >= 4:
+				visible_btns[1].focus_neighbor_bottom = visible_btns[3].get_path()
+				visible_btns[3].focus_neighbor_top = visible_btns[1].get_path()
+				visible_btns[3].focus_neighbor_left = visible_btns[2].get_path()
+				visible_btns[3].focus_neighbor_bottom = back_btn.get_path()
+			else:
+				visible_btns[1].focus_neighbor_bottom = back_btn.get_path()
+			visible_btns[2].focus_neighbor_top = visible_btns[0].get_path()
+			if visible_btns.size() >= 4:
+				visible_btns[2].focus_neighbor_right = visible_btns[3].get_path()
+			visible_btns[2].focus_neighbor_bottom = back_btn.get_path()
+			back_btn.focus_neighbor_top = visible_btns[2].get_path()
+			back_btn.focus_neighbor_bottom = visible_btns[0].get_path()
 
 func _animate_attack(is_player: bool) -> void:
 	var sprite = player_sprite if is_player else opponent_sprite
@@ -381,6 +444,12 @@ func _on_bag_pressed() -> void:
 	back.text = "← Back"
 	back.pressed.connect(_show_action_menu)
 	vbox.add_child(back)
+	
+	# Auto-focus first item button or back button for keyboard/WASD navigation
+	for ch in vbox.get_children():
+		if ch is Button and not ch.disabled:
+			ch.grab_focus()
+			break
 
 func _on_bag_item_selected(item_id: String) -> void:
 	if bag_menu: bag_menu.visible = false
@@ -452,6 +521,12 @@ func _on_pokemon_pressed() -> void:
 	back.text = "← Back"
 	back.pressed.connect(_show_action_menu)
 	vbox.add_child(back)
+	
+	# Auto-focus first item button or back button for keyboard/WASD navigation
+	for ch in vbox.get_children():
+		if ch is Button and not ch.disabled:
+			ch.grab_focus()
+			break
 
 func _on_pokemon_switch_selected(new_pokemon: PokemonInstance) -> void:
 	if pokemon_menu: pokemon_menu.visible = false

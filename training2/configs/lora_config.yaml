@@ -1,0 +1,11 @@
+# LoRA Configuration for Battle Talk Dialogue & Morale Model (MLX / Hugging Face)
+fine_tune_type: lora
+num_layers: 16
+grad_checkpoint: true
+max_seq_length: 512
+mask_prompt: true
+
+lora_parameters:
+  rank: 16
+  scale: 32.0
+  dropout: 0.05

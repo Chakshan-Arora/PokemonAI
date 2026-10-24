@@ -27,10 +27,11 @@ from src.models.habitat import TimeOfDay
 from src.data.species import SAMPLE_SPECIES
 from src.models.personality import Personality
 from src.models.pokemon import Pokemon
+from src.models.trainer_team_generator import TrainerTeamGenerator
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
-from src.models.personality import Personality
+from src.ai.battle_talk_parser import BattleTalkParser
 
 
 _habitat_mgr: HabitatManager = None
@@ -96,6 +97,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                     "/api/wild_encounter",
                     "/api/pokemon/create",
                     "/companion/talk",
+                    "/battle/talk",
                     "/battle/decide",
                     "/decide",
                 ],
@@ -144,6 +146,8 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         try:
             if clean_path == "/companion/talk":
                 resp_data = self._handle_companion_talk(req_data)
+            elif clean_path == "/battle/talk":
+                resp_data = self._handle_battle_talk(req_data)
             elif clean_path == "/battle/decide":
                 resp_data = self._handle_battle_decide(req_data)
             elif clean_path == "/decide":
@@ -172,7 +176,12 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         
         # In Godot, save data might have top-level wrapper or direct player fields
         player_dict = data.get("player", data)
-        # Ensure collection items have integer bond/obedience
+        if "inventory" in data and "inventory" not in player_dict:
+            player_dict = data
+        if "collection" in data and "collection" not in player_dict:
+            player_dict = data
+
+        # Ensure collection items have integer bond/obedience/personality
         col = player_dict.get("collection", [])
         for mon_d in col:
             if isinstance(mon_d, dict):
@@ -180,6 +189,19 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                     mon_d["bond"] = int(round(mon_d["bond"]))
                 if "obedience" in mon_d and isinstance(mon_d["obedience"], (int, float)):
                     mon_d["obedience"] = int(round(mon_d["obedience"]))
+                if "personality" in mon_d and isinstance(mon_d["personality"], dict):
+                    for pk, pv in list(mon_d["personality"].items()):
+                        if isinstance(pv, (int, float)) and not isinstance(pv, bool):
+                            mon_d["personality"][pk] = int(round(pv))
+
+        # Ensure inventory item quantities are strictly integers
+        inv = player_dict.get("inventory", {})
+        if isinstance(inv, dict):
+            items = inv.get("items", {})
+            if isinstance(items, dict):
+                for item_id, qty in list(items.items()):
+                    if isinstance(qty, (int, float)) and not isinstance(qty, bool):
+                        items[item_id] = int(round(qty))
         
         # Deserialize to validate
         player = deserialize_player(player_dict)
@@ -197,6 +219,13 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 saved_json["discovered_regions"] = data["discovered_regions"]
             if "discovered_landmarks" in data:
                 saved_json["discovered_landmarks"] = data["discovered_landmarks"]
+            # Double check inventory item counts in file are integer
+            if "inventory" in saved_json and isinstance(saved_json["inventory"], dict):
+                s_items = saved_json["inventory"].get("items", {})
+                if isinstance(s_items, dict):
+                    for k, v in list(s_items.items()):
+                        if isinstance(v, (int, float)) and not isinstance(v, bool):
+                            s_items[k] = int(round(v))
             with open(save_path, "w", encoding="utf-8") as f:
                 json.dump(saved_json, f, indent=2)
         except Exception:
@@ -234,7 +263,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             loyalty=random.randint(1, 100),
             confidence=random.randint(1, 100),
         )
-        moves = list(sp.available_attacks)[:4]
+        moves = TrainerTeamGenerator.generate_moveset(sp, level)
         mon = Pokemon(species=sp, level=level, personality=pers, attacks=moves)
         return {
             "success": True,
@@ -257,7 +286,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             loyalty=int(p_data.get("loyalty", random.randint(1, 100))),
             confidence=int(p_data.get("confidence", random.randint(1, 100))),
         )
-        moves = list(sp.available_attacks)[:4]
+        moves = TrainerTeamGenerator.generate_moveset(sp, level)
         mon = Pokemon(species=sp, level=level, personality=pers, attacks=moves)
         if nickname:
             mon.nickname = nickname
@@ -330,6 +359,62 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
             "new_trust": round(trust + trust_delta, 1),
             "new_affection": round(affection + affection_delta, 1),
         }
+
+    def _handle_battle_talk(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Handles mid-combat trainer/opponent communication via LLM or deterministic fallback."""
+        species = data.get("species", "Pikachu")
+        nickname = data.get("nickname", species)
+        message = data.get("message", "")
+        personality = data.get("personality", {
+            "aggression": 50, "loyalty": 70, "confidence": 60, "fear": 20, "curiosity": 50, "sociability": 50
+        })
+        temperament = data.get("temperament", "bold")
+        bond = float(data.get("bond", 50.0))
+        obedience = float(data.get("obedience", 70.0))
+        battle_context = data.get("battle_context", {})
+        is_opponent = bool(data.get("is_opponent", False))
+        opponent_archetype = str(data.get("opponent_archetype", "wild"))
+
+        fallback = BattleTalkParser.generate_fallback_response(
+            species=species,
+            nickname=nickname,
+            message=message,
+            personality=personality,
+            temperament=temperament,
+            bond=bond,
+            obedience=obedience,
+            battle_context=battle_context,
+            is_opponent=is_opponent,
+            opponent_archetype=opponent_archetype,
+        )
+
+        # If LLM model is loaded with generation capability, invoke it
+        if self.provider and getattr(self.provider, "is_loaded", False):
+            try:
+                if hasattr(self.provider, "generate_raw"):
+                    prompt = BattleTalkParser.build_prompt(
+                        species=species,
+                        nickname=nickname,
+                        message=message,
+                        personality=personality,
+                        temperament=temperament,
+                        bond=bond,
+                        obedience=obedience,
+                        battle_context=battle_context,
+                        is_opponent=is_opponent,
+                        opponent_archetype=opponent_archetype,
+                    )
+                    raw_out = self.provider.generate_raw(
+                        system_instruction="You are a tactical Pokemon battle LLM.",
+                        user_prompt=prompt,
+                        max_tokens=150,
+                        use_battle_adapter=True,
+                    )
+                    return BattleTalkParser.parse_llm_response(raw_out, fallback)
+            except Exception as exc:
+                sys.stderr.write(f"[LLM Server] Battle talk LLM inference fallback triggered: {exc}\n")
+
+        return fallback
 
     def _handle_battle_decide(self, data: dict[str, Any]) -> dict[str, Any]:
         """Handles combat turn decisions using battle adapter."""

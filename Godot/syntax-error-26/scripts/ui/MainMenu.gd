@@ -35,9 +35,11 @@ func _ready() -> void:
 				preview.get("team_size", 0),
 				preview.get("total_catches", 0)
 			]
+		continue_btn.grab_focus()
 	else:
 		continue_btn.disabled = true
 		save_info_label.text = "No save file found."
+		new_game_btn.grab_focus()
 
 func _setup_avatar_selection() -> void:
 	var vbox = $DialogPanel/VBox
@@ -73,6 +75,14 @@ func _setup_avatar_selection() -> void:
 		# Insert before StartBtn
 		vbox.add_child(avatar_box)
 		vbox.move_child(avatar_box, vbox.get_child_count() - 3)
+		
+		calem_btn.focus_neighbor_right = serena_btn.get_path()
+		calem_btn.focus_neighbor_left = serena_btn.get_path()
+		serena_btn.focus_neighbor_left = calem_btn.get_path()
+		serena_btn.focus_neighbor_right = calem_btn.get_path()
+		
+		calem_btn.focus_entered.connect(func(): _select_avatar("calem"))
+		serena_btn.focus_entered.connect(func(): _select_avatar("serena"))
 
 func _select_avatar(avatar: String) -> void:
 	selected_avatar = avatar
@@ -89,7 +99,7 @@ func _on_new_game_pressed() -> void:
 	player_name_input.grab_focus()
 
 func _on_continue_pressed() -> void:
-	var success = SaveLoad.load_game()
+	var success = await SaveLoad.load_game()
 	if success:
 		get_tree().change_scene_to_file("res://scenes/World.tscn")
 	else:
@@ -113,3 +123,4 @@ func _on_start_pressed() -> void:
 func _on_back_pressed() -> void:
 	dialog_panel.visible = false
 	main_buttons_container.visible = true
+	new_game_btn.grab_focus()

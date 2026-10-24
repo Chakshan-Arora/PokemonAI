@@ -19,7 +19,45 @@ const TYPE_COLORS: Dictionary = {
 	"Ghost":    Color(0.27, 0.19, 0.49)
 }
 
-# All species data
+# Canonical move learning progression tables (level, attack)
+const MOVE_LEARNING: Dictionary = {
+	"Pikachu": [[1, "Thunder Shock"], [3, "Quick Attack"], [6, "Tackle"], [10, "Thunderbolt"]],
+	"Charmander": [[1, "Scratch"], [3, "Ember"], [6, "Tackle"], [10, "Flamethrower"]],
+	"Squirtle": [[1, "Tackle"], [3, "Water Gun"], [6, "Quick Attack"], [10, "Hydro Pump"]],
+	"Bulbasaur": [[1, "Tackle"], [3, "Vine Whip"], [6, "Poison Powder"], [10, "Razor Leaf"]],
+	"Pidgey": [[1, "Tackle"], [3, "Gust"], [6, "Quick Attack"], [10, "Wing Attack"]],
+	"Rattata": [[1, "Tackle"], [3, "Quick Attack"], [6, "Bite"], [10, "Hyper Fang"]],
+	"Caterpie": [[1, "Tackle"], [3, "Bug Bite"], [6, "Tackle"]],
+	"Butterfree": [[1, "Tackle"], [3, "Gust"], [6, "Confusion"], [10, "Psybeam"]],
+	"Geodude": [[1, "Tackle"], [3, "Rock Throw"], [6, "Defense Curl"], [10, "Rock Slide"]],
+	"Zubat": [[1, "Leech Life"], [3, "Bite"], [6, "Wing Attack"], [10, "Confuse Ray"]],
+	"Machop": [[1, "Low Kick"], [3, "Karate Chop"], [6, "Tackle"], [10, "Brick Break"]],
+	"Gastly": [[1, "Lick"], [3, "Confuse Ray"], [6, "Night Shade"], [10, "Shadow Ball"]],
+	"Abra": [[1, "Tackle"], [3, "Confusion"], [6, "Psybeam"], [10, "Psychic"]],
+	"Eevee": [[1, "Tackle"], [3, "Quick Attack"], [6, "Bite"], [10, "Body Slam"]],
+	"Growlithe": [[1, "Bite"], [3, "Ember"], [6, "Flame Wheel"], [10, "Flamethrower"]],
+	"Poliwag": [[1, "Water Gun"], [3, "Bubble"], [6, "Body Slam"], [10, "Hydro Pump"]]
+}
+
+## Returns all moves learned by a species up to the given level (max 4 most recent)
+static func get_moves_for_level(species_name: String, level: int) -> Array:
+	var table = MOVE_LEARNING.get(species_name, [])
+	var moves: Array = []
+	for entry in table:
+		var req_lvl = int(entry[0])
+		var atk_name = str(entry[1])
+		if req_lvl <= level and not moves.has(atk_name):
+			moves.append(atk_name)
+	if moves.size() > 4:
+		moves = moves.slice(moves.size() - 4, moves.size())
+	if moves.is_empty():
+		var sp = SPECIES.get(species_name, {})
+		var av = sp.get("available_attacks", [])
+		if not av.is_empty():
+			moves.append(av[0])
+	return moves
+
+# All species data with level-appropriate base starting attacks
 static var SPECIES: Dictionary = {
 	"Bulbasaur": {
 		"name": "Bulbasaur",
@@ -28,7 +66,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 49,
 		"base_defense": 49,
 		"base_speed": 45,
-		"available_attacks": ["Tackle", "Vine Whip", "Poison Powder", "Razor Leaf", "Solar Beam"],
+		"available_attacks": ["Tackle", "Vine Whip"],
 		"color": "#4DAE44",
 		"description": "A strange seed was planted on its back at birth."
 	},
@@ -39,7 +77,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 52,
 		"base_defense": 43,
 		"base_speed": 65,
-		"available_attacks": ["Scratch", "Ember", "Flamethrower", "Fire Fang"],
+		"available_attacks": ["Scratch", "Ember"],
 		"color": "#F05A0A",
 		"description": "The flame on its tail shows the strength of its life force."
 	},
@@ -50,7 +88,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 48,
 		"base_defense": 65,
 		"base_speed": 43,
-		"available_attacks": ["Tackle", "Water Gun", "Hydro Pump", "Bite"],
+		"available_attacks": ["Tackle", "Water Gun"],
 		"color": "#458FE8",
 		"description": "When it retracts its long neck into its shell, it squirts water."
 	},
@@ -61,7 +99,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 55,
 		"base_defense": 40,
 		"base_speed": 90,
-		"available_attacks": ["Thunder Shock", "Quick Attack", "Thunderbolt", "Spark"],
+		"available_attacks": ["Thunder Shock", "Quick Attack"],
 		"color": "#FAD812",
 		"description": "When several of these Pokémon gather, their electricity can build up."
 	},
@@ -72,7 +110,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 45,
 		"base_defense": 40,
 		"base_speed": 56,
-		"available_attacks": ["Tackle", "Gust", "Quick Attack", "Wing Attack"],
+		"available_attacks": ["Tackle", "Gust"],
 		"color": "#A0C0D0",
 		"description": "A common sight in fields and forests. Very docile."
 	},
@@ -83,7 +121,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 56,
 		"base_defense": 35,
 		"base_speed": 72,
-		"available_attacks": ["Tackle", "Quick Attack", "Bite", "Hyper Fang"],
+		"available_attacks": ["Tackle", "Quick Attack"],
 		"color": "#A0609A",
 		"description": "Will chew on anything with its fangs. Very tenacious."
 	},
@@ -105,7 +143,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 45,
 		"base_defense": 50,
 		"base_speed": 70,
-		"available_attacks": ["Gust", "Confusion", "Poison Powder", "Psybeam"],
+		"available_attacks": ["Tackle", "Gust"],
 		"color": "#78B0D8",
 		"description": "In battle, it flaps its wings at great speed."
 	},
@@ -116,7 +154,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 80,
 		"base_defense": 100,
 		"base_speed": 20,
-		"available_attacks": ["Tackle", "Rock Throw", "Rock Slide"],
+		"available_attacks": ["Tackle", "Rock Throw"],
 		"color": "#907840",
 		"description": "Found in fields and mountains. Mistaken for rocks often."
 	},
@@ -127,7 +165,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 45,
 		"base_defense": 35,
 		"base_speed": 55,
-		"available_attacks": ["Leech Life", "Bite", "Wing Attack"],
+		"available_attacks": ["Leech Life", "Bite"],
 		"color": "#6038A0",
 		"description": "Forms colonies in dark places. Uses ultrasonic waves."
 	},
@@ -138,7 +176,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 80,
 		"base_defense": 50,
 		"base_speed": 35,
-		"available_attacks": ["Low Kick", "Karate Chop", "Tackle", "Brick Break"],
+		"available_attacks": ["Low Kick", "Karate Chop"],
 		"color": "#C03020",
 		"description": "Its whole body is composed of muscles. Never gets tired."
 	},
@@ -149,7 +187,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 35,
 		"base_defense": 30,
 		"base_speed": 80,
-		"available_attacks": ["Lick", "Night Shade", "Shadow Ball"],
+		"available_attacks": ["Lick", "Confuse Ray"],
 		"color": "#40307C",
 		"description": "Almost invisible in darkness. Its body is made of gas."
 	},
@@ -160,7 +198,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 20,
 		"base_defense": 15,
 		"base_speed": 90,
-		"available_attacks": ["Tackle", "Confusion", "Psybeam", "Psychic"],
+		"available_attacks": ["Tackle", "Confusion"],
 		"color": "#F855C8",
 		"description": "Using its ability to read minds, it will identify impending danger."
 	},
@@ -171,7 +209,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 55,
 		"base_defense": 50,
 		"base_speed": 55,
-		"available_attacks": ["Tackle", "Quick Attack", "Bite", "Body Slam"],
+		"available_attacks": ["Tackle", "Quick Attack"],
 		"color": "#C8A040",
 		"description": "Its genetic code is irregular. It may mutate if it is exposed."
 	},
@@ -182,7 +220,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 70,
 		"base_defense": 45,
 		"base_speed": 60,
-		"available_attacks": ["Bite", "Ember", "Flame Wheel", "Flamethrower"],
+		"available_attacks": ["Bite", "Ember"],
 		"color": "#E06010",
 		"description": "Very protective of its territory. It will bark at any threat."
 	},
@@ -193,7 +231,7 @@ static var SPECIES: Dictionary = {
 		"base_attack": 50,
 		"base_defense": 40,
 		"base_speed": 90,
-		"available_attacks": ["Water Gun", "Bubble", "Body Slam", "Hydro Pump"],
+		"available_attacks": ["Water Gun", "Bubble"],
 		"color": "#3068D8",
 		"description": "Its newly grown legs prevent it from running. It's more adept at swimming."
 	}

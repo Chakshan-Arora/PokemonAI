@@ -18,7 +18,7 @@ func _on_save_requested() -> void:
 	save_game()
 
 func _on_load_requested() -> void:
-	load_game()
+	await load_game()
 
 func get_save_file_path() -> String:
 	# Primary: workspace root save_game.json
@@ -57,6 +57,13 @@ func save_game() -> bool:
 	var active_mon = GameState.player.get_active_pokemon()
 	var active_id = active_mon.unique_id if active_mon else (team_data[0] if team_data.size() > 0 else null)
 	
+	# Ensure inventory item quantities are strictly integers (not floats like 5.0)
+	var clean_items: Dictionary = {}
+	if GameState.player and GameState.player.inventory is Dictionary:
+		for item_id in GameState.player.inventory:
+			var qty = GameState.player.inventory[item_id]
+			clean_items[str(item_id)] = int(round(float(qty)))
+
 	var save_data: Dictionary = {
 		"schema_version": SAVE_VERSION,
 		"saved_at": Time.get_datetime_string_from_system(false, true),
@@ -69,7 +76,7 @@ func save_game() -> bool:
 		},
 		"inventory": {
 			"capacity": 20,
-			"items": GameState.player.inventory.duplicate()
+			"items": clean_items
 		},
 		"collection": col_data,
 		"team": team_data,
@@ -175,12 +182,17 @@ func load_game() -> bool:
 	player.unique_id = str(player_dict.get("unique_id", player.unique_id))
 	player.max_team_size = int(player_dict.get("max_team_size", 6))
 	
-	# Inventory
+	# Inventory - ensure quantities are strictly integers
 	var inv_data = save_data.get("inventory", {})
-	if inv_data.has("items") and inv_data["items"] is Dictionary:
-		player.inventory = inv_data["items"].duplicate()
+	var raw_items: Dictionary = {}
+	if inv_data is Dictionary and inv_data.has("items") and inv_data["items"] is Dictionary:
+		raw_items = inv_data["items"]
 	elif inv_data is Dictionary:
-		player.inventory = inv_data.duplicate()
+		raw_items = inv_data
+	
+	player.inventory = {}
+	for k in raw_items:
+		player.inventory[str(k)] = int(round(float(raw_items[k])))
 	
 	# Collection
 	player.collection.clear()

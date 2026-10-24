@@ -57,15 +57,15 @@ from src.ai.local_model_provider import (
     LocalModelError,
 )
 from src.ai.wild_encounter_service import AutonomousWildService
-from src.ai.battle_talk_parser import BattleTalkParser, parse as parse_battle_talk
-from src.ai.battle_talk import parse_battle_talk_intent
+# from src.ai.battle_talk_parser import BattleTalkParser, parse as parse_battle_talk
+# from src.ai.battle_talk import parse_battle_talk_intent
 from src.ai.companion_service import (
     CompanionService,
     CompanionInteractionResult,
     CompanionBattleDisposition,
     TeammateInteractionResult,
-    BattleTalkContext,
-    generate_battle_talk_response,
+    # BattleTalkContext,
+    # generate_battle_talk_response,
 )
 # from src.ai.voice_input import (
 #     VoiceInputService,
@@ -128,11 +128,11 @@ __all__ = [
     "CompanionInteractionResult",
     "CompanionBattleDisposition",
     "TeammateInteractionResult",
-    "BattleTalkParser",
-    "parse_battle_talk",
-    "parse_battle_talk_intent",
-    "BattleTalkContext",
-    "generate_battle_talk_response",
+    # "BattleTalkParser",
+    # "parse_battle_talk",
+    # "parse_battle_talk_intent",
+    # "BattleTalkContext",
+    # "generate_battle_talk_response",
 #     "VoiceInputService",
 #     "VoiceInputResult",
 #     "VoiceInputErrorType",

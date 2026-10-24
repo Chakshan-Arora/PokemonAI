@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PokemonBattleTalkDecision",
+  "description": "Schema for LLM Model 2: Battle Talk Dialogue, Intent, Tactical Advice & Morale",
+  "type": "object",
+  "required": [
+    "dialogue",
+    "intent",
+    "emotional_state",
+    "morale_delta",
+    "tactical_reaction",
+    "momentum_tier",
+    "morale_effect",
+    "confidence"
+  ],
+  "properties": {
+    "dialogue": {
+      "type": "string",
+      "description": "In-battle dialogue, emotional cry, or descriptive combat emote"
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "PRAISE",
+        "ENCOURAGE",
+        "WARNING",
+        "TACTICAL",
+        "ADVICE",
+        "TAUNT",
+        "GENERAL"
+      ],
+      "description": "Interpreted communicative intent of the trainer's or opponent's message"
+    },
+    "emotional_state": {
+      "type": "string",
+      "description": "In-combat emotional state (focused, defiant, pleased, nervous, exhausted, fired_up, combative, composed, gleeful, cocky, malicious, thoughtful, recovering)"
+    },
+    "morale_delta": {
+      "type": "integer",
+      "minimum": -10,
+      "maximum": 10,
+      "description": "Temporary impact on combat morale and momentum"
+    },
+    "tactical_reaction": {
+      "type": "string",
+      "description": "Immediate tactical physical response (brace, strike, reposition, nod, hesitate)"
+    },
+    "tactical_suggestion": {
+      "type": ["string", "null"],
+      "description": "Optional recommended attack move or switch action"
+    },
+    "momentum_tier": {
+      "type": "string",
+      "enum": [
+        "SURGING",
+        "STEADY",
+        "PRESSURED",
+        "CRITICAL"
+      ],
+      "description": "Battle momentum tier calculated from HP difference, morale, and bond"
+    },
+    "morale_effect": {
+      "type": "string",
+      "description": "Active combat morale effect or status descriptor"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score of the intent interpretation and response"
+    }
+  },
+  "additionalProperties": false
+}

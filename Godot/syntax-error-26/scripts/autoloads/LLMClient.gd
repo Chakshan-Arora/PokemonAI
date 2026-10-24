@@ -12,6 +12,7 @@ var _health_timer: Timer = null
 signal server_status_changed(is_online: bool)
 signal companion_replied(data: Dictionary)
 signal battle_decision_ready(data: Dictionary)
+signal battle_talk_replied(data: Dictionary)
 
 func _ready() -> void:
 	_health_request = HTTPRequest.new()
@@ -139,6 +140,58 @@ func decide_battle_action(active_pokemon_dict: Dictionary, opponent_pokemon_dict
 	battle_decision_ready.emit(fallback)
 	return fallback
 
+## Requests mid-combat interaction and banter from the battle talk system (LLM or fallback)
+func talk_in_battle(pokemon_dict: Dictionary, message: String, context: Dictionary = {}, is_opponent: bool = false, opponent_archetype: String = "wild") -> Dictionary:
+	var species: String = pokemon_dict.get("species", pokemon_dict.get("species_name", "Pokemon"))
+	var nickname: String = pokemon_dict.get("nickname", species)
+	var personality: Dictionary = pokemon_dict.get("personality", {})
+	var bond: float = float(pokemon_dict.get("bond", 50.0))
+	var obedience: float = float(pokemon_dict.get("obedience", 70.0))
+	var temperament: String = pokemon_dict.get("temperament", "bold")
+	
+	var payload = {
+		"species": species,
+		"nickname": nickname,
+		"message": message,
+		"personality": personality,
+		"temperament": temperament,
+		"bond": bond,
+		"obedience": obedience,
+		"battle_context": context,
+		"is_opponent": is_opponent,
+		"opponent_archetype": opponent_archetype
+	}
+	
+	var response = await _post_json(BASE_URL + "/battle/talk", payload)
+	if not response.is_empty():
+		battle_talk_replied.emit(response)
+		return response
+	
+	# Fallback if server is unreachable
+	var fallback = {
+		"species": species,
+		"dialogue": "%s locks eyes with you attentively and prepares for the next order!" % nickname,
+		"intent": "GENERAL",
+		"emotional_state": "focused",
+		"morale_delta": 2,
+		"tactical_reaction": "nod",
+		"tactical_suggestion": null,
+		"momentum_tier": "STEADY",
+		"morale_effect": "buff_morale_stable",
+		"confidence": 0.5,
+		"source": "client_fallback"
+	}
+	battle_talk_replied.emit(fallback)
+	return fallback
+
+## Requests tactical move advice from the partner Pokémon or advisor engine
+func ask_battle_advice(pokemon_dict: Dictionary, context: Dictionary = {}) -> Dictionary:
+	return await talk_in_battle(pokemon_dict, "What move should we use here?", context, false)
+
+## Requests dynamic combat banter from an opposing trainer or wild Pokémon
+func get_opponent_battle_banter(opponent_dict: Dictionary, context: Dictionary = {}, opponent_archetype: String = "wild") -> Dictionary:
+	return await talk_in_battle(opponent_dict, "Battle engagement!", context, true, opponent_archetype)
+
 ## Internal helper for asynchronous HTTP GET requests
 func _get_json(url: String) -> Dictionary:
 	var http = HTTPRequest.new()
@@ -158,9 +211,14 @@ func _get_json(url: String) -> Dictionary:
 	if resp_code == 200:
 		is_server_online = true
 		var body_str = body_bytes.get_string_from_utf8()
-		var parsed = JSON.parse_string(body_str)
-		if parsed is Dictionary:
-			return parsed
+		# print("[LLMClient] url: ", url, " len: ", body_str.length(), " body: ", body_str.substr(0, 100))
+		if body_str.strip_edges() == "":
+			return {}
+		var json = JSON.new()
+		if json.parse(body_str) == OK and json.data is Dictionary:
+			return json.data
+		else:
+			push_warning("[LLMClient] Failed parsing JSON from %s: %s" % [url, json.get_error_message()])
 	return {}
 
 ## Internal helper for asynchronous HTTP POST requests
@@ -185,8 +243,12 @@ func _post_json(url: String, data: Dictionary) -> Dictionary:
 	if resp_code == 200:
 		is_server_online = true
 		var body_str = body_bytes.get_string_from_utf8()
-		var parsed = JSON.parse_string(body_str)
-		if parsed is Dictionary:
-			return parsed
+		if body_str.strip_edges() == "":
+			return {}
+		var json = JSON.new()
+		if json.parse(body_str) == OK and json.data is Dictionary:
+			return json.data
+		else:
+			push_warning("[LLMClient] Failed parsing POST response JSON: %s" % json.get_error_message())
 	
 	return {}

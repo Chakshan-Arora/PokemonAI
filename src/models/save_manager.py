@@ -272,6 +272,9 @@ def deserialize_player(
         if norm_item_id not in item_cat and get_item(norm_item_id) is None:
             raise SaveDataError(f"Unknown item '{item_id}' in inventory save data.")
 
+        if isinstance(quantity, float):
+            quantity = int(round(quantity))
+
         if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
             raise SaveDataError(f"Invalid quantity {quantity} for item '{item_id}' in save data.")
 

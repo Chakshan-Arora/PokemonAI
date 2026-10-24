@@ -102,10 +102,8 @@ static func create(p_species_name: String, p_level: int, p_nickname: String = ""
 	inst.max_hp = inst._base_hp + (p_level * 2)
 	inst.current_hp = inst.max_hp
 
-	# Assign first 4 available attacks
-	var available = species_data["available_attacks"]
-	for i in range(min(4, available.size())):
-		inst.attacks.append(available[i])
+	# Assign level-appropriate attacks based on canonical move learning tables
+	inst.attacks = PokemonData.get_moves_for_level(p_species_name, p_level)
 
 	return inst
 
@@ -184,6 +182,24 @@ func _level_up() -> void:
 	var hp_gain = max_hp - old_max
 	if not is_fainted():
 		current_hp += hp_gain
+	_check_level_up_moves()
+
+func _check_level_up_moves() -> void:
+	var table = PokemonData.MOVE_LEARNING.get(species_name, [])
+	for entry in table:
+		var req_lvl = int(entry[0])
+		var atk_name = str(entry[1])
+		if req_lvl == level and not attacks.has(atk_name):
+			if attacks.size() < 4:
+				attacks.append(atk_name)
+				awarded_level_moves.append(atk_name)
+				EventBus.show_message.emit("%s learned %s!" % [get_display_name(), atk_name])
+			else:
+				var old_move = attacks[0]
+				attacks.remove_at(0)
+				attacks.append(atk_name)
+				awarded_level_moves.append(atk_name)
+				EventBus.show_message.emit("%s learned %s in place of %s!" % [get_display_name(), atk_name, old_move])
 
 func xp_to_next_level() -> int:
 	return (level * 100) - experience
@@ -245,6 +261,11 @@ func paralysis_blocks() -> bool:
 # ─── Serialization ────────────────────────────────────────────────────────────
 
 func to_dict() -> Dictionary:
+	var clean_pers: Dictionary = {}
+	if personality is Dictionary:
+		for k in personality:
+			clean_pers[k] = int(round(float(personality[k])))
+
 	return {
 		"species": species_name,
 		"species_name": species_name,
@@ -255,7 +276,7 @@ func to_dict() -> Dictionary:
 		"max_hp": max_hp,
 		"bond": int(round(bond)),
 		"obedience": int(round(obedience)),
-		"personality": personality.duplicate(),
+		"personality": clean_pers,
 		"attacks": attacks.duplicate(),
 		"trained_atk": trained_atk,
 		"trained_def": trained_def,
@@ -283,8 +304,18 @@ static func from_dict(d: Dictionary):
 	inst.current_hp = min(int(d.get("current_hp", inst.max_hp)), inst.max_hp)
 	inst.bond = float(d.get("bond", 0.0))
 	inst.obedience = float(d.get("obedience", 100.0))
+	inst.awarded_level_moves = d.get("awarded_level_moves", []).duplicate()
 	if d.has("attacks") and d["attacks"] is Array:
-		inst.attacks = d["attacks"].duplicate()
+		var raw_atks = d["attacks"]
+		var legal_moves = PokemonData.get_moves_for_level(s_name, lvl)
+		var sanitized_atks = []
+		for a in raw_atks:
+			var a_str = str(a)
+			if legal_moves.has(a_str) or inst.awarded_level_moves.has(a_str):
+				sanitized_atks.append(a_str)
+		if sanitized_atks.is_empty():
+			sanitized_atks = legal_moves
+		inst.attacks = sanitized_atks
 	var t_stats = d.get("trained_stats", {})
 	if not t_stats.is_empty():
 		inst.trained_atk = int(t_stats.get("attack", 0))

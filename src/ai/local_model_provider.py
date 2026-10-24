@@ -285,3 +285,16 @@ class LocalModelDecisionProvider(DecisionProvider):
             "confidence": 0.9,
             "rationale": "Local model mock inference fallback response.",
         })
+
+    def generate_raw(
+        self,
+        system_instruction: str,
+        user_prompt: str,
+        max_tokens: int = 200,
+        use_battle_adapter: bool = False,
+    ) -> str:
+        """Executes text generation using loaded adapter or base model."""
+        active_model = self._battle_model if (use_battle_adapter and self._battle_model is not None) else self._model
+        active_tok = self._battle_tokenizer if (use_battle_adapter and self._battle_tokenizer is not None) else self._tokenizer
+        return self._generate_text(system_instruction, user_prompt, model=active_model, tokenizer=active_tok)
+
