@@ -1,0 +1,56 @@
+extends StaticBody3D
+## TrainerNPC - Overworld trainer NPC capable of initiating trainer battles
+
+const PokemonInstance = preload("res://scripts/models/PokemonInstance.gd")
+
+@export var trainer_id: String = "koji"
+@export var trainer_name: String = "Field Trainer Koji"
+@export_multiline var dialogue_intro: String = "Hey there! Let's see how strong your Pokemon are!"
+@export_multiline var dialogue_defeat: String = "Wow, your team is remarkably well trained!"
+@export var team_species: Array[String] = ["Geodude", "Machop"]
+@export var team_levels: Array[int] = [4, 5]
+
+@onready var label_3d: Label3D = $Label3D
+@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
+
+var _is_defeated: bool = false
+
+func _ready() -> void:
+	add_to_group("interactable")
+	if label_3d:
+		label_3d.text = trainer_name
+	
+	if mesh_instance:
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(0.9, 0.4, 0.1)  # Trainer red-orange
+		mesh_instance.material_override = mat
+
+func get_interaction_text() -> String:
+	return "Battle " + trainer_name if not _is_defeated else "Talk to " + trainer_name
+
+func on_interact(_player_node: Node3D) -> void:
+	if _is_defeated:
+		EventBus.show_message.emit(dialogue_defeat, 4.0)
+		return
+	
+	EventBus.show_message.emit(dialogue_intro, 3.0)
+	
+	# Create opponent Pokemon
+	var opp_species = team_species[0] if not team_species.is_empty() else "Geodude"
+	var opp_lvl = team_levels[0] if not team_levels.is_empty() else 4
+	var opp_p = PokemonInstance.create(opp_species, opp_lvl)
+	
+	GameState.set_meta("wild_pokemon_for_battle", opp_p.to_dict())
+	GameState.set_meta("is_trainer_battle", true)
+	GameState.set_meta("trainer_name", trainer_name)
+	GameState.enter_battle()
+	
+	_is_defeated = true
+	
+	EventBus.battle_started.emit(
+		GameState.get_active_pokemon().to_dict() if GameState.get_active_pokemon() else {},
+		opp_p.to_dict(),
+		true
+	)
+	
+	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
