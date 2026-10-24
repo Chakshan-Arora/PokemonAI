@@ -36,18 +36,13 @@ from src.models.habitat import TimeOfDay
 from src.data.species import SAMPLE_SPECIES
 from src.models.personality import Personality
 from src.models.pokemon import Pokemon
-<<<<<<< HEAD
 from src.models.trainer_team_generator import TrainerTeamGenerator
-from src.ai.local_model_provider import LocalModelDecisionProvider
-from src.ai.agent import PokemonAgent, AgentIdentity
-from src.ai.perception import AgentPerception
-from src.ai.battle_talk_parser import BattleTalkParser
-=======
 from src.ai.decision_provider import DecisionProvider, FallbackDecisionHandler
 from src.ai.live_provider import create_live_decision_provider
 from src.ai.local_model_provider import LocalModelDecisionProvider
 from src.ai.agent import PokemonAgent, AgentIdentity
 from src.ai.perception import AgentPerception
+from src.ai.battle_talk_parser import BattleTalkParser
 
 VERY_NEGATIVE_PHRASES = [
     "hate you", "despise you", "loathe you", "shut up", "get lost", "get out",
@@ -170,7 +165,6 @@ def classify_companion_sentiment(text: str) -> str:
     if has_pos and has_neg:
         return "negative"
     return "neutral"
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
 
 
 _habitat_mgr: HabitatManager = None
@@ -286,19 +280,7 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
 
         clean_path = self.path.split("?")[0]
         try:
-<<<<<<< HEAD
-            if clean_path == "/companion/talk":
-                resp_data = self._handle_companion_talk(req_data)
-            elif clean_path == "/battle/talk":
-                resp_data = self._handle_battle_talk(req_data)
-            elif clean_path == "/battle/decide":
-                resp_data = self._handle_battle_decide(req_data)
-            elif clean_path == "/decide":
-                resp_data = self._handle_generalized_decide(req_data)
-            elif clean_path == "/api/save":
-=======
             if clean_path == "/api/save":
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
                 resp_data = self._handle_api_save(req_data)
             elif clean_path == "/api/wild_encounter":
                 resp_data = self._handle_wild_encounter(req_data)
@@ -306,6 +288,8 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
                 resp_data = self._handle_pokemon_create(req_data)
             elif clean_path == "/companion/talk":
                 resp_data = self._handle_companion_talk(req_data)
+            elif clean_path == "/battle/talk":
+                resp_data = self._handle_battle_talk(req_data)
             elif clean_path == "/battle/decide":
                 resp_data = self._handle_battle_decide(req_data)
             elif clean_path == "/decide":
@@ -324,15 +308,12 @@ class LLMBridgeHandler(BaseHTTPRequestHandler):
         save_path = repo_root / "save_game.json"
         
         player_dict = data.get("player", data)
-<<<<<<< HEAD
         if "inventory" in data and "inventory" not in player_dict:
             player_dict = data
         if "collection" in data and "collection" not in player_dict:
             player_dict = data
 
         # Ensure collection items have integer bond/obedience/personality
-=======
->>>>>>> 3fe9cb2d3e31f41d3f02c5f3f17e627fb9188755
         col = player_dict.get("collection", [])
         for mon_d in col:
             if isinstance(mon_d, dict):
