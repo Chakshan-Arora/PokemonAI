@@ -228,6 +228,11 @@ func _setup_battle() -> void:
 	if has_node("/root/BattleTransition"):
 		var bt = get_node("/root/BattleTransition")
 		bt.play_battle_intro_animation()
+	
+	if has_node("/root/SoundManager"):
+		var sm = get_node("/root/SoundManager")
+		if not sm.is_battle_transition_playing():
+			sm.play_battle_transition()
 
 func _update_hp_bar_color(bar: ProgressBar, current: int, maximum: int) -> void:
 	var ratio = float(current) / float(max(1, maximum))
@@ -1205,6 +1210,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			proceed = true
 		
 		if proceed:
+			if has_node("/root/SoundManager"):
+				get_node("/root/SoundManager").play_click()
 			get_viewport().set_input_as_handled()
 			_end_battle()
 			return
@@ -1221,6 +1228,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			skip = true
 		
 		if skip:
+			if has_node("/root/SoundManager"):
+				get_node("/root/SoundManager").play_click()
 			_typewriter_tween.custom_step(999.0)
 			get_viewport().set_input_as_handled()
 
@@ -1370,6 +1379,8 @@ func _show_continue_prompt() -> void:
 
 func _end_battle() -> void:
 	_waiting_for_continue = false
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").stop_battle_transition(0.6)
 	SaveLoad.save_game()
 	GameState.exit_battle()
 	get_tree().change_scene_to_file("res://scenes/World.tscn")

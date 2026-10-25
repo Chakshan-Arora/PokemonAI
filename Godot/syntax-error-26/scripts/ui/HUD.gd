@@ -573,12 +573,16 @@ func set_interaction_prompt(visible_state: bool, text: String = "") -> void:
 
 func _on_dialogue_box_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if has_node("/root/SoundManager"):
+			get_node("/root/SoundManager").play_click()
 		if dialogue_box:
 			dialogue_box.visible = false
 			_dialogue_timer = 0.0
 
 func _on_message_banner_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if has_node("/root/SoundManager"):
+			get_node("/root/SoundManager").play_click()
 		if message_banner:
 			message_banner.visible = false
 			_banner_timer = 0.0

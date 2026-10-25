@@ -291,6 +291,10 @@ func _play_wild_transition() -> void:
 	_wild_banner.position = Vector2((vp_size.x - 360.0) * 0.5, vp_size.y * 0.5 + 40.0)
 	_wild_banner.size = Vector2(360.0, 70.0)
 	
+	# Play 14-second Pokémon battle transition sound effect
+	if has_node("/root/SoundManager"):
+		get_node("/root/SoundManager").play_battle_transition()
+	
 	var tween = create_tween().set_parallel(false)
 	
 	# Phase 1: Rapid Retro Strobe Flashes (3 sharp flashes)

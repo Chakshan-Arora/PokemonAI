@@ -24,6 +24,7 @@ QuestSystem="*res://scripts/systems/QuestSystem.gd"
 SaveLoad="*res://scripts/autoloads/SaveLoad.gd"
 LLMClient="*res://scripts/autoloads/LLMClient.gd"
 BattleTransition="*res://scripts/autoloads/BattleTransition.gd"
+SoundManager="*res://scripts/autoloads/SoundManager.gd"
 
 [display]
 
