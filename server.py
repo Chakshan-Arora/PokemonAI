@@ -26,8 +26,26 @@ from dotenv import load_dotenv
 # Ensure project root is in sys.path and load environment variables
 repo_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(repo_root))
-load_dotenv()
-load_dotenv(repo_root / ".env")
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    load_dotenv(repo_root / ".env")
+except ImportError:
+    # Pure standard library .env loader fallback (zero pip requirements needed)
+    for env_path in (Path(".env"), repo_root / ".env"):
+        if env_path.is_file():
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k, v = k.strip(), v.strip().strip("'\"")
+                            if k not in os.environ:
+                                os.environ[k] = v
+            except Exception:
+                pass
 
 from export_backend_data import build_backend_data
 from src.models.save_manager import load_game, save_game, serialize_player, deserialize_player

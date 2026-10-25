@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cnrumf8xgrgld"
 path.s3tc="res://.godot/imported/shadow_decal.png-6ffc789760b63a8cc50238d75aa01ee4.s3tc.ctex"
-path.etc2="res://.godot/imported/shadow_decal.png-6ffc789760b63a8cc50238d75aa01ee4.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/sprites/world/shadow_decal.png"
-dest_files=["res://.godot/imported/shadow_decal.png-6ffc789760b63a8cc50238d75aa01ee4.s3tc.ctex", "res://.godot/imported/shadow_decal.png-6ffc789760b63a8cc50238d75aa01ee4.etc2.ctex"]
+dest_files=["res://.godot/imported/shadow_decal.png-6ffc789760b63a8cc50238d75aa01ee4.s3tc.ctex"]
 
 [params]
 

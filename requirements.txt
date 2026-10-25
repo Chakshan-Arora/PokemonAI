@@ -1,11 +1,8 @@
-# Syntax Error 26 Dependencies
+# Syntax Error 26 — Backend & Server Dependencies
 pytest>=8.0.0
-
-# Optional Voice Input Dependencies (Milestone BT3.1) - COMMENTED OUT
-# Speech-to-text recognition via AssemblyAI
-# assemblyai>=0.30.0
-
-# Microphone audio recording
-# sounddevice>=0.4.6
 numpy>=1.26.0
+python-dotenv>=1.0.0
 
+# Optional Voice Input Dependencies (Milestone BT3.1)
+# assemblyai>=0.30.0
+# sounddevice>=0.4.6

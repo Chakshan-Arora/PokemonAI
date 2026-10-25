@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://r4hv17efunfo"
 path.s3tc="res://.godot/imported/ash_walk.png-e0351a71ec8ce8b1567eb0828f46d7a3.s3tc.ctex"
-path.etc2="res://.godot/imported/ash_walk.png-e0351a71ec8ce8b1567eb0828f46d7a3.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/sprites/trainers/ash_walk.png"
-dest_files=["res://.godot/imported/ash_walk.png-e0351a71ec8ce8b1567eb0828f46d7a3.s3tc.ctex", "res://.godot/imported/ash_walk.png-e0351a71ec8ce8b1567eb0828f46d7a3.etc2.ctex"]
+dest_files=["res://.godot/imported/ash_walk.png-e0351a71ec8ce8b1567eb0828f46d7a3.s3tc.ctex"]
 
 [params]
 

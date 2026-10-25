@@ -11,8 +11,11 @@ import re
 import urllib.error
 import urllib.request
 from typing import Any, Callable, Optional, Union
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from src.ai.agent import PokemonAgent
 from src.ai.decision import AgentActionType, AgentDecision
