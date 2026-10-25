@@ -4,66 +4,100 @@ An immersive 3D Pokémon adventure built with Godot 4 and powered by an autonomo
 
 ---
 
-## Quick Start & Installation Guide
+## How to Install & Play
 
-> **🎉 Everything is Bundled in the Release!**
-> When you download your operating system's package from **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)**, `server.py`, all backend AI models, and 1-click launchers are **already included inside the same zip**! You do not need to clone the repository or download source code separately.
+Getting the game up and running takes just 4 simple steps:
 
----
-
-### Step 1: Download the Release for Your Computer
-
-Go to **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)** and download your platform's package:
-
-| Download Package | Included Contents | Launch Method |
-| :--- | :--- | :--- |
-| **`PokemonAI_Windows.zip`** | `PokemonAI.exe`<br>`Play_PokemonAI.bat`<br>`run_server.bat`<br>`server.py` + `src/` | **Option A (1-Click):** Double-click `Play_PokemonAI.bat`<br>*(Starts server + game together)*<br><br>**Option B:** Double-click `run_server.bat`, then double-click `PokemonAI.exe` |
-| **`PokemonAI_macOS.zip`** | `PokémonAI.app`<br>`run_server.sh`<br>`server.py` + `src/` | 1. Open Terminal in folder and run `./run_server.sh`<br>2. Double-click `PokémonAI.app` |
-| **`PokemonAI_Linux.zip`** | `PokemonAI.x86_64`<br>`run_server.sh`<br>`server.py` + `src/` | 1. Run `./run_server.sh`<br>2. Run `./PokemonAI.x86_64` |
-| **`PokemonAI_Server.zip`** *(272 KB)* | `server.py`<br>`src/`<br>`run_server.bat`<br>`run_server.sh` | Standalone server package for headless hosts, VPS, or running backend separately |
+```
+[ 1. Download Files ] ──► [ 2. pip install ] ──► [ 3. Run server.py ] ──► [ 4. Launch Game ]
+```
 
 ---
 
-### Step 2: Install Requirements for `server.py`
+### Step 1: Download the Required Files
 
-Make sure **Python 3.9 or higher** is installed. In the extracted folder:
+You need two things: the **code repository** (which contains `server.py` and the backend AI systems) and the **game release** built for your operating system.
 
-#### Windows (Command Prompt / PowerShell):
+1. **Download the Repository Code:**
+   - Click the green **Code** button at the top of this GitHub page ➔ **Download ZIP** (or [click here to download ZIP](https://github.com/Chakshan-Arora/PokemonAI/archive/refs/heads/main.zip)).
+   - Extract the downloaded zip file into a folder on your computer.
+
+2. **Download Your System's Release:**
+   - Head over to the **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)** page.
+   - Download the file corresponding to your operating system:
+     - **Windows:** `PokemonAI_Windows.exe` (or `PokemonAI_Windows.zip`)
+     - **macOS:** `PokemonAI_Mac.app.zip` (or `PokemonAI_macOS.zip`)
+     - **Linux:** `PokemonAI_Linux` (or `PokemonAI_Linux.zip`)
+
+---
+
+### Step 2: Install Python Requirements
+
+Make sure you have **Python 3.9 or higher** installed on your computer.
+
+Open your terminal (Terminal on macOS/Linux or Command Prompt / PowerShell on Windows), navigate into the extracted repository directory, and run:
+
+```bash
+pip install -r requirements.txt
+```
+
+> **Note:** If you use virtual environments, you can optionally create and activate one before running the command (`python -m venv venv`).
+
+---
+
+### Step 3: Run `server.py`
+
+In the same repository directory, start the Pokémon AI bridge server:
+
+#### **Windows:**
 ```cmd
-pip install -r requirements.txt
+python server.py
 ```
+*(Alternatively, you can just double-click `run_server.bat`)*
 
-#### macOS / Linux (Terminal):
+#### **macOS / Linux:**
 ```bash
-pip install -r requirements.txt
+python3 server.py
+```
+*(Alternatively, run `./run_server.sh`)*
+
+You will see the confirmation message:
+```text
+============================================================
+ Syntax Error 26 — Pokémon AI & LLM Bridge Server
+ Target: http://127.0.0.1:8008
+============================================================
+[OK] LLM Bridge Server Ready and Listening on http://127.0.0.1:8008!
 ```
 
-> **Zero-Dependency Note:** `server.py` includes a pure standard-library fallback. Even if `pip install` is skipped, the server and offline autonomous AI will still start and run!
+> **Important:** Keep this terminal window open while playing so the game can communicate with the AI companion and battle engine.
 
 ---
 
-### Step 3: Run the Server & Play!
+### Step 4: Launch the Game Release
 
-#### Windows:
-Double-click **`Play_PokemonAI.bat`** (or run `run_server.bat`, then launch `PokemonAI.exe`).
+Now, locate the release file you downloaded in **Step 1** and run it:
 
-#### macOS / Linux:
-In terminal:
-```bash
-# Terminal 1: Start server
-./run_server.sh
+- **Windows:** Double-click `PokemonAI_Windows.exe`.
+  *(If Windows SmartScreen appears, click **More info** ➔ **Run anyway**)*.
+- **macOS:** Unzip `PokemonAI_Mac.app.zip` and double-click `PokémonAI.app`.
+  *(If Gatekeeper warns about an unidentified developer, right-click `PokémonAI.app` ➔ **Open**, or run `xattr -cr PokémonAI.app` in Terminal)*.
+- **Linux:** Open a terminal where `PokemonAI_Linux` is located and run:
+  ```bash
+  chmod +x PokemonAI_Linux
+  ./PokemonAI_Linux
+  ```
 
-# Terminal 2: Launch game
-# macOS: open PokémonAI.app
-# Linux: ./PokemonAI.x86_64
-```
+Once launched, the game will automatically detect `http://127.0.0.1:8008` and display the **Backend Online** status indicator on your HUD!
 
 ---
 
-### (Optional) Cloud LLM API Keys
-The game runs offline by default using the built-in autonomous heuristic model. If you want to connect live cloud LLM reasoning (Gemini or OpenAI), create a `.env` file in the folder:
+## (Optional) Live Cloud AI Keys
+
+The game runs 100% offline out-of-the-box using built-in autonomous heuristic AI. If you want your partner Pokémon to use live cloud LLM reasoning (Gemini or OpenAI), create a file named `.env` in the repository directory:
+
 ```env
-# Google Gemini (Recommended for low latency)
+# Google Gemini (Recommended for low-latency dialogue)
 GEMINI_API_KEY=your_gemini_api_key_here
 POKEMON_AI_PROVIDER=gemini
 POKEMON_AI_MODEL=gemini-2.5-flash
@@ -78,14 +112,14 @@ POKEMON_AI_MODEL=gemini-2.5-flash
 
 ## In-Game Controls
 
-| Action | Keyboard / Mouse |
+| Action | Controls |
 | :--- | :--- |
-| **Movement** | `W`, `A`, `S`, `D` / Arrow Keys |
-| **Camera Rotation** | Right Mouse Button + Drag / Mouse Movement |
-| **Interact / Talk** | `E` or `Space` (near NPCs, signs, items) |
-| **Companion Chat** | Click the Companion dialogue button on the HUD |
-| **Open Menu / Inventory** | `Tab` / `ESC` |
-| **Battle Actions** | Mouse Click on Fight, Items, Switch, or Run |
+| **Move Trainer** | `W`, `A`, `S`, `D` or Arrow Keys |
+| **Rotate Camera** | Hold Right Mouse Button & Drag / Mouse Look |
+| **Interact / Talk / Collect** | `E` or `Space` |
+| **Talk to Companion Pokémon** | Click the **Companion Dialogue** bubble on the HUD |
+| **Inventory & Team Menu** | `Tab` or `ESC` |
+| **Battle Choices** | Click **Fight**, **Bag**, **Pokémon**, or **Run** buttons |
 
 ---
 
@@ -99,41 +133,13 @@ POKEMON_AI_MODEL=gemini-2.5-flash
 
 ---
 
-## Running Automated Tests
+## Running Unit Tests
 
-To run the full suite of 810 unit and integration tests:
+To verify the game systems and backend algorithms:
 
 ```bash
 pytest
 ```
-Expected output:
 ```text
 ============================= 810 passed in 2.15s ==============================
-```
-
----
-
-## Project Structure
-
-```text
-PokemonAI/
-├── server.py                 # REST API bridge for LLM companion & combat decisions
-├── run_server.bat            # Windows 1-click server launcher
-├── run_server.sh             # macOS/Linux 1-click server launcher
-├── requirements.txt          # Python dependencies
-├── export_backend_data.py    # Synchronizes Python models with Godot JSON schemas
-│
-├── Godot/syntax-error-26/    # Godot 4 3D Game Project
-│   ├── scenes/               # World, Battle, UI, and Starter Choice scenes
-│   ├── scripts/              # GDScript game systems and LLMClient autoload
-│   ├── assets/               # 3D models, textures, battle backgrounds, and audio
-│   └── project.godot         # Godot project configuration & export presets
-│
-├── src/                      # Authoritative Python game logic
-│   ├── ai/                   # Companion dialogue, battle decision providers, & perception
-│   ├── models/               # Pokémon, Battle, Inventory, Quests, & SaveManager
-│   └── data/                 # Species, attacks, habitats, items, & type chart
-│
-├── tests/                    # 810 automated pytest suites
-└── build/                    # Exported distribution binaries (Windows, macOS, Linux)
 ```
