@@ -409,6 +409,76 @@ func _animate_hit(is_player_hit: bool) -> void:
 	tween.tween_property(sprite, "position:x", orig_x, 0.04)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 
+func _animate_heal(is_player: bool) -> void:
+	var sprite = player_sprite if is_player else opponent_sprite
+	if not is_instance_valid(sprite):
+		return
+	var orig_y = sprite.position.y
+	var tween = create_tween()
+	sprite.modulate = Color(0.6, 2.2, 0.8)
+	tween.tween_property(sprite, "position:y", orig_y - 8, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "position:y", orig_y, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(sprite, "modulate", Color.WHITE, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+func _spawn_heal_sparkles(center: Vector2) -> void:
+	var arena = $Arena
+	if not is_instance_valid(arena):
+		return
+	for i in range(6):
+		var p = Label.new()
+		p.text = "💚" if (i % 2 == 0) else "✨"
+		p.add_theme_font_size_override("font_size", 16)
+		p.position = center - Vector2(8, 8)
+		p.z_index = 25
+		arena.add_child(p)
+		
+		var angle = randf_range(-PI * 0.9, -PI * 0.1)
+		var dist = randf_range(25.0, 55.0)
+		var dest = center + Vector2(cos(angle), sin(angle)) * dist - Vector2(0, 15)
+		
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(p, "position", dest, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "scale", Vector2(1.2, 1.2), 0.2)
+		tw.tween_property(p, "scale", Vector2(0.2, 0.2), 0.3).set_delay(0.2)
+		tw.tween_property(p, "modulate:a", 0.0, 0.5)
+		tw.chain().tween_callback(p.queue_free)
+
+func _apply_heal(is_player: bool, new_hp: int, max_hp: int) -> void:
+	if is_player:
+		if is_instance_valid(player_hp_bar):
+			var current_val = player_hp_bar.value
+			if abs(current_val - float(new_hp)) > 0.01:
+				var hp_tw = create_tween()
+				hp_tw.tween_property(player_hp_bar, "value", float(new_hp), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				hp_tw.parallel().tween_method(func(val: float):
+					if is_instance_valid(player_hp_text):
+						player_hp_text.text = "%d / %d HP" % [int(round(val)), max_hp]
+					_update_hp_bar_color(player_hp_bar, int(round(val)), max_hp)
+				, current_val, float(new_hp), 0.45)
+			else:
+				if is_instance_valid(player_hp_text):
+					player_hp_text.text = "%d / %d HP" % [new_hp, max_hp]
+				_update_hp_bar_color(player_hp_bar, new_hp, max_hp)
+				return
+		_animate_heal(true)
+		if is_instance_valid(player_sprite):
+			_spawn_heal_sparkles(player_sprite.position + Vector2(player_sprite.size.x * 0.5, player_sprite.size.y * 0.5))
+	else:
+		if is_instance_valid(opponent_hp_bar):
+			var current_val = opponent_hp_bar.value
+			if abs(current_val - float(new_hp)) > 0.01:
+				var opp_hp_tw = create_tween()
+				opp_hp_tw.tween_property(opponent_hp_bar, "value", float(new_hp), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				opp_hp_tw.parallel().tween_method(func(val: float):
+					_update_hp_bar_color(opponent_hp_bar, int(round(val)), max_hp)
+				, current_val, float(new_hp), 0.45)
+			else:
+				_update_hp_bar_color(opponent_hp_bar, new_hp, max_hp)
+				return
+		_animate_heal(false)
+		if is_instance_valid(opponent_sprite):
+			_spawn_heal_sparkles(opponent_sprite.position + Vector2(opponent_sprite.size.x * 0.5, opponent_sprite.size.y * 0.5))
+
 ## ─── Poké Ball Throw & Capture Animations ───────────────────────────────────
 
 func _animate_capture_throw(success: bool, callback: Callable) -> void:
@@ -980,10 +1050,41 @@ func _process_turn_result(result: Dictionary) -> void:
 				})
 			
 			"item_used":
+				var is_p = e.get("is_player", true)
+				var poke = player_pokemon if is_p else opponent_pokemon
+				var new_hp = e.get("new_hp", poke.current_hp if poke else -1)
+				var max_hp = e.get("max_hp", poke.max_hp if poke else -1)
 				_battle_step_queue.append({
-					"type": "message",
-					"text": "Used %s on %s!" % [e.get("item", ""), e.get("target", "")]
+					"type": "item_used",
+					"text": "Used %s on %s!" % [e.get("item", ""), e.get("target", "")],
+					"item": e.get("item", ""),
+					"target": e.get("target", ""),
+					"is_player": is_p,
+					"new_hp": new_hp,
+					"max_hp": max_hp,
+					"heal_amount": e.get("heal_amount", 0)
 				})
+			
+			"hp_update":
+				var is_p = e.get("is_player", true)
+				var new_hp = e.get("hp", 0)
+				var max_hp = e.get("max_hp", 10)
+				if not _battle_step_queue.is_empty():
+					var last_step = _battle_step_queue[-1]
+					if last_step.get("type") in ["item_used", "message"]:
+						last_step["has_hp_update"] = true
+						last_step["hp_is_player"] = is_p
+						last_step["new_hp"] = new_hp
+						last_step["max_hp"] = max_hp
+				else:
+					_battle_step_queue.append({
+						"type": "hp_update",
+						"text": "",
+						"is_player": is_p,
+						"new_hp": new_hp,
+						"max_hp": max_hp,
+						"has_hp_update": true
+					})
 			
 			"capture_attempt":
 				var cap_data = e.get("data", {})
@@ -1154,6 +1255,22 @@ func _play_next_step() -> void:
 	var step_delay = tw_duration + 0.65
 	
 	match stype:
+		"item_used":
+			var is_p = step.get("is_player", true)
+			var new_hp = step.get("new_hp", -1)
+			var max_hp = step.get("max_hp", -1)
+			if new_hp >= 0 and max_hp > 0:
+				_apply_heal(is_p, new_hp, max_hp)
+			step_delay = tw_duration + 0.65
+		
+		"hp_update":
+			var is_p = step.get("is_player", true)
+			var new_hp = step.get("new_hp", -1)
+			var max_hp = step.get("max_hp", -1)
+			if new_hp >= 0 and max_hp > 0:
+				_apply_heal(is_p, new_hp, max_hp)
+			step_delay = 0.45
+
 		"capture_throw":
 			var success = step.get("success", false)
 			_animate_capture_throw(success, func():
@@ -1183,14 +1300,21 @@ func _play_next_step() -> void:
 				)
 			
 			if is_p_target:
+				var current_val = player_hp_bar.value
 				var hp_tw = create_tween()
 				hp_tw.tween_property(player_hp_bar, "value", float(new_hp), 0.35)
-				_update_hp_bar_color(player_hp_bar, new_hp, max_hp)
-				player_hp_text.text = "%d / %d HP" % [new_hp, max_hp]
+				hp_tw.parallel().tween_method(func(val: float):
+					if is_instance_valid(player_hp_text):
+						player_hp_text.text = "%d / %d HP" % [int(round(val)), max_hp]
+					_update_hp_bar_color(player_hp_bar, int(round(val)), max_hp)
+				, current_val, float(new_hp), 0.35)
 			else:
+				var current_val = opponent_hp_bar.value
 				var opp_hp_tw = create_tween()
 				opp_hp_tw.tween_property(opponent_hp_bar, "value", float(new_hp), 0.35)
-				_update_hp_bar_color(opponent_hp_bar, new_hp, max_hp)
+				opp_hp_tw.parallel().tween_method(func(val: float):
+					_update_hp_bar_color(opponent_hp_bar, int(round(val)), max_hp)
+				, current_val, float(new_hp), 0.35)
 			
 			step_delay = tw_duration + 0.75
 		
@@ -1205,6 +1329,15 @@ func _play_next_step() -> void:
 			player_pokemon = battle_engine.player_pokemon
 			_init_ui_stats()
 			_update_move_buttons()
+
+		"message":
+			if step.get("has_hp_update", false):
+				var is_p = step.get("hp_is_player", true)
+				var new_hp = step.get("new_hp", -1)
+				var max_hp = step.get("max_hp", -1)
+				if new_hp >= 0 and max_hp > 0:
+					_apply_heal(is_p, new_hp, max_hp)
+			step_delay = tw_duration + 0.65
 	
 	get_tree().create_timer(step_delay).timeout.connect(_play_next_step)
 

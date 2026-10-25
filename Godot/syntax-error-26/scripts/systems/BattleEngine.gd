@@ -395,17 +395,44 @@ func _use_item(item_id: String) -> Array:
 		"heal":
 			var amount = item_data.get("heal_amount", 20)
 			var healed = target.heal(amount)
-			evts.append({"type": "item_used", "item": item_data["name"], "target": target.nickname})
+			evts.append({
+				"type": "item_used",
+				"item": item_data["name"],
+				"target": target.nickname,
+				"heal_amount": healed,
+				"new_hp": target.current_hp,
+				"max_hp": target.max_hp,
+				"is_player": (target == player_pokemon)
+			})
 			evts.append({"type": "message", "text": "%s recovered %d HP!" % [target.nickname, healed]})
-			evts.append({"type": "hp_update", "pokemon": target.nickname, "is_player": true,
-				"hp": target.current_hp, "max_hp": target.max_hp})
+			evts.append({
+				"type": "hp_update",
+				"pokemon": target.nickname,
+				"is_player": (target == player_pokemon),
+				"hp": target.current_hp,
+				"max_hp": target.max_hp
+			})
 		"full_restore":
+			var healed = target.max_hp - target.current_hp
 			target.heal_to_full()
 			target.clear_all_statuses()
-			evts.append({"type": "item_used", "item": item_data["name"], "target": target.nickname})
+			evts.append({
+				"type": "item_used",
+				"item": item_data["name"],
+				"target": target.nickname,
+				"heal_amount": healed,
+				"new_hp": target.current_hp,
+				"max_hp": target.max_hp,
+				"is_player": (target == player_pokemon)
+			})
 			evts.append({"type": "message", "text": "%s was fully restored!" % target.nickname})
-			evts.append({"type": "hp_update", "pokemon": target.nickname, "is_player": true,
-				"hp": target.current_hp, "max_hp": target.max_hp})
+			evts.append({
+				"type": "hp_update",
+				"pokemon": target.nickname,
+				"is_player": (target == player_pokemon),
+				"hp": target.current_hp,
+				"max_hp": target.max_hp
+			})
 		"cure_poison":
 			StatusEffectSystem.cure_status(target, "POISON")
 			evts.append({"type": "message", "text": "%s was cured of poison!" % target.nickname})
