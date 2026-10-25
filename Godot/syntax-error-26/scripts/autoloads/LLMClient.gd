@@ -39,24 +39,42 @@ func _try_start_backend_server() -> void:
 		return
 	_has_attempted_autostart = true
 	
+	var exec_dir = OS.get_executable_path().get_base_dir()
+	var macos_app_parent = exec_dir.path_join("../../../").simplify_path()
 	var base_res = ProjectSettings.globalize_path("res://")
 	var repo_root = base_res.path_join("../../").simplify_path()
-	var server_script = repo_root.path_join("server.py")
 	
-	if FileAccess.file_exists(server_script):
+	var candidates = [
+		exec_dir.path_join("server.py"),
+		macos_app_parent.path_join("server.py"),
+		repo_root.path_join("server.py"),
+		base_res.path_join("server.py")
+	]
+	
+	var server_script = ""
+	for c in candidates:
+		if FileAccess.file_exists(c):
+			server_script = c
+			break
+	
+	if server_script != "":
 		print("[LLMClient] Python backend is offline. Auto-starting server at: ", server_script)
-		var pid = OS.create_process("python", [server_script])
+		var pid = -1
+		if OS.get_name() == "Windows":
+			pid = OS.create_process("python", [server_script])
+			if pid <= 0:
+				pid = OS.create_process("py", ["-3", server_script])
+		else:
+			pid = OS.create_process("python3", [server_script])
+			if pid <= 0:
+				pid = OS.create_process("python", [server_script])
+		
 		if pid > 0:
 			_server_pid = pid
 			print("[LLMClient] Launched Python backend server in background (PID: %d)" % pid)
-		else:
-			var py_pid = OS.create_process("py", ["-3", server_script])
-			if py_pid > 0:
-				_server_pid = py_pid
-				print("[LLMClient] Launched Python backend server via py (PID: %d)" % py_pid)
 		
 		# Schedule health check after brief delay for server to bind port
-		get_tree().create_timer(1.8).timeout.connect(_check_health)
+		get_tree().create_timer(2.0).timeout.connect(_check_health)
 
 func _check_health() -> void:
 	if _is_probing_health:

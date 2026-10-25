@@ -6,44 +6,62 @@ An immersive 3D Pokémon adventure built with Godot 4 and powered by an autonomo
 
 ## Quick Start & Installation Guide
 
-To play the game, follow these 3 simple steps:
-
-```
-[ Step 1: Install Requirements ] ──► [ Step 2: Start server.py ] ──► [ Step 3: Launch Game Release ]
-```
+> **🎉 Everything is Bundled in the Release!**
+> When you download your operating system's package from **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)**, `server.py`, all backend AI models, and 1-click launchers are **already included inside the same zip**! You do not need to clone the repository or download source code separately.
 
 ---
 
-### Step 1: Install Requirements for `server.py`
+### Step 1: Download the Release for Your Computer
 
-Make sure you have **Python 3.9 or higher** installed.
+Go to **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)** and download your platform's package:
 
-Open your terminal or command prompt in the project root directory:
+| Download Package | Included Contents | Launch Method |
+| :--- | :--- | :--- |
+| **`PokemonAI_Windows.zip`** | `PokemonAI.exe`<br>`Play_PokemonAI.bat`<br>`run_server.bat`<br>`server.py` + `src/` | **Option A (1-Click):** Double-click `Play_PokemonAI.bat`<br>*(Starts server + game together)*<br><br>**Option B:** Double-click `run_server.bat`, then double-click `PokemonAI.exe` |
+| **`PokemonAI_macOS.zip`** | `PokémonAI.app`<br>`run_server.sh`<br>`server.py` + `src/` | 1. Open Terminal in folder and run `./run_server.sh`<br>2. Double-click `PokémonAI.app` |
+| **`PokemonAI_Linux.zip`** | `PokemonAI.x86_64`<br>`run_server.sh`<br>`server.py` + `src/` | 1. Run `./run_server.sh`<br>2. Run `./PokemonAI.x86_64` |
+| **`PokemonAI_Server.zip`** *(272 KB)* | `server.py`<br>`src/`<br>`run_server.bat`<br>`run_server.sh` | Standalone server package for headless hosts, VPS, or running backend separately |
+
+---
+
+### Step 2: Install Requirements for `server.py`
+
+Make sure **Python 3.9 or higher** is installed. In the extracted folder:
 
 #### Windows (Command Prompt / PowerShell):
 ```cmd
-# (Optional) Create and activate a virtual environment
-python -m venv venv
-venv\Scripts\activate
-
-# Install required packages
 pip install -r requirements.txt
 ```
 
 #### macOS / Linux (Terminal):
 ```bash
-# (Optional) Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install required packages
 pip install -r requirements.txt
 ```
 
-> **Note:** `requirements.txt` installs `python-dotenv`, `numpy`, and `pytest`. All core game logic and AI providers use the Python standard library.
+> **Zero-Dependency Note:** `server.py` includes a pure standard-library fallback. Even if `pip install` is skipped, the server and offline autonomous AI will still start and run!
 
-#### (Optional) Cloud LLM API Keys
-The game runs out-of-the-box in **Autonomous Offline AI Mode**. If you want to connect live cloud LLM reasoning (Gemini or OpenAI), create a `.env` file in the project root:
+---
+
+### Step 3: Run the Server & Play!
+
+#### Windows:
+Double-click **`Play_PokemonAI.bat`** (or run `run_server.bat`, then launch `PokemonAI.exe`).
+
+#### macOS / Linux:
+In terminal:
+```bash
+# Terminal 1: Start server
+./run_server.sh
+
+# Terminal 2: Launch game
+# macOS: open PokémonAI.app
+# Linux: ./PokemonAI.x86_64
+```
+
+---
+
+### (Optional) Cloud LLM API Keys
+The game runs offline by default using the built-in autonomous heuristic model. If you want to connect live cloud LLM reasoning (Gemini or OpenAI), create a `.env` file in the folder:
 ```env
 # Google Gemini (Recommended for low latency)
 GEMINI_API_KEY=your_gemini_api_key_here
@@ -55,45 +73,6 @@ POKEMON_AI_MODEL=gemini-2.5-flash
 # POKEMON_AI_PROVIDER=openai
 # POKEMON_AI_MODEL=gpt-4o-mini
 ```
-
----
-
-### Step 2: Run `server.py`
-
-Start the local AI bridge server. **Keep this terminal window open while playing the game.**
-
-#### Windows:
-```cmd
-python server.py
-```
-*(Alternatively, simply double-click `run_server.bat`)*
-
-#### macOS / Linux:
-```bash
-python3 server.py
-```
-*(Alternatively, run `./run_server.sh`)*
-
-You will see:
-```text
-============================================================
- Syntax Error 26 — Pokémon AI & LLM Bridge Server
- Target: http://127.0.0.1:8008
-============================================================
-[OK] LLM Bridge Server Ready and Listening on http://127.0.0.1:8008!
-```
-
----
-
-### Step 3: Download & Launch the Game Release for Your Computer
-
-Go to the repository's **[Releases](https://github.com/Chakshan-Arora/PokemonAI/releases)** page and download the package matching your operating system:
-
-| Platform | Download File | Launch Instructions |
-| :--- | :--- | :--- |
-| **Windows** | `PokemonAI_Windows.zip` | 1. Extract `PokemonAI_Windows.zip`.<br>2. Double-click `PokemonAI.exe`.<br>*(If prompted by Windows SmartScreen, click **More info** ➔ **Run anyway**)*. |
-| **macOS** | `PokemonAI_macOS.zip` | 1. Extract `PokemonAI_macOS.zip`.<br>2. Double-click `PokémonAI.app`.<br>*(If macOS Gatekeeper blocks opening, right-click `PokémonAI.app` ➔ **Open**, or run `xattr -cr PokémonAI.app` in Terminal)*. |
-| **Linux** | `PokemonAI_Linux.zip` | 1. Extract `PokemonAI_Linux.zip`.<br>2. Open a terminal in the extracted folder.<br>3. Run `./PokemonAI.x86_64` (or `chmod +x PokemonAI.x86_64 && ./PokemonAI.x86_64`). |
 
 ---
 
